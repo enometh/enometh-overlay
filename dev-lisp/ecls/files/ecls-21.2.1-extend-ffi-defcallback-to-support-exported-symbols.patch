@@ -1,0 +1,133 @@
+From 4908ccae5fa90c93235c299766d1a67c435a7f2f Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 7 Jun 2020 11:28:57 +0530
+Subject: [PATCH] extend ffi:defcallback to support exported symbols
+
+* src/cmp/cmppass1-ffi.lsp: (c1-defcallback): extend the form which the
+NAME argument to FFI:DEFCALLBACK can take: if NAME is a list of three
+elements then a non-NIL third element indicates that the callback should
+be exported.  In this case the c-name of the callback is derived from
+NAME via LISP-TO-C-NAME.
+
+* src/cmp/cmppass2-ffi.lsp: (t3-defcallback): arrange to export this
+c-name with extern linkage
+
+This patch extends ffi:defcallback so the NAME argument can be
+of the form (lisp-name call-type export-p)
+
+If EXPORT-P is non-NIL build-shared-library will arrange to export an
+ELF symbol, derived via (c::lisp-to-c-name lisp-name), which can be
+directly accessed from C.
+
+e.g.  - with (c::install-c-compiler)
+
+$cat hello.lisp
+(ffi:defcallback (hello :default :export-p) :int () 42)
+
+$ ecl --norc --eval '(compile-file "hello.lisp" :system-p t)' --eval '(ext:quit)'
+$ ecl --norc --eval "(c:build-shared-library \"hello\" :lisp-files '(\"hello.o\") :init-name \"init_hello\")" --eval '(ext:quit)'
+$ objdump -T libhello.so | grep hello
+
+$cat hello_eg.c
+int
+main(int argc, char **argv)
+{
+	extern void init_hello(cl_object);
+	extern int hello(void);
+	cl_boot(argc, argv);
+	ecl_init_module(NULL, init_hello);
+	printf("%d\n", hello());
+}
+
+$ gcc hello_eg.c -L . -lhello -ldl -lecl
+$ LD_LIBRARY_PATH=`pwd` ./a.out
+---
+ src/cmp/cmppass1-ffi.lsp | 25 ++++++++++++++++++-------
+ src/cmp/cmppass2-ffi.lsp | 14 +++++++++++---
+ 2 files changed, 29 insertions(+), 10 deletions(-)
+
+diff --git a/src/cmp/cmppass1-ffi.lsp b/src/cmp/cmppass1-ffi.lsp
+index d3c19ae3e..04e9c80c5 100644
+--- a/src/cmp/cmppass1-ffi.lsp
++++ b/src/cmp/cmppass1-ffi.lsp
+@@ -144,6 +144,13 @@
+ ;;; types like :fixnum or :sse2. Another argument against such
+ ;;; approach is semantic equivalence between interpreted and compiled
+ ;;; versions of the special form. -- jd 2019-11-27
++
++;; ;m 200607 - extend the form which NAME can take: if name is a list
++;; of three elements then a non-NIL third element indicates that the
++;; callback should be exported.  In this case the c-name of the
++;; callback is derived from NAME via LISP-TO-C-NAME.  Arrange to export
++;; this c-name with extern linkage via t3-defcallback.
++
+ (defun c1-defcallback (args)
+   (destructuring-bind (name return-type arg-list &rest body)
+       args
+@@ -152,12 +159,15 @@
+           ((and (consp return-type)
+                 (member (first return-type) '(* array)))
+            (setf return-type :pointer-void)))
+-    (let ((arg-types '())
+-          (arg-type-constants '())
+-          (arg-variables '())
+-          (c-name (format nil "ecl_callback_~d" (length *callbacks*)))
+-          (name (if (consp name) (first name) name))
+-          (call-type (if (consp name) (second name) :cdecl)))
++    (let* ((export-callback-p (and (consp name) (third name)))
++           (arg-types '())
++           (arg-type-constants '())
++           (arg-variables '())
++           (c-name (if export-callback-p
++                       (lisp-to-c-name (first name))
++                       (format nil "ecl_callback_~d" (length *callbacks*))))
++           (name (if (consp name) (first name) name))
++           (call-type (if (consp name) (second name) :cdecl)))
+       (dolist (i arg-list)
+         (unless (consp i)
+           (cmperr "Syntax error in CALLBACK form: C type is missing in argument ~A "i))
+@@ -170,7 +180,8 @@
+                   (foreign-elt-type-code return-type)
+                   (reverse arg-types)
+                   (reverse arg-type-constants)
+-                  call-type)
++                  call-type
++                  export-callback-p)
+             *callbacks*)
+       (c1expr
+        `(progn
+diff --git a/src/cmp/cmppass2-ffi.lsp b/src/cmp/cmppass2-ffi.lsp
+index 09d367cf2..86a1113f9 100644
+--- a/src/cmp/cmppass2-ffi.lsp
++++ b/src/cmp/cmppass2-ffi.lsp
+@@ -494,7 +494,9 @@
+                       collect c))))
+ 
+ (defun t3-defcallback (lisp-name c-name c-name-constant return-type return-type-code
+-                       arg-types arg-type-constants call-type &aux (return-p t))
++                       arg-types arg-type-constants call-type
++                       export-callback-p
++                       &aux (return-p t))
+   (when (eql return-type :void)
+     (setf return-p nil))
+   (let ((return-type-name (rep-type->c-name (ffi::%convert-to-arg-type return-type)))
+@@ -503,8 +505,14 @@
+                 (:stdcall "__stdcall ")
+                 (t (cmperr "DEFCALLBACK does not support ~A as calling convention"
+                            call-type)))))
+-    (wt-nl-h "static " return-type-name " " fmod c-name "(")
+-    (wt-nl1  "static " return-type-name " " fmod c-name "(")
++    (wt-nl-h (if export-callback-p
++                 "extern "
++                 "static ")
++             return-type-name " " fmod c-name "(")
++    (wt-nl1  (if export-callback-p
++                 "__attribute__((visibility(\"default\"))) "
++                 "static ")
++             return-type-name " " fmod c-name "(")
+     (loop with comma = ""
+           for n from 0
+           for type in arg-types
+-- 
+2.31.0
+
