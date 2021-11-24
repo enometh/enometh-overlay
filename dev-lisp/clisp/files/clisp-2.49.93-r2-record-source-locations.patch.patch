@@ -1,0 +1,42 @@
+From 5adf57cebeba47f8592a558c418332178cf14f5e Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 1 Sep 2019 09:55:28 +0000
+Subject: [PATCH 1/2] clisp-record-source-locations.patch
+
+---
+ src/compiler.lisp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/compiler.lisp b/src/compiler.lisp
+index 024fa18..25e0125 100644
+--- a/src/compiler.lisp
++++ b/src/compiler.lisp
+@@ -11326,6 +11326,7 @@ (defun compile-file (file &key (output-file 'T) listing
+                                ((:print *compile-print*) *compile-print*)
+                                (external-format :default)
+                           &aux liboutput-file (*coutput-file* nil) input-file
++		     soutput-file	; record source file
+                                (*compile-file-directory*
+                                  (if (eq t output-file)
+                                    nil
+@@ -11337,6 +11338,7 @@ (defun compile-file (file &key (output-file 'T) listing
+     (compile-file-pathname-helper file output-file))
+   (when (and output-file (not (streamp output-file)))
+     (setq liboutput-file (merge-extension "lib" output-file))
++    (setq soutput-file  (merge-extension "cfp" output-file)) ;madhu
+     (setq *coutput-file* (merge-extension "c" output-file))
+     (setq new-output-stream t))
+   (when (and listing (not (streamp listing)))
+@@ -11464,6 +11466,9 @@ (defun compile-file (file &key (output-file 'T) listing
+                              (truename *fasoutput-stream*))
+                         (compile-warnings-p)
+                         (compile-failure-p))))
++	    (when (and compilation-successful)
++	      (with-open-file (ostream soutput-file :direction :output :if-exists :supersede)
++		(write-line (namestring *compile-file-pathname*) ostream)))
+             (when new-output-stream
+               (close *fasoutput-stream*)
+               (close *liboutput-stream*)
+-- 
+2.31.0
+

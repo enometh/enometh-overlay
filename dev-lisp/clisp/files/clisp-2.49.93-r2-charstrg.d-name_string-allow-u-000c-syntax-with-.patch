@@ -1,0 +1,52 @@
+From 34c070de20b374e41744d0155685dcb6f9c1cb89 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 5 Nov 2021 11:41:15 +0530
+Subject: [PATCH 2/2] src/charstrg.d: (name_string): allow #\u+000c syntax
+ (with the + sign)
+
+---
+ src/charstrg.d | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/src/charstrg.d b/src/charstrg.d
+index f0c613c..9effaa9 100644
+--- a/src/charstrg.d
++++ b/src/charstrg.d
+@@ -1380,15 +1380,20 @@ global object name_char (object string) {
+     string = unpack_string_ro(string,&len,&offset);
+     if (len > 1 && len < UNINAME_MAX) {
+       var const chart* charptr;
++      var uintL allow_plus = 0;
+       unpack_sstring_alloca(string,len,offset, charptr=);
+       /* Test for Uxxxx or Uxxxxxxxx syntax. */
+-      if ((len == 5 || len == 9)
+-          && (chareq(charptr[0],ascii('U'))
+-              || chareq(charptr[0],ascii('u')))) {
++      if (((len == 5 || len == 9)
++	   && (chareq(charptr[0],ascii('U'))
++	       || chareq(charptr[0],ascii('u'))))
++	  || ((allow_plus = (len == 6 || len == 10))
++	      && (chareq(charptr[0],ascii('U'))
++	       || chareq(charptr[0],ascii('u')))
++	      && (chareq(charptr[1],ascii('+'))))) {
+         /* decode a hexadecimal number: */
+         var uintL code = 0;
+-        var uintL index = 1;
+-        var const chart* tmpcharptr = charptr+1;
++        var uintL index = allow_plus? 2 : 1;
++        var const chart* tmpcharptr = charptr+1+(allow_plus ? 1 : 0);
+         while (1) {
+           var cint c = as_cint(*tmpcharptr++); /* next character */
+           /* should be a hexadecimal digit: */
+@@ -1405,7 +1410,7 @@ global object name_char (object string) {
+           if (index == len) {
+             /* Character name was "Uxxxx" with code = xxxx < char_code_limit.
+                Its length should be 5 or 9, depending on xxxx < 0x10000. */
+-            if (!(len == (code < 0x10000 ? 5 : 9)))
++            if (!(len == (allow_plus ? (code < 0x10000 ? 6 : 10) : (code < 0x10000 ? 5 : 9))))
+               break;
+             /* Don't test for graphic_char_p - see comment in char_name().
+                This also avoids special-casing the #\Uxxxx syntax in io.d. */
+-- 
+2.31.0
+
