@@ -1,0 +1,39 @@
+From 5636ea6363b78c5e497fa97c73d03c4c2b12ad86 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 19 Nov 2021 09:53:35 +0530
+Subject: [PATCH] fixes for LLVM-13 (beta)
+
+---
+ src/decl.c | 2 +-
+ src/util.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/decl.c b/src/decl.c
+index 8c0382f..da9b4ff 100644
+--- a/src/decl.c
++++ b/src/decl.c
+@@ -294,7 +294,7 @@ static resect_decl_kind convert_cursor_kind(CXCursor cursor) {
+         case CXCursor_TemplateRef:
+         case CXCursor_ClassTemplate:
+         case CXCursor_ClassTemplatePartialSpecialization:
+-        case CXCursor_ClassTemplateSpecialization:
++//        case CXCursor_ClassTemplateSpecialization:
+         case CXCursor_ClassDecl:
+             return RESECT_DECL_KIND_CLASS;
+         case CXCursor_CXXMethod:
+diff --git a/src/util.c b/src/util.c
+index c2ca6c6..b4d57ce 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -447,7 +447,7 @@ resect_string resect_format_cursor_full_name(CXCursor cursor) {
+     switch (parent_kind) {
+         case CXCursor_ClassDecl:
+         case CXCursor_ClassTemplate:
+-        case CXCursor_ClassTemplateSpecialization:
++//        case CXCursor_ClassTemplateSpecialization:
+         case CXCursor_ClassTemplatePartialSpecialization:
+         case CXCursor_UnionDecl:
+         case CXCursor_StructDecl: {
+-- 
+2.31.0
+
