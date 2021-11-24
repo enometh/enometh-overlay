@@ -1,0 +1,24 @@
+From 750c71363ba1cada63a53ad9dd4b200471e60456 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 1 Oct 2020 14:13:47 +0530
+Subject: [PATCH 1/2] c2ffi-10.0.0.20200527-add-target-link-directories.patch
+
+---
+ CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index eb3c023..f9f8a22 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -65,6 +65,7 @@ target_include_directories(c2ffi PUBLIC
+   ${LLVM_INCLUDE_DIRS}
+   ${SOURCE_ROOT}/src/include
+   )
++target_link_directories(c2ffi PUBLIC ${LLVM_LIBRARY_DIRS})
+ target_link_libraries(c2ffi PUBLIC clang-cpp LLVM)
+ 
+ set(APP_BIN_DIR "${CMAKE_BINARY_DIR}/bin")
+-- 
+2.31.0
+

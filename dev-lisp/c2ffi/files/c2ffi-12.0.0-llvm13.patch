@@ -1,0 +1,66 @@
+From 264c3e427a3d5ec073ce1b4b6a59438e570c82e0 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 12 Nov 2021 12:18:24 +0530
+Subject: [PATCH 2/2] llvm13
+
+---
+ CMakeLists.txt   | 2 +-
+ src/Template.cpp | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f9f8a22..e7704c2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,7 +7,7 @@ project(c2ffi)
+ set(SOURCE_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+ 
+ # Apparently the LLVM package doesn't support ranges
+-find_package(LLVM 12.0.0 CONFIG)
++find_package(LLVM 13.0.0 CONFIG)
+ 
+ find_package(Clang)
+ 
+diff --git a/src/Template.cpp b/src/Template.cpp
+index d4a6d8b..afc6fdf 100644
+--- a/src/Template.cpp
++++ b/src/Template.cpp
+@@ -35,7 +35,7 @@ TemplateArg::TemplateArg(C2FFIASTConsumer* ast, const clang::TemplateArgument& a
+         _type = Type::make_type(ast, arg.getAsType().getTypePtrOrNull());
+     else if(arg.getKind() == clang::TemplateArgument::Integral) {
+         _has_val = true;
+-        _val     = arg.getAsIntegral().toString(10);
++        _val     = toString(arg.getAsIntegral(), 10);
+         _type    = Type::make_type(ast, arg.getIntegralType().getTypePtrOrNull());
+     } else if(arg.getKind() == clang::TemplateArgument::Declaration) {
+         _has_val = true;
+@@ -53,7 +53,7 @@ TemplateArg::TemplateArg(C2FFIASTConsumer* ast, const clang::TemplateArgument& a
+ 
+             if(r.Val.isInt()) {
+                 _has_val = true;
+-                _val     = r.Val.getInt().toString(10);
++                _val     = toString(r.Val.getInt(), 10);
+             }
+         }
+     } else {
+@@ -101,7 +101,7 @@ void C2FFIASTConsumer::write_template(
+         if(arg.getKind() == clang::TemplateArgument::Type)
+             out << arg.getAsType().getAsString();
+         else if(arg.getKind() == clang::TemplateArgument::Integral) {
+-            out << arg.getAsIntegral().toString(10);
++            out << toString(arg.getAsIntegral(), 10);
+         } else if(arg.getKind() == clang::TemplateArgument::Declaration) {
+             out << arg.getAsDecl()->getNameAsString();
+         } else if(arg.getKind() == clang::TemplateArgument::Expression) {
+@@ -112,7 +112,7 @@ void C2FFIASTConsumer::write_template(
+                 clang::Expr::EvalResult r;
+                 expr->EvaluateAsInt(r, ctx);
+                 if(r.Val.isInt())
+-                    out << r.Val.getInt().toString(10);
++                    out << toString(r.Val.getInt(), 10);
+             }
+         } else {
+             out << "?" << arg.getKind() << "?";
+-- 
+2.31.0
+
