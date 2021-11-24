@@ -1,0 +1,14 @@
+--- a/src/Mayaqua/Unix.c	2019-09-18 17:51:52.985867574 +0300
++++ b/src/Mayaqua/Unix.c	2019-09-18 17:52:11.442867091 +0300
+@@ -100,10 +100,0 @@
+-	// Write a value to the threads-max of the proc file system
+-	o = UnixFileCreate("/proc/sys/kernel/threads-max");
+-	if (o != NULL)
+-	{
+-		char tmp[128];
+-		sprintf(tmp, "%u\n", UNIX_LINUX_MAX_THREADS);
+-		UnixFileWrite(o, tmp, strlen(tmp));
+-		UnixFileClose(o, false);
+-	}
+-
+

@@ -1,0 +1,25 @@
+From 755c7d169826f1fcdd633e113804fbc9b7143c78 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 21 Sep 2021 20:26:02 +0530
+Subject: [PATCH] src/Mayaqua/Network.c: debug UDP registrations
+
+---
+ src/Mayaqua/Network.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Mayaqua/Network.c b/src/Mayaqua/Network.c
+index 2f8df7e..21d6ef1 100644
+--- a/src/Mayaqua/Network.c
++++ b/src/Mayaqua/Network.c
+@@ -4171,7 +4171,7 @@ void RUDPGetRegisterHostNameByIP(char *dst, UINT size, IP *ip)
+ 	       tmp[2], tmp[3]);
+ 
+ 
+-	if (false)
++	if (true)
+ 	{
+ 		Debug("Hash Src IP: %r\n"
+ 		      "Hash Dst HN: %s\n",
+-- 
+2.31.0
+
