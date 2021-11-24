@@ -1,1 +1,2 @@
 move sys-libs/libfixposix dev-lisp/libfixposix
+move net-vpn/softether net-vpn/softether-vpn
