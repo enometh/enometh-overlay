@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# Copyright 1999-2018 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+command="/opt/softether/bin/vpnbridge/vpnbridge"
+command_args="start"
+description="SoftEther VPN Bridge"
+name="SoftEther VPN Bridge"
+start_stop_daemon_args="-q"
+pidfile="/run/softether/${RC_SVCNAME}.pid"
+
+depend() {
+	need net
+}
+
+start_post() {
+	pgrep -n "$procname" > "$pidfile"
+}
+
+stop() {
+	ebegin "Stopping $name"
+	start-stop-daemon --stop --quiet --pidfile "$pidfile" -- stop
+	eend $?
+}
