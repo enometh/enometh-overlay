@@ -1,0 +1,99 @@
+From 8d71e32a480f76b482468ddc140e18da7735690c Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 23 May 2019 18:33:16 +0530
+Subject: [PATCH] src/emacs.c: klugde to find emacs.pdump
+
+* src/emacs.c: (load_pdump): keep going when looking for pdump if one
+doesn't load because of a bad signature.  On linux if
+basename(argv[0]).pdump isnt found  then look at
+proc/self/exe for the path to the actual executable and try that once
+that instead of argv[0]. This works if emacs is a symlink.
+---
+ src/emacs.c | 33 +++++++++++++++++++++++++++++----
+ 1 file changed, 29 insertions(+), 4 deletions(-)
+
+diff --git a/src/emacs.c b/src/emacs.c
+index 4734faf33c..dadc0bec09 100644
+--- a/src/emacs.c
++++ b/src/emacs.c
+@@ -876,6 +876,16 @@ load_pdump (int argc, char **argv)
+ 
+   /* Where's our executable?  */
+   ptrdiff_t bufsize, exec_bufsize;
++
++#if defined GNU_LINUX
++  /* if argv[0].pdmp is not found and argv[0] is a symlink, retry once
++     with argv[0] set to the link resolved by readlink(2). Lose if
++     readlink truncates output. */
++  static char buf[PATH_MAX];
++  int ntries = 0;
++ retry:
++#endif
++
+   emacs_executable = load_pdump_find_executable (argv[0], &bufsize);
+   exec_bufsize = bufsize;
+ 
+@@ -889,7 +899,7 @@ load_pdump (int argc, char **argv)
+       result = pdumper_load (dump_file, emacs_executable);
+ 
+       if (result != PDUMPER_LOAD_SUCCESS)
+-        fatal ("could not load dump file \"%s\": %s",
++        fprintf (stderr, "could not load dump file \"%s\": %s",
+                dump_file, dump_error_to_string (result));
+       return;
+     }
+@@ -900,6 +910,7 @@ load_pdump (int argc, char **argv)
+      so we can't use decode_env_path.  We're working in whatever
+      encoding the system natively uses for filesystem access, so
+      there's no need for character set conversion.  */
++
+   ptrdiff_t exenamelen = strlen (emacs_executable);
+   if (strip_suffix)
+     {
+@@ -919,7 +930,7 @@ load_pdump (int argc, char **argv)
+     goto out;
+ 
+   if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
+-    fatal ("could not load dump file \"%s\": %s",
++    fprintf (stderr, "could not load dump file \"%s\": %s",
+ 	   dump_file, dump_error_to_string (result));
+ 
+  hardcoded:
+@@ -971,7 +982,7 @@ load_pdump (int argc, char **argv)
+ #endif
+   result = pdumper_load (dump_file, emacs_executable);
+ 
+-  if (result == PDUMPER_LOAD_FILE_NOT_FOUND)
++  if (result != PDUMPER_LOAD_SUCCESS)
+     {
+       /* Finally, look for basename(argv0)+".pdmp" in PATH_EXEC.
+ 	 This way, they can rename both the executable and its pdump
+@@ -1007,10 +1018,24 @@ load_pdump (int argc, char **argv)
+       result = pdumper_load (dump_file, emacs_executable);
+     }
+ 
++#if defined GNU_LINUX
++  if (result != PDUMPER_LOAD_SUCCESS) {
++    if (++ntries == 2) goto out;
++    int nbytes = readlink("/proc/self/exe", buf, PATH_MAX);
++    if (nbytes == -1) {
++      perror("readlink /proc/self/exe");
++      goto out;
++    }
++    if (nbytes < sizeof(buf)) buf[nbytes] = 0;
++    argv[0] = buf;		/* XXX use argv0=argv[0] */
++    goto retry;
++  }
++#endif
++
+   if (result != PDUMPER_LOAD_SUCCESS)
+     {
+       if (result != PDUMPER_LOAD_FILE_NOT_FOUND)
+-	fatal ("could not load dump file \"%s\": %s",
++	fprintf (stderr, "could not load dump file \"%s\": %s",
+ 	       dump_file, dump_error_to_string (result));
+     }
+ 
+-- 
+2.31.0
+
