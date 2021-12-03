@@ -1,0 +1,39 @@
+From d9efe5654acad77fd520b440c22700ef9a2e2c80 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 1 Sep 2021 08:45:43 +0530
+Subject: [PATCH] ffmpeg-4.5 support: hack avcodec_get_context_defaults3
+
+---
+ gview_encoder/encoder.h        | 2 ++
+ gview_v4l2core/frame_decoder.h | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/gview_encoder/encoder.h b/gview_encoder/encoder.h
+index 11c9522..c4115e9 100644
+--- a/gview_encoder/encoder.h
++++ b/gview_encoder/encoder.h
+@@ -39,6 +39,8 @@
+ #include <libavutil/avutil.h>
+ #endif
+ 
++#define avcodec_get_context_defaults3(a,b) ((a=avcodec_alloc_context3(b)) == 0 ? -1 : 1)
++
+ #define LIBAVCODEC_VER_AT_LEAST(major,minor)  (LIBAVCODEC_VERSION_MAJOR > major || \
+                                               (LIBAVCODEC_VERSION_MAJOR == major && \
+                                                LIBAVCODEC_VERSION_MINOR >= minor))
+diff --git a/gview_v4l2core/frame_decoder.h b/gview_v4l2core/frame_decoder.h
+index 17fd9b7..60aa3e7 100644
+--- a/gview_v4l2core/frame_decoder.h
++++ b/gview_v4l2core/frame_decoder.h
+@@ -51,6 +51,8 @@
+ #define LIBAVUTIL_VER_AT_LEAST(major,minor) 0
+ #endif
+ 
++#define avcodec_get_context_defaults3(a,b) ((a=avcodec_alloc_context3(b)) == 0 ? -1 : 1)
++
+ int libav_decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt);
+ 
+ /*
+-- 
+2.31.0
+
