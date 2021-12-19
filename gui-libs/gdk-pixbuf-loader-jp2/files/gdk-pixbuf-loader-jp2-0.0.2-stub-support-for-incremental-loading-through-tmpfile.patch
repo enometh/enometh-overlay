@@ -1,0 +1,156 @@
+From ce41412a8cf1d00acd6c101b30c8833114d969fc Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 19 Dec 2021 23:02:34 +0530
+Subject: [PATCH] stub support for incremental loading through tmpfile
+
+* src/io-jp2.c: (JP2Context,gdk_pixbuf__jp2_image_begin_load,
+gdk_pixbuf__jp2_image_stop_load,
+gdk_pixbuf__jp2_image_load_increment): load via a temp file ala
+gdk-pixbuf-loaders:io-xpm.c.
+---
+ src/io-jp2.c | 87 ++++++++++++++++++++++++++++++++++++++++++----------
+ 1 file changed, 71 insertions(+), 16 deletions(-)
+
+diff --git a/src/io-jp2.c b/src/io-jp2.c
+index 87e12d8..ea7be2a 100644
+--- a/src/io-jp2.c
++++ b/src/io-jp2.c
+@@ -25,6 +25,7 @@
+ #include <string.h>
+ #include <util.h>
+ #include <color.h>
++#include <glib/gstdio.h>
+ 
+ typedef enum {
+ 	IS_OUTPUT = 0,
+@@ -44,6 +45,9 @@ typedef struct {
+ 	gpointer user_data;
+ 	GdkPixbuf *pixbuf;
+ 	GError **error;
++	gchar *tempname;
++	FILE *file;
++	gboolean all_ok;
+ } JP2Context;
+ 
+ static void free_buffer(guchar *pixels, gpointer data)
+@@ -184,7 +188,6 @@ static GdkPixbuf *gdk_pixbuf__jp2_image_load(FILE *fp, GError **error)
+ 	return pixbuf;
+ }
+ 
+-#if FALSE
+ 
+ static gpointer gdk_pixbuf__jp2_image_begin_load
+ (
+@@ -195,31 +198,83 @@ static gpointer gdk_pixbuf__jp2_image_begin_load
+ 	GError **error
+ ) {
+ 	JP2Context *context = g_new0 (JP2Context, 1);
++	gint fd;
+ 	context->size_func = size_func;
+ 	context->prepare_func = prepare_func;
+ 	context->update_func  = update_func;
+ 	context->user_data = user_data;
++	context->all_ok = TRUE;
++	fd = g_file_open_tmp ("gdkpixbuf-jp2-tmp.XXXXXX", &context->tempname,
++			     NULL);
++       if (fd < 0) {
++               g_free (context);
++               return NULL;
++       }
++       context->file = fdopen (fd, "w+");
++       if (context->file == NULL) {
++               g_free (context->tempname);
++               g_free (context);
++               return NULL;
++       }
+ 	return context;
+ }
+ 
+-static gboolean gdk_pixbuf__jp2_image_stop_load(gpointer context, GError **error)
++static gboolean gdk_pixbuf__jp2_image_stop_load(gpointer data, GError **error)
+ {
+-	JP2Context *data = (JP2Context *) context;
+-	g_return_val_if_fail(data != NULL, TRUE);
+-	if (data->pixbuf) {
+-		g_object_unref(data->pixbuf);
+-	}
+-	return TRUE;
++	JP2Context *context = (JP2Context *) data;
++	GdkPixbuf *pixbuf;
++	gboolean retval = FALSE;
++
++	g_return_val_if_fail(data != NULL, FALSE);
++	fflush (context->file);
++	rewind (context->file);
++
++       if (context->all_ok) {
++               pixbuf = gdk_pixbuf__jp2_image_load (context->file, error);
++
++               if (pixbuf != NULL) {
++		       if (context->prepare_func)
++			       (* context->prepare_func) (pixbuf,
++							  NULL,
++							  context->user_data);
++		       if (context->update_func)
++			       (* context->update_func) (pixbuf,
++							 0, 0,
++							 gdk_pixbuf_get_width (pixbuf),
++							 gdk_pixbuf_get_height (pixbuf),
++							 context->user_data);
++                       g_object_unref (pixbuf);
++
++                       retval = TRUE;
++               }
++       }
++       fclose (context->file);
++       g_unlink (context->tempname);
++       g_free (context->tempname);
++       g_free ((JP2Context *) context);
++
++       return retval;
+ }
+ 
+-static gboolean gdk_pixbuf__jp2_image_load_increment(gpointer context, const guchar *buf, guint size, GError **error)
++static gboolean gdk_pixbuf__jp2_image_load_increment(gpointer data, const guchar *buf, guint size, GError **error)
+ {
+-	JP2Context *data = (JP2Context *) context;
+-
+-	g_set_error (error, GDK_PIXBUF_ERROR, GDK_PIXBUF_ERROR_FAILED, "Bro, I just can't...");
+-	return FALSE;
++	JP2Context *context = (JP2Context *) data;
++	g_return_val_if_fail (data != NULL, FALSE);
++       if (fwrite (buf, sizeof (guchar), size, context->file) != size) {
++	       gint save_errno = errno;
++               context->all_ok = FALSE;
++               g_set_error_literal (error,
++                                    G_FILE_ERROR,
++                                    g_file_error_from_errno (save_errno),
++                                    "Failed to write to temporary file when loading XPM image");
++               return FALSE;
++       }
++
++       return TRUE;
+ }
+ 
++#if FALSE
++
+ static gboolean gdk_pixbuf__jp2_image_save_to_callback
+ (
+ 	GdkPixbufSaveFunc save_func,
+@@ -386,10 +441,10 @@ void fill_vtable(GdkPixbufModule *module)
+ {
+ 	module->load             = gdk_pixbuf__jp2_image_load;
+ 	module->save             = gdk_pixbuf__jp2_image_save;
++	module->stop_load        = gdk_pixbuf__jp2_image_stop_load;
++	module->begin_load       = gdk_pixbuf__jp2_image_begin_load;
++	module->load_increment   = gdk_pixbuf__jp2_image_load_increment;
+ 	// TODO: consider implementing these
+-	//module->stop_load        = gdk_pixbuf__jp2_image_stop_load;
+-	//module->begin_load       = gdk_pixbuf__jp2_image_begin_load;
+-	//module->load_increment   = gdk_pixbuf__jp2_image_load_increment;
+ 	//module->save_to_callback = gdk_pixbuf__jp2_image_save_to_callback;
+ }
+ 
+-- 
+2.31.0
+
