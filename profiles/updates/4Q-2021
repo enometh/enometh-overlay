@@ -1,2 +1,3 @@
 move sys-libs/libfixposix dev-lisp/libfixposix
 move net-vpn/softether net-vpn/softether-vpn
+move dev-antichrist/libportal dev-libs/libportal
