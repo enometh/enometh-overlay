@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>enometh@meer.net</email>
+	</maintainer>
+  <use>
+    <flag name="perl">Build perl bindings</flag>
+    <flag name="php">Build php bindings</flag>
+    <flag name="python">Build Python bindings</flag>
+    <flag name="tools">Build hcal/hdate utitlities</flag>
+  </use>
+</pkgmetadata>

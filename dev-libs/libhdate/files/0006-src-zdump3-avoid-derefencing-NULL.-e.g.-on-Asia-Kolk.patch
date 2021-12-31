@@ -1,0 +1,26 @@
+From 2ad801a46af58560a20238c0de495681938f0587 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jan 2022 12:27:26 +0530
+Subject: [PATCH 6/8] src/zdump3: avoid derefencing NULL. (e.g. on
+ Asia/Kolkata)
+
+---
+ src/zdump3.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/zdump3.c b/src/zdump3.c
+index 95b1c92..22ca5b3 100644
+--- a/src/zdump3.c
++++ b/src/zdump3.c
+@@ -308,7 +308,7 @@ int rule_decode( const char* tzif, const size_t tzif_size, rule_detail* p_rule )
+ 		next++;
+ 		if (*next == 'J') next = rule_julian(STD, next, p_rule);
+ 		else next = rule_mwd(STD, next, p_rule);
+-		if (*next == ',')
++		if (next && *next == ',')
+ 		{
+ 			next++;
+ 			if (*next == 'J') next = rule_julian(DST, next, p_rule);
+-- 
+2.31.0
+

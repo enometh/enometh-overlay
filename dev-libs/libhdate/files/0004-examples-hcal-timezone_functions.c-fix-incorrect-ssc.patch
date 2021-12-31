@@ -1,0 +1,26 @@
+From 32203238df168e4be97f7d943491bc85d93a3f2c Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jan 2022 08:47:13 +0530
+Subject: [PATCH 4/8] examples/hcal/timezone_functions.c: fix incorrect sscanf
+ %a -> %m
+
+---
+ examples/hcal/timezone_functions.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/examples/hcal/timezone_functions.c b/examples/hcal/timezone_functions.c
+index dc07d3e..e0b5a8c 100644
+--- a/examples/hcal/timezone_functions.c
++++ b/examples/hcal/timezone_functions.c
+@@ -816,7 +816,7 @@ int get_lat_lon_from_zonetab_file( const char* input_string, char** tz_name, dou
+ 		if ( end_of_zonetab_file!=TRUE )
+ 		{
+ 			// TODO - need to free tz_name when not the zone we're looking for!
+-			match_count = sscanf(zonetab_string,"%*2c %a[+0-9-] %as %*[^\n]", &lat_and_lon, tz_name);
++			match_count = sscanf(zonetab_string,"%*2c %m[+0-9-] %ms %*[^\n]", &lat_and_lon, tz_name);
+ 			if (match_count == 2)
+ 			{
+ 				search_result_ptr = strcasestr(*tz_name, search_string);
+-- 
+2.31.0
+

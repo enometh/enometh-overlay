@@ -1,0 +1,38 @@
+From 387fbe831b1ba7d6ca62cdf6e915c14e3774de4a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jan 2022 12:32:30 +0530
+Subject: [PATCH 8/8] zdump: ship zdump3.h and fix manpage
+
+should add a comment to #include <time.h> before including zdump3.h
+---
+ docs/man/man3/zdump.3 | 2 +-
+ src/Makefile.am       | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/docs/man/man3/zdump.3 b/docs/man/man3/zdump.3
+index a4edf5a..baa3347 100644
+--- a/docs/man/man3/zdump.3
++++ b/docs/man/man3/zdump.3
+@@ -22,7 +22,7 @@ zdump \- report time zone and daylight savings time information
+ .PP
+ .SH "SYNOPSIS"
+ .nf
+-.B #include <zdump.h>
++.B #include <zdump3.h>
+ .sp
+ .BI "int zdump( char *" tzname ", const time_t " start ", const time_t " end ",
+ .BI "           int* " num_entries ", void** " return_data ");"
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 38f5bbe..0ba13f9 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -39,5 +39,5 @@ libhdate_la_LDFLAGS = -version-info 0:0:0
+ 
+ libhdate_la_LIBADD = 
+ 
+-include_HEADERS = hdate.h hdatepp.h
++include_HEADERS = hdate.h hdatepp.h zdump3.h
+ 
+-- 
+2.31.0
+
