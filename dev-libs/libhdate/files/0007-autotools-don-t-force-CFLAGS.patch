@@ -1,0 +1,54 @@
+From 77deedc1e6d5437ac367244c6c15b1609e8c9b30 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jan 2022 12:28:55 +0530
+Subject: [PATCH 7/8] autotools: don't force CFLAGS
+
+---
+ bindings/ruby/Makefile.am | 2 +-
+ configure.ac              | 2 +-
+ src/Makefile.am           | 6 +++---
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/bindings/ruby/Makefile.am b/bindings/ruby/Makefile.am
+index d8aa850..879098d 100644
+--- a/bindings/ruby/Makefile.am
++++ b/bindings/ruby/Makefile.am
+@@ -13,7 +13,7 @@ CLEANFILES = *.o *.cxx *.so *wrap*
+ all-am: hdate.so
+ 
+ hdate.so: hdate_wrap.cxx
+-	g++ -fpic -fno-strict-aliasing -g -O2 -c hdate_wrap.cxx $(RU_CFLAGS)
++	g++ -fpic -fno-strict-aliasing -c hdate_wrap.cxx $(RU_CFLAGS)
+ 	gcc -shared hdate_wrap.o ../../src/.libs/libhdate.so -rdynamic -Wl,-export-dynamic -lruby$(RU_VERSION) -lpthread -ldl -lcrypt -lm -lc -lstdc++ -o hdate.so
+ 
+ 
+diff --git a/configure.ac b/configure.ac
+index 6c801f0..4d6de2a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -22,7 +22,7 @@ AC_CONFIG_SRCDIR(src/hdate.h)
+ AC_CONFIG_MACRO_DIR([m4])
+ AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+ 
+-CFLAGS=
++dnl CFLAGS=
+ LIBS=-lm
+ 
+ dnl =======================================================================================
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 088c8e0..38f5bbe 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -1,6 +1,6 @@
+-libhdate_la_CFLAGS =\
+-	 -Wall\
+-	 -g
++#libhdate_la_CFLAGS =\
++#	 -Wall\
++#	 -g
+ 
+ lib_LTLIBRARIES = libhdate.la
+ 
+-- 
+2.31.0
+

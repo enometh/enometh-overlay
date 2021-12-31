@@ -1,0 +1,95 @@
+From bbd3d16dd169b93a186800dd8d0225931fdf64a2 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jan 2022 10:51:36 +0530
+Subject: [PATCH 5/8] fix incorrect latitute/longitude parsing of zone.tab
+
+* examples/hcal/timezone_functions.c: (get_lat_lon_from_zonetab_file):
+rewrite convert_from_dms. The original code assumes passed in
+num_of_digits which is not the number of digits in the
+string. e.g. consider "0001" num_of_digits was 4 but the number of
+digits used by the algorithm should have been 1.
+---
+ examples/hcal/timezone_functions.c | 47 +++++++++++++++++++++---------
+ 1 file changed, 34 insertions(+), 13 deletions(-)
+
+diff --git a/examples/hcal/timezone_functions.c b/examples/hcal/timezone_functions.c
+index e0b5a8c..060e8ee 100644
+--- a/examples/hcal/timezone_functions.c
++++ b/examples/hcal/timezone_functions.c
+@@ -748,17 +748,37 @@ char* read_sys_tz_string_from_file()
+ int get_lat_lon_from_zonetab_file( const char* input_string, char** tz_name, double *lat, double *lon, int quiet_alerts )
+ {
+ 
+-	double convert_from_dms( long in_val, int num_of_digits )
+-	{
+-		/// sanity check performed by caller, so we know
+-		/// that the number is four, six or seven digits
+-
+-		/// Let the compiler do the arithmetic an make it clear for us
+-
+-		if (num_of_digits == 4)
+-			return ( (double) in_val/100 )   + ((double)(in_val%100))/60;
+-		else
+-			return ( (double) (in_val/10000) ) + (double) ((in_val%10000)/100) /60 + (double) (in_val%100)/3600;
++	double convert_from_dms( char *string, int num_of_digits )
++	{
++/*
++  zone1970.tab
++# 2.  Latitude and longitude of the timezone's principal location
++#     in ISO 6709 sign-degrees-minutes-seconds format,
++#     either ±DDMM±DDDMM or ±DDMMSS±DDDMMSS,
++#     first latitude (+ is north), then longitude (+ is east).
++*/
++	  int d = 0, m = 0, s = 0;
++	  // assert(string[0] == '+' || string[0] == '-');
++	  // assert(digit_char_p(string[i]));
++	  if (num_of_digits == 4) {
++	    d = (string[1] - '0') * 10 + (string[2] - '0');
++	    m = (string[3] - '0') * 10 + (string[4] - '0');
++	  } else if (num_of_digits == 5) {
++	    d = (string[1] - '0') * 100 + (string[2] - '0') * 10 + (string[3] - '0');
++	    m = (string[4] - '0') * 10  + (string[5] - '0');
++	  } else if (num_of_digits == 6) {
++	    d = (string[1] - '0') * 10 + (string[2] - '0');
++	    m = (string[3] - '0') * 10 + (string[4] - '0');
++	    s = (string[5] - '0') * 10 + (string[6] - '0');
++	  } else if (num_of_digits == 7) {
++	    d = (string[1] - '0') * 100 + (string[2] - '0') * 10 + (string[3] - '0');
++	    m = (string[4] - '0') * 10  + (string[5] - '0');
++	    s = (string[6] - '0') * 10  + (string[7] - '0');
++	  } else {
++	    error(0,0,"incorrect dms string");
++	    return 0;
++	  }
++	  return d + (((double) m) / 60) + (((double) s) / 3600);
+ 	}
+ 
+ 
+@@ -835,7 +855,7 @@ int get_lat_lon_from_zonetab_file( const char* input_string, char** tz_name, dou
+ 					{
+ 						memcpy(&number_string, lat_and_lon, lat_end+1);
+ 						number_string[lat_end+1] = '\0';
+-						*lat = convert_from_dms ( atol(number_string), lat_end);
++						*lat = convert_from_dms (number_string, lat_end);
+ 						lon_end = strlen( &lat_and_lon[lat_end+1]);
+ 						if ((lon_end < 5) || (lon_end > 8) )
+ 						{
+@@ -848,13 +868,14 @@ int get_lat_lon_from_zonetab_file( const char* input_string, char** tz_name, dou
+ 							memcpy(&number_string, &lat_and_lon[lat_end+1], lon_end+1);
+ 							number_string[lon_end+1] = '\0';
+ 
+-							*lon = convert_from_dms ( atol(number_string), lon_end);
++							*lon = convert_from_dms (number_string, lon_end);
+ //							if (!quiet_alerts) print_alert_coordinate_pair(search_string);
+ 							if ( (!quiet_alerts) && (strlen(*tz_name) != strlen(search_string)) )
+ 								error(0,0,"%s \"%s\" %s \"%s\"", N_("ALERT: interpreting timezone entered"), input_string, N_("as"), *tz_name);
+ 						}
+ 					}
+ 				}
++				break;
+ 			}
+ 			if (lat_and_lon != NULL)
+ 			{
+-- 
+2.31.0
+

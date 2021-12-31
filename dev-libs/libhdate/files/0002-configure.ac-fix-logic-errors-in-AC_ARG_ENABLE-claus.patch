@@ -1,0 +1,63 @@
+From 117c21ece53dcfa2b2c5b8dc6e64e0caa8de692f Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 2 Jan 2022 08:03:42 +0530
+Subject: [PATCH 2/8] configure.ac: fix logic errors in AC_ARG_ENABLE clauses
+
+---
+ configure.ac | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 4b05121..a541daa 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -51,6 +51,7 @@ AC_CHECK_PROG(have_gpc, "gpc", do, dont)
+ 
+ build_gpc=$have_gpc
+ 
++dnl fixme wrong [ACTION-IF-GIVEN] for AC_ARG_ENABLE
+ AC_ARG_ENABLE([gpc],
+   [AS_HELP_STRING([--disable-gpc],
+   [do not build gnu pascal binding])],
+@@ -87,7 +88,8 @@ build_python=$have_python
+ AC_ARG_ENABLE([python],
+   [AS_HELP_STRING([--disable-python],
+   [do not build python binding])],
+-  [build_python=dont], [build_python=$have_python])
++  [if test "${enableval}" = "no" -o "${enableval}" != "yes"; then build_python=dont; fi],
++   [build_python=$have_python])
+ 
+ AC_ARG_WITH(python-sitelib-dir,
+   [AS_HELP_STRING([--with-python-sitelib-dir=PATH],
+@@ -176,7 +178,8 @@ build_php=$have_php
+ AC_ARG_ENABLE([php],
+   [AS_HELP_STRING([--disable-php],
+   [do not build php binding])],
+-  [build_php=dont], [build_php=$have_php])
++  [if test "${enableval}" = "no" -o "${enableval}" != "yes"; then build_php=dont; fi],
++   [build_php=$have_php])
+ 
+ AC_ARG_WITH(php-sitelib-dir,
+   [AS_HELP_STRING([--with-php-sitelib-dir=PATH],
+@@ -217,7 +220,8 @@ build_perl=$have_perl
+ AC_ARG_ENABLE([perl],
+   [AS_HELP_STRING([--disable-perl],
+   [do not build perl binding])],
+-  [build_perl=dont], [build_perl=$have_perl])
++  [if test "${enableval}" = "no" -o "${enableval}" != "yes"; then build_perl=dont; fi],
++   [build_perl=$have_perl])
+ 
+ AC_ARG_WITH(perl-sitelib-dir,
+   [AS_HELP_STRING([--with-perl-sitelib-dir=PATH],
+@@ -275,7 +279,7 @@ build_hcal=do
+ AC_ARG_ENABLE([hcal],
+   [AS_HELP_STRING([--disable-hcal],
+   [do not build hcal/hdate utility programs])],
+-  [build_hcal=dont], [build_hcal=do])
++  [if test "${enableval}" = "no" -o "${enableval}" != "yes"; then build_hcal=dont; fi], [build_hcal=do])
+ 
+ AM_CONDITIONAL(WITH_HCAL, test "$build_hcal" = "do")
+ AM_PROG_CC_C_O
+-- 
+2.31.0
+

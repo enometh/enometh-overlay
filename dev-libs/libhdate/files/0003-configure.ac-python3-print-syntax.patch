@@ -1,0 +1,27 @@
+From e81d8a31103c7342e097c553e6496755a742babd Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 2 Jan 2022 08:04:10 +0530
+Subject: [PATCH 3/8] configure.ac: python3 print syntax
+
+---
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index a541daa..6c801f0 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -97,8 +97,8 @@ AC_ARG_WITH(python-sitelib-dir,
+ 
+ if test "$have_python" = "do"; then
+     AM_PATH_PYTHON([2.7],, [:])
+-    PY_PREFIX=`python -c 'import sys ; print sys.prefix'`
+-    PY_VERSION=`python -c 'import sys ; print sys.version[[0:3]]'`
++    PY_PREFIX=`python -c 'import sys ; print (sys.prefix)'`
++    PY_VERSION=`python -c 'import sys ; print (sys.version[[0:3]])'`
+     AC_MSG_CHECKING(for $PY_PREFIX/include/python$PY_VERSION/Python.h)
+     if test -f $PY_PREFIX/include/python$PY_VERSION/Python.h; then
+       AC_MSG_RESULT(yes)
+-- 
+2.31.0
+

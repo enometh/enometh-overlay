@@ -1,0 +1,63 @@
+From 42d7d6867e263dc2cf3b0d62fbaec9b11a793a13 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 2 Jan 2022 08:02:42 +0530
+Subject: [PATCH 1/8] Makefile.am: use $docdir from autoconf instead of
+ usr/share/doc/libhdate
+
+---
+ Makefile.am                          | 2 +-
+ examples/bindings/Makefile.am        | 2 +-
+ examples/bindings/pascal/Makefile.am | 2 +-
+ examples/hcal/Makefile.am            | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 91e5504..027c286 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -12,7 +12,7 @@ SUBDIRS = po docs src examples bindings
+ pkgconfigdir = $(libdir)/pkgconfig
+ pkgconfig_DATA = libhdate.pc
+ 
+-libhdatedocdir = ${prefix}/share/doc/libhdate
++libhdatedocdir = $(docdir)
+ libhdatedoc_DATA = \
+ 	README\
+ 	COPYING\
+diff --git a/examples/bindings/Makefile.am b/examples/bindings/Makefile.am
+index 61ee7ba..4dbba26 100644
+--- a/examples/bindings/Makefile.am
++++ b/examples/bindings/Makefile.am
+@@ -9,5 +9,5 @@ EXTRA_DIST = \
+   hdate_ruby.rb \
+   hdate_php.php
+ 
+-libhdatedocdir = ${prefix}/share/doc/libhdate/examples/bindings
++libhdatedocdir = ${docdir}/examples/bindings
+ libhdatedoc_DATA = $(EXTRA_DIST)
+diff --git a/examples/bindings/pascal/Makefile.am b/examples/bindings/pascal/Makefile.am
+index b619a2c..4e595c6 100644
+--- a/examples/bindings/pascal/Makefile.am
++++ b/examples/bindings/pascal/Makefile.am
+@@ -1,4 +1,4 @@
+ EXTRA_DIST = hdate_class.pp hdate_obj.pp hdate_pascal.pp
+ 
+-libhdatedocdir = ${prefix}/share/doc/libhdate/examples/bindings/pascal
++libhdatedocdir = ${docdir}/examples/bindings/pascal
+ libhdatedoc_DATA = hdate_class.pp hdate_obj.pp hdate_pascal.pp
+diff --git a/examples/hcal/Makefile.am b/examples/hcal/Makefile.am
+index 1f09963..ecad38c 100644
+--- a/examples/hcal/Makefile.am
++++ b/examples/hcal/Makefile.am
+@@ -30,7 +30,7 @@ hcal_SOURCES = hcal.c local_functions.c custom_days.c timezone_functions.c
+ 
+ endif
+ 
+-libhdatedocdir = ${prefix}/share/doc/libhdate/examples/hcal
++libhdatedocdir = ${docdir}/examples/hcal
+ libhdatedoc_DATA = hcal.c hdate.c local_functions.c custom_days.c timezone_functions.c
+ 
+ #EXTRA_DIST = $(libhdatedoc_DATA)
+-- 
+2.31.0
+
