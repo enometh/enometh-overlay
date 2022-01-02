@@ -1,0 +1,26 @@
+From 7697952b7afe9103f7f11056959a810d1aa6b322 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 2 Jan 2022 08:20:08 +0530
+Subject: [PATCH] Makefile.am: use $docdir from autoconf instead of
+ usr/share/doc/libhdate_glib
+
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index c7f0595..798ae36 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -13,7 +13,7 @@ SUBDIRS = \
+ pkgconfigdir = $(libdir)/pkgconfig
+ pkgconfig_DATA = libhdate-glib.pc
+ 
+-libhdate_glibdocdir = ${prefix}/doc/libhdate_glib
++libhdate_glibdocdir = ${docdir}
+ libhdate_glibdoc_DATA = \
+ 	ChangeLog \
+ 	README \
+-- 
+2.31.0
+
