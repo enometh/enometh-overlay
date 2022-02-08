@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <2021-03-29 12:36:42 IST>
@@ -25,7 +25,7 @@
 # ;madhu 210329 246.9.2 v246-pre-79-g7a54937
 # ;madhu 210506 246.10 on the 246-stable branch
 # ;madhu 211005 248.0 v248-pre-9-g2fd46629
-
+# ;madhu 220208 249.0_pre v249-pre-14-g0f29ee86 +cgroup-hybrid
 
 
 EAPI=7
@@ -41,7 +41,7 @@ if ${USE_GIT}; then
 	SRC_URI=
 else
 	SRC_URI="https://github.com/${PN}/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~mips ppc ppc64 ~s390 sparc x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 inherit linux-info meson pam udev xdg-utils
@@ -52,8 +52,7 @@ HOMEPAGE="https://github.com/elogind/elogind"
 LICENSE="CC0-1.0 LGPL-2.1+ public-domain"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~x86"
-IUSE="+acl audit debug doc +pam +policykit selinux"
-#efi
+IUSE="+acl audit +cgroup-hybrid debug doc +pam +policykit selinux efi"
 
 BDEPEND="
 	app-text/docbook-xml-dtd:4.2
@@ -81,6 +80,8 @@ PDEPEND="
 "
 
 DOCS=( README.md )
+#we don't apply the docs patch
+#DOCS += ( src/libelogind/sd-gvabus/GVARIANT-SERIALIZATION )
 
 PATCHES=(
 )
@@ -98,15 +99,13 @@ src_prepare() {
 }
 
 src_configure() {
-	local rccgroupmode="$(grep rc_cgroup_mode ${EPREFIX}/etc/rc.conf | cut -d '"' -f 2)"
-	local cgroupmode="legacy"
-	local debugmode=""
-
-	if [[ "xhybrid" = "x${rccgroupmode}" ]] ; then
+	# local rccgroupmode="$(grep rc_cgroup_mode ${EPREFIX}/etc/rc.conf | cut -d '"' -f 2)"
+	if use cgroup-hybrid; then
 		cgroupmode="hybrid"
-	elif [[ "xunified" = "x${rccgroupmode}" ]] ; then
+	else
 		cgroupmode="unified"
 	fi
+	local debugmode=""
 
 	if use debug; then
 		debugmode="-Ddebug-extra=['elogind']" #'hashmap'
@@ -119,7 +118,8 @@ src_configure() {
 	local emesonargs=(
 		-Ddocdir="${EPREFIX}/usr/share/doc/${PF}"
 		-Dhtmldir="${EPREFIX}/usr/share/doc/${PF}/html"
-#		-Defi=$(usex efi true false)
+#bogus
+		-Defi=$(usex efi true false)
 		$debugmode
 		-Dpamlibdir=$(getpam_mod_dir)
 		-Dudevrulesdir="${EPREFIX}$(get_udevdir)"/rules.d
@@ -152,6 +152,7 @@ src_configure() {
 }
 
 src_install() {
+
 	meson_src_install
 
 	newinitd "${FILESDIR}"/${PN}.init-r1 ${PN}
