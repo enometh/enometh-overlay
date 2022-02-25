@@ -1,0 +1,30 @@
+From f2062dd1d7bb5e21e6fc3ba6bc2e088559082d22 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 21 Mar 2021 17:21:06 +0530
+Subject: [PATCH 1/2] init: don't reset core.filemode on git-new-workdirs.
+
+If the .git/config file is a symlink (as is the case of a .git created
+by the contrib/workdir/git-new-workdir script) then the filemode tests
+fail, and the filemode is reset to be false.  To avoid this only munge
+core.filemode if .git/config is a regular file.
+---
+ builtin/init-db.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/builtin/init-db.c b/builtin/init-db.c
+index 546f9c595e..4279a05633 100644
+--- a/builtin/init-db.c
++++ b/builtin/init-db.c
+@@ -273,7 +273,8 @@ static int create_default_files(const char *template_path,
+ 	/* Check filemode trustability */
+ 	path = git_path_buf(&buf, "config");
+ 	filemode = TEST_FILEMODE;
+-	if (TEST_FILEMODE && !lstat(path, &st1)) {
++	if (TEST_FILEMODE && !lstat(path, &st1)
++	    && (st1.st_mode & S_IFMT) == S_IFREG) {
+ 		struct stat st2;
+ 		filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
+ 				!lstat(path, &st2) &&
+-- 
+2.31.0
+
