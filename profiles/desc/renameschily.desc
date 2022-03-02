@@ -1,0 +1,13 @@
+# Copyright 1999-2022 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# This file contains descriptions of RENAMESCHILY USE_EXPAND flags.
+
+calc - Rename calc to scalc for compatibility with sci-mathematics/calc
+compare - Rename compare to scompare for compatibility with imagemagick
+count - Rename count to scount for compatibility with sys-devel/llvm
+getopt - Rename count to scount for compatibility with sys-devel/llvm
+jsh - Rename jsh to sjsh for compatibility with app-shells/heirloom-sh
+libschily - Rename some manpages from libschily for compatibility with sys-apps/man
+man2html - Rename man2html to sman2html for compatibility with sys-apps/man
+p - Rename p to sp for compatibility with dev-util/wiggle
