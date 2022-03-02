@@ -1,0 +1,32 @@
+From 69354b95ce772521fdc115a9977aa66fc91cd9b1 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 2 Mar 2022 15:20:57 +0530
+Subject: [PATCH] configure.ac: assume 64bit external sqlite3 library
+
+---
+ configure.ac | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 1552d3f..d49772a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -238,12 +238,12 @@ AC_ARG_WITH(sqlite3,
+ 			if ! test -r "$withval/include/sqlite3.h"; then
+ 				AC_MSG_ERROR([header $withval/include/sqlite3.h not found.])
+ 			fi
+-			if ! test -r "$withval/lib/libsqlite3.so" && ! test -r "$withval/lib/libsqlite3.dylib"; then
+-				AC_MSG_ERROR([library $withval/lib/libsqlite3.* not found.])
++			if ! test -r "$withval/lib64/libsqlite3.so" && ! test -r "$withval/lib/libsqlite3.dylib"; then
++				AC_MSG_ERROR([library $withval/lib64/libsqlite3.* not found.])
+ 			fi
+ 			AM_CONDITIONAL(USE_SQLITE3_VENDORED, false)
+ 			AM_CPPFLAGS="$AM_CPPFLAGS -I$withval/include"
+-			LIBS="$LIBS -L$withval/lib -lsqlite3"
++			LIBS="$LIBS -L$withval/lib64 -lsqlite3"
+                 	AC_MSG_RESULT([yes, using $withval])
+ 			;;
+ 		esac
+-- 
+2.35.1.dirty
+
