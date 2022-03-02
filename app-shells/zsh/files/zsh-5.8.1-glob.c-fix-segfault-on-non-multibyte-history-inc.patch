@@ -1,0 +1,61 @@
+From 81e59a30fa593a8bfd10ad8a28a7475803d5f839 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 28 Feb 2022 22:04:09 +0530
+Subject: [PATCH] Src/glob.c: fix segfault on non-multibyte
+ history-incremental-pattern-search-backward
+
+* Src/glob.c: (igetmatch): cargo cult port code from the ifdef
+MULTIBYTE_SUPPORT version to the ifndef MULTIBYTE_VERSION. This seems
+to fix the segfault.
+---
+ Src/glob.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/Src/glob.c b/Src/glob.c
+index 375671c..7e2d810 100644
+--- a/Src/glob.c
++++ b/Src/glob.c
+@@ -3351,7 +3351,7 @@ igetmatch(char **sp, Patprog p, int fl, int n, char *replstr,
+ 	    /* longest or smallest at start with substrings */
+ 	    t = s;
+ 	    if (fl & SUB_GLOBAL) {
+-		imd.repllist = newlinklist();
++		imd.repllist = (fl & SUB_LIST) ? znewlinklist() : newlinklist();
+ 		if (repllistp)
+ 		    *repllistp = imd.repllist;
+ 	    }
+@@ -3481,6 +3481,7 @@ igetmatch(char **sp, Patprog p, int fl, int n, char *replstr,
+ 	 * Results from get_match_ret in repllist are all metafied.
+ 	 */
+ 	s = *sp;
++	if (!(fl & SUB_LIST)) {
+ 	i = 0;			/* start of last chunk we got from *sp */
+ 	for (nd = firstnode(imd.repllist); nd; incnode(nd)) {
+ 	    rd = (Repldata) getdata(nd);
+@@ -3503,16 +3504,22 @@ igetmatch(char **sp, Patprog p, int fl, int n, char *replstr,
+ 	memcpy(t, s + i, l - i);
+ 	start[lleft] = '\0';
+ 	*sp = (char *)start;
++	}
+ 	return 1;
+     }
+ 
++    if (fl & SUB_LIST) {	/* safety: don't think this can happen */
++	return 0;
++    }
++
+     /* munge the whole string: no match, so no replstr */
+     imd.replstr = NULL;
+     imd.repllist = NULL;
+     *sp = get_match_ret(&imd, 0, 0);
+-    return 1;
++    return (fl & SUB_RETFAIL) ? 0 : 1;
+ }
+ 
++
+ /**/
+ #endif /* MULTIBYTE_SUPPORT */
+ 
+-- 
+2.35.1.dirty
+
