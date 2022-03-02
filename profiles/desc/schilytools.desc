@@ -1,0 +1,38 @@
+# Copyright 1999-2022 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# This file contains descriptions of SCHILYTOOLS USE_EXPAND flags.
+
+bosh - Install bosh, a shell which aims to be fully POSIX compatible
+calc - Install calc, a bc clone
+calltree - Install calltree, a cflow clone
+cdrtools - Install programs provided by app-cdr/cdrtools
+change - Install change, a program to change patterns in files
+compare - Install compare, a cmp clone
+copy - Install copy, a cp clone
+count - Install count, a wc clone
+cpp - Install cpp, a C preprocessor
+cstyle - Install Cstyle, a C-codingstyle lint
+cut - Install scut, a cut clone
+hdump - Install hdump, a hexdump clone
+label - Install label, a sun disk label manipulator
+lndir - Install lndir, a program for creating symlinked directory trees
+man2html - Install a man2html clone
+manmake - Install manpages about the schily makefile system
+match - Install match, a grep clone
+mdigest - Install mdigest, e.g. covering md5sum sha*sum
+mountcd - Install mountcd, a solaris CD comparison tool
+obosh - Install obosh (formerly: osh), the original sVr4 (SunOS 5) shell with original bugs
+p - Install p, a more program which filters non-printable characters
+paste - Install spaste, a paste clone
+patch - Install spatch, a patch clone
+pbosh - Install pbosh, a shell which implements all POSIX features but only those (compatbilitiy testing!)
+pxupgrade - Install pxupgrade: upgrading firmware in Plextor CD/DVD writers
+sccs - Install sfind, a source code control system
+sfind - Install sfind, a find clone
+smake - Install smake, a make clone
+star - Install programs provided by app-arch/star
+termcap - Install termcap, a termcap compiler
+translit - Install translit, a tr clone
+udiff - Install udiff, a diff clone
+ved - Install ved, a visual editor with features from vi and emacs

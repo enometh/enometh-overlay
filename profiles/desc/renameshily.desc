@@ -1,0 +1,6 @@
+# Copyright 1999-2022 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# This file contains descriptions of RENAMESHILY USE_EXPAND flags.
+
+renameschily_p - Rename p to sp for compatibility with dev-util/wiggle
