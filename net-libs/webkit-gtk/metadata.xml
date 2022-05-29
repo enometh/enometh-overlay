@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<maintainer type="person">
+	<email>enometh@meer.net</email>
+</maintainer>
+<use>
+	<flag name="avif">Enable support for AVIF images via <pkg>media-libs/libavif</pkg></flag>
+	<flag name="egl">Enable EGL support</flag>
+	<flag name="elogind">Use modified libelogind for writing journal messages to stdout</flag>
+	<flag name="examples">Install the MiniBrowser example application</flag>
+	<flag name="gamepad">Enable gamepad input support via <pkg>dev-libs/libmanette</pkg></flag>
+	<flag name="geolocation">Enable geolocation support through <pkg>app-misc/geoclue</pkg></flag>
+	<flag name="gtk4">Build libwebkit2gtk-5.[01] with gtk4. Othewrwise build libwebkitgtk-4.[01] with gtk+-3.0. Use with slotting</flag>
+	<flag name="jpegxl">Enable support for JPEG-XL images via <pkg>media-libs/libjpegxl</pkg></flag>
+	<flag name="jumbo-build">Combine source files to speed up build process</flag>
+	<flag name="soup3">Build libwebkitgtk-[45].1 with libsoup-3.0.  Otherwise build libwebkitgtk-[45].0 with libsoup-2.0. Use with slotting</flag>
+	<flag name="webdriver">Bundle webdrive instead of providing it via <pkg>net-libs/webkit-gtk-webdriver</pkg> </flag>
+	<flag name="webp">webp support via <pkg>media-libs/webp</pkg> </flag>
+	<flag name="woff">enable woff2 support via <pkg>media-libs/woff2</pkg></flag>
+</use>
+</pkgmetadata>
