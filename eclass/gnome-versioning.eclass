@@ -30,11 +30,11 @@
 #    | 40.alpha.1.1          | 40_alpha1_p1        |
 #
 # @EXAMPLE:
-# `inherit gnome-versioniong' in
-# x11-wm/mutter/mutter-40_alpha1_p1.ebuild would set SRC_URI to
+# call `inherit gnome-versioning' (after `inherit gnome.org')
+# x11-wm/mutter/mutter-40_alpha1_p1.ebuild to set SRC_URI to
 # https://download.gnome.org/sources/mutter/40/mutter-40.alpha.1.1.tar.xz
 #
-# you have to have a USE_GIT=false before calling inherit
+# you have to have a USE_GIT=false before calling inherit this eclass
 
 MAJORMINORVER=${PV%%_*}
 
@@ -53,9 +53,15 @@ fi
 MY_PV=${MAJORMINORVER}${SUFFIX:+.}${SUFFIX}
 MY_P=${PN}-${MY_PV}
 
-MYSUBDIR=$(ver_cut 1 ${PV})
+
+if ver_test -ge 40.0; then
+	: ${GNOME_ORG_PVP:=$(ver_cut 1)}
+else
+	: ${GNOME_ORG_PVP:=$(ver_cut 1-2)}
+fi
+
 
 if ! ${USE_GIT}; then
-	SRC_URI="https://download.gnome.org/sources/${PN}/${MYSUBDIR}/$PN-${MY_PV}.tar.xz"
+	SRC_URI="https://download.gnome.org/sources/${PN}/${GNOME_ORG_PVP}/$PN-${MY_PV}.tar.xz"
 	S="${WORKDIR}/${MY_P}"
 fi
