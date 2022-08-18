@@ -1,0 +1,25 @@
+From e2b64f204b9378e1dc106d4c6acae6d9d9a98d57 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 28 May 2013 19:05:46 +0530
+Subject: [PATCH 4/6] xterm-allow_iso-utf_fonts_in_menu.patch
+
+---
+ XTerm.ad | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/XTerm.ad b/XTerm.ad
+index bf27cb4..4a98e40 100644
+--- a/XTerm.ad
++++ b/XTerm.ad
+@@ -34,7 +34,7 @@
+ *saveLines: 1024
+ 
+ *SimpleMenu*BackingStore: NotUseful
+-*SimpleMenu*menuLabel.font: -adobe-helvetica-bold-r-normal--*-120-*-*-*-*-iso8859-*
++*SimpleMenu*menuLabel.font: -adobe-helvetica-bold-r-normal--*-120-*-*-*-*-iso*-*
+ *SimpleMenu*menuLabel.vertSpace: 	100
+ *SimpleMenu*HorizontalMargins: 16
+ *SimpleMenu*Sme.height:	16
+-- 
+2.35.1.dirty
+

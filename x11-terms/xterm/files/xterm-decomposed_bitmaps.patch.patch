@@ -1,0 +1,25 @@
+From 16e7db892ef8aa5d28e6457481b9d77708069653 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 22 Sep 2017 17:23:17 +0530
+Subject: [PATCH 5/6] xterm-decomposed_bitmaps.patch
+
+---
+ misc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/misc.c b/misc.c
+index cbb2679..f00c1de 100644
+--- a/misc.c
++++ b/misc.c
+@@ -2692,6 +2692,8 @@ getColormapInfo(XtermWidget xw, unsigned *typep, unsigned *sizep)
+     if (getVisualInfo(xw)) {
+ 	*typep = (unsigned) xw->visInfo->class;
+ 	*sizep = (unsigned) xw->visInfo->colormap_size;
++	if (*typep > 3)
++		*sizep = (*sizep)*(*sizep)*(*sizep);
+     } else {
+ 	*typep = 0;
+ 	*sizep = 0;
+-- 
+2.35.1.dirty
+

@@ -1,0 +1,24 @@
+From 42561f173a385cd6044f63750e0d058679242e2b Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 10 Mar 2016 03:53:09 +0530
+Subject: [PATCH 2/6] xterm-desktop_file_icon.patch
+
+---
+ xterm.desktop | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xterm.desktop b/xterm.desktop
+index 61dcd2c..d35042c 100644
+--- a/xterm.desktop
++++ b/xterm.desktop
+@@ -38,6 +38,6 @@ Exec=xterm
+ Terminal=false
+ Type=Application
+ Encoding=UTF-8
+-Icon=xterm-color_48x48
++Icon=terminal
+ Categories=System;TerminalEmulator;
+ Keywords=shell;prompt;command;commandline;cmd;
+-- 
+2.35.1.dirty
+

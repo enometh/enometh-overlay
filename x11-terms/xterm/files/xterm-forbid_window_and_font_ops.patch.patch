@@ -1,0 +1,40 @@
+From 86d51bd22d77a5e0bb0055ed710dd79303c5951f Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 22 Sep 2017 17:23:18 +0530
+Subject: [PATCH 3/6] xterm-forbid_window_and_font_ops.patch
+
+---
+ XTerm.ad  | 4 ++--
+ xterm.man | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/XTerm.ad b/XTerm.ad
+index 6d347a1..bf27cb4 100644
+--- a/XTerm.ad
++++ b/XTerm.ad
+@@ -266,7 +266,7 @@
+ !
+ ! Depending on your environment, you may wish to disable those by default by
+ ! uncommenting one or more of the resource settings below:
+-!*allowFontOps: false
++*allowFontOps: false
+ !*allowTcapOps: false
+ !*allowTitleOps: false
+-!*allowWindowOps: false
++*allowWindowOps: false
+diff --git a/xterm.man b/xterm.man
+index f5f510f..3ac8585 100644
+--- a/xterm.man
++++ b/xterm.man
+@@ -2251,7 +2251,7 @@ The default is \*(``true\*(''.
+ .TP
+ .B "allowFontOps\fP (class\fB AllowFontOps\fP)"
+ Specifies whether control sequences that set/query the font should be allowed.
+-The default is \*(``true\*(''.
++The default is \*(``false\*(''.
+ .TP
+ .B "allowMouseOps\fP (class\fB AllowMouseOps\fP)"
+ Specifies whether control sequences that enable \fI\*n\fP to send
+-- 
+2.35.1.dirty
+
