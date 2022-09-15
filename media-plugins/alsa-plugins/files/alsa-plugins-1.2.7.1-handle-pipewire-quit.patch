@@ -1,0 +1,51 @@
+From 76679c0335ff7eafc92e4220047f8b76700905cb Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 15 May 2022 08:23:23 +0530
+Subject: [PATCH] pulse/conf_pulse.c: (conf_pulse_hook_load_if_running): quit
+ if pipewiere is running
+
+compile with -DHAVE_PIPEWIRE
+---
+ pulse/conf_pulse.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/pulse/conf_pulse.c b/pulse/conf_pulse.c
+index 35dd383..e173c9e 100644
+--- a/pulse/conf_pulse.c
++++ b/pulse/conf_pulse.c
+@@ -27,6 +27,9 @@
+ #include <alsa/asoundlib.h>
+ #include <pulse/pulseaudio.h>
+ 
++#ifdef HAVE_PIPEWIRE
++#include <pipewire/pipewire.h>
++#endif
+ 
+ /* Not actually part of the alsa api....  */
+ extern int
+@@ -48,6 +51,22 @@ conf_pulse_hook_load_if_running(snd_config_t * root, snd_config_t * config,
+ 	if (getenv("PULSE_INTERNAL") != NULL)
+ 		goto out;
+ 
++#ifdef HAVE_PIPEWIRE
++	{
++	pw_init(0, 0);
++	struct pw_main_loop* loop = pw_main_loop_new(NULL /* properties */);
++        struct pw_context* context = pw_context_new(pw_main_loop_get_loop(loop),
++                        NULL /* properties */,
++                        0 /* user_data size */);
++
++        struct pw_core* core = pw_context_connect(context,
++                        NULL /* properties */,
++                        0 /* user_data size */);
++	if (core != NULL)
++	  goto out;
++	}
++#endif
++
+ 	loop = pa_mainloop_new();
+ 	if (loop == NULL)
+ 		goto out;
+-- 
+2.35.1.dirty
+
