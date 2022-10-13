@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>enometh@meer.net</email>
+	</maintainer>
+  <use>
+    <flag name="system-mupdf">Build PyMuPDF bindings against installed <pkg>app-text/mupdf</pkg></flag>
+  </use>
+</pkgmetadata>
