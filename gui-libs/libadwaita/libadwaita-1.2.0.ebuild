@@ -8,13 +8,12 @@
 #   Copyright (C) 2022 Madhu.  All Rights Reserved.
 #
 # ;madhu 220324 1.1.0 1.1.0-2-gee83dd7 - use locally installed gi-gendoc to avoid polluting the filesystem with the ugly shipped fonts
+# ;madhu 221023 1.2.0 TODO:  call xdg_icon_cache_update() in pkg_postinst() and pkg_postrm() - checkout the specific commit
 
-EAPI=7
-
-USE_GIT=true
-
-PYTHON_COMPAT=( python3_{8..10} )
+EAPI=8
+PYTHON_COMPAT=( python3_{8..11} )
 VALA_MIN_API_VERSION="0.52"
+USE_GIT=true
 inherit gnome.org meson python-any-r1 vala virtualx
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
@@ -34,15 +33,16 @@ if ${USE_GIT}; then
 	EGIT_SUBMODULES=()
 fi
 
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc64 ~riscv ~x86"
+KEYWORDS="~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
 
-DEPEND="
+RDEPEND="
 	>=dev-libs/glib-2.66:2
 	>=gui-libs/gtk-4.5.0:4[introspection?]
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
 "
-RDEPEND="${DEPEND}"
+DEPEND="${RDEPEND}
+	test? ( dev-libs/appstream-glib )"
 BDEPEND="
 	${PYTHON_DEPS}
 	vala? ( $(vala_depend) )
@@ -63,8 +63,8 @@ fi
 
 src_prepare() {
 	echo > po/LINGUAS
-	use vala && vala_src_prepare
 	default
+	use vala && vala_setup
 }
 
 src_configure() {
@@ -75,6 +75,7 @@ src_configure() {
 		-Dprofiling=false
 		$(meson_feature introspection)
 		$(meson_use vala vapi)
+
 		$(meson_use test tests)
 		$(meson_use examples)
 	)
@@ -101,7 +102,8 @@ src_install() {
 			# This will install libadwaita API docs unconditionally, but this is intentional
 			doins -r "${S}"/doc/libadwaita-1
 		else
-			mv ${ED}/usr/share/{doc,gtk-doc/html}/libadwaita-1
+			mkdir -pv ${ED}/usr/share/gtk-doc/html
+			mv -v ${ED}/usr/share/{doc,gtk-doc/html}/libadwaita-1
 		fi
 	fi
 }
