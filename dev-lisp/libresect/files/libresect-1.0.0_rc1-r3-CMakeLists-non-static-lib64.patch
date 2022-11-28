@@ -1,0 +1,80 @@
+From 7aff100cbd1210f913f2433e9289a3288e82ee05 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 19 Nov 2021 09:54:40 +0530
+Subject: [PATCH] CMakeLists.txt: non-static build (llvm14)
+
+- hardcode include and lib64 paths for LIBCLANG_LINK_DIRS and
+  LIBCLANG_INCLUDE_DIRS (actually get them from LLVMConfig.cmake in)
+- disable pcre install (only static library needs to be used) with
+  add_subdirectory( ... EXCLUDE_FROM_ALL)
+- add an install target for libresect.so
+---
+ CMakeLists.txt | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7d43112..6672a8a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,11 +1,18 @@
+ cmake_minimum_required(VERSION 3.16)
+ project(resect C)
+ 
+-set(LIBCLANG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libclang-bundle/")
+-set(LIBCLANG_INCLUDE_DIRS "${LIBCLANG_DIR}/include/")
+-set(LIBCLANG_LINK_DIRS "${LIBCLANG_DIR}/lib/")
++#set(LIBCLANG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libclang-bundle/")
++#set(LIBCLANG_INCLUDE_DIRS "${LIBCLANG_DIR}/include/")
++#set(LIBCLANG_LINK_DIRS "${LIBCLANG_DIR}/lib/")
+ set(THIRD_PARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/")
+ 
++find_package(LLVM 14.0.0 CONFIG)
++find_package(Clang REQUIRED CONFIG)
++
++set(LIBCLANG_INCLUDE_DIRS ${LLVM_INCLUDE_DIRS})
++set(LIBCLANG_LINK_DIRS ${LLVM_LIBRARY_DIRS} CACHE PATH "path to libclang. so overridable for multilib cf. mozconfig with-libclang-path. variable is named *_DIRS but it is really a single path.")
++
++
+ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+ #
+ # PCRE
+@@ -19,7 +26,7 @@ set(PCRE2_SUPPORT_LIBZ OFF CACHE BOOL "" FORCE)
+ set(PCRE2_SUPPORT_LIBBZ2 OFF CACHE BOOL "" FORCE)
+ set(PCRE2_SUPPORT_LIBREADLINE OFF CACHE BOOL "" FORCE)
+ 
+-add_subdirectory("${THIRD_PARTY_DIR}/pcre2-10.37/")
++add_subdirectory("${THIRD_PARTY_DIR}/pcre2-10.37/" EXCLUDE_FROM_ALL)
+ 
+ set_target_properties(pcre2-8 PROPERTIES
+         CMAKE_POSITION_INDEPENDENT_CODE ON)
+@@ -50,12 +57,12 @@ target_include_directories(resect
+ target_link_directories(resect
+   PUBLIC "${LIBCLANG_LINK_DIRS}")
+ 
+-add_library(resect_clang_static STATIC IMPORTED)
++#add_library(resect_clang_static STATIC IMPORTED)
+ 
+ if (APPLE OR UNIX)
+ 
+-    set_target_properties(resect_clang_static PROPERTIES
+-        IMPORTED_LOCATION "${LIBCLANG_LINK_DIRS}/libclang_bundled.a")
++#    set_target_properties(resect_clang_static PROPERTIES
++#        IMPORTED_LOCATION "${LIBCLANG_LINK_DIRS}/libclang_bundled.a")
+ 
+ #    target_link_options(resect PUBLIC "-fuse-ld=gold")
+     target_link_libraries(resect
+@@ -68,7 +75,10 @@ elseif(WIN32)
+ endif()
+ 
+ target_link_libraries(resect
+-    resect_clang_static pcre2-8)
++    libclang pcre2-8)
+ 
+ add_executable(resect-test test/test.c)
+ target_link_libraries(resect-test PUBLIC resect)
++
++
++install(TARGETS resect resect-test)
+-- 
+2.35.1
+
