@@ -1,0 +1,115 @@
+From ab8abc0ca33752e90d37c9f9ba22cdb111fcef0b Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 23 May 2022 22:59:04 +0530
+Subject: [PATCH 5/5] madhu: audio logging
+
+---
+ xpra/client/mixins/audio.py                     | 2 +-
+ xpra/log.py                                     | 1 +
+ xpra/server/source/audio_mixin.py               | 2 +-
+ xpra/sound/pulseaudio/pulseaudio_common_util.py | 2 +-
+ xpra/sound/sink.py                              | 5 +++--
+ xpra/sound/sound_pipeline.py                    | 3 +++
+ 6 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/xpra/client/mixins/audio.py b/xpra/client/mixins/audio.py
+index 55606aa..2794151 100644
+--- a/xpra/client/mixins/audio.py
++++ b/xpra/client/mixins/audio.py
+@@ -204,7 +204,7 @@ class AudioClient(StubClientMixin):
+         self.server_sound_encoders = c.strtupleget("sound.encoders")
+         self.server_sound_receive = c.boolget("sound.receive")
+         self.server_sound_send = c.boolget("sound.send")
+-        log("pulseaudio id=%s, server=%s, sound decoders=%s, sound encoders=%s, receive=%s, send=%s",
++        log("AUDIO.PY: PARSE_SERVER_CAPABILITIES: MADHU: pulseaudio id=%s, server=%s, sound decoders=%s, sound encoders=%s, receive=%s, send=%s",
+                  self.server_pulseaudio_id, self.server_pulseaudio_server,
+                  csv(self.server_sound_decoders), csv(self.server_sound_encoders),
+                  self.server_sound_receive, self.server_sound_send)
+diff --git a/xpra/log.py b/xpra/log.py
+index 7960489..5032adb 100644
+--- a/xpra/log.py
++++ b/xpra/log.py
+@@ -16,6 +16,7 @@ LOG_FORMAT = os.environ.get("XPRA_LOG_FORMAT", "%(asctime)s %(message)s")
+ NOPREFIX_FORMAT = "%(message)s"
+ 
+ DEBUG_MODULES = [x for x in os.environ.get("XPRA_DEBUG_MODULES", "").split(",") if x]
++print('MADHU: log.py %s' % DEBUG_MODULES)
+ 
+ logging.basicConfig(format=LOG_FORMAT)
+ logging.root.setLevel(logging.INFO)
+diff --git a/xpra/server/source/audio_mixin.py b/xpra/server/source/audio_mixin.py
+index 0b87a6c..cd0851a 100644
+--- a/xpra/server/source/audio_mixin.py
++++ b/xpra/server/source/audio_mixin.py
+@@ -107,7 +107,7 @@ class AudioMixin(StubSourceMixin):
+             self.sound_encoders = c.strtupleget("sound.encoders", [])
+             self.sound_receive = c.boolget("sound.receive")
+             self.sound_send = c.boolget("sound.send")
+-        log("pulseaudio id=%s, cookie-hash=%s, server=%s, sound decoders=%s, sound encoders=%s, receive=%s, send=%s",
++        log("AUDIO_MIXIN.PY: PARSE_CLIENT_CAPS: MADHU: pulseaudio id=%s, cookie-hash=%s, server=%s, sound decoders=%s, sound encoders=%s, receive=%s, send=%s",
+                  self.pulseaudio_id, self.pulseaudio_cookie_hash, self.pulseaudio_server,
+                  self.sound_decoders, self.sound_encoders, self.sound_receive, self.sound_send)
+ 
+diff --git a/xpra/sound/pulseaudio/pulseaudio_common_util.py b/xpra/sound/pulseaudio/pulseaudio_common_util.py
+index 4d2a2e8..0188b13 100755
+--- a/xpra/sound/pulseaudio/pulseaudio_common_util.py
++++ b/xpra/sound/pulseaudio/pulseaudio_common_util.py
+@@ -9,7 +9,7 @@ import sys
+ 
+ from xpra.log import Logger
+ log = Logger("sound")
+-
++print('madhu: log=%s' % log)
+ 
+ def get_x11_property(atom_name):
+     from xpra.os_util import OSX, POSIX
+diff --git a/xpra/sound/sink.py b/xpra/sound/sink.py
+index afd254e..15b4aea 100755
+--- a/xpra/sound/sink.py
++++ b/xpra/sound/sink.py
+@@ -224,6 +224,7 @@ class SoundSink(SoundPipeline):
+         if self.queue_state=="starting" or 1000*(now-self.start_time)<GRACE_PERIOD:
+             gstlog("ignoring underrun during startup")
+             return True
++        log("MADHU: underrun")
+         self.underruns += 1
+         gstlog("queue_underrun")
+         self.queue_state = "underrun"
+@@ -539,11 +540,11 @@ def main():
+             if qtime<=0:
+                 log.info("underrun (end of stream)")
+                 start_thread(ss.stop, "stop", daemon=True)
+-                GLib.timeout_add(500, glib_mainloop.quit)
++                GLib.timeout_add(1500, glib_mainloop.quit)
+                 return False
+             return True
+-        GLib.timeout_add(1000, check_for_end)
+         GLib.idle_add(ss.add_data, data)
++        GLib.timeout_add(1000, check_for_end)
+ 
+         glib_mainloop.run()
+         return 0
+diff --git a/xpra/sound/sound_pipeline.py b/xpra/sound/sound_pipeline.py
+index 4a9e76e..86f70e6 100644
+--- a/xpra/sound/sound_pipeline.py
++++ b/xpra/sound/sound_pipeline.py
+@@ -194,6 +194,7 @@ class SoundPipeline(GObject.GObject):
+ 
+ 
+     def start(self):
++        log("madhu: ss.start")
+         if not self.pipeline:
+             log.error("cannot start")
+             return
+@@ -310,6 +311,8 @@ class SoundPipeline(GObject.GObject):
+         gstlog("on_message: %s", message)
+         t = message.type
+         if t == gst.MessageType.EOS:
++#           print('MADHU: IGNORING EOS')
++#           if False:
+             self.pipeline.set_state(gst.State.NULL)
+             self.gstloginfo("EOS")
+             self.update_state("stopped")
+-- 
+2.35.1.dirty
+

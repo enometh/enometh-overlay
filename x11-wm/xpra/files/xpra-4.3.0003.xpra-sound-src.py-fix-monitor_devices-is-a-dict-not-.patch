@@ -1,0 +1,34 @@
+From 0cc532de104ef8ef9c327d059dd20d673fc9a3f4 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 26 May 2022 11:39:20 +0530
+Subject: [PATCH 3/5] xpra/sound/src.py: fix monitor_devices is a dict, not an
+ array
+
+---
+ xpra/sound/src.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/xpra/sound/src.py b/xpra/sound/src.py
+index 4c0ac30..9cdc7cf 100755
+--- a/xpra/sound/src.py
++++ b/xpra/sound/src.py
+@@ -59,14 +59,14 @@ class SoundSource(SoundPipeline):
+             except ImportError as e:
+                 log.warn("Warning: pulseaudio is not available!")
+                 log.warn(" %s", e)
+-                monitor_devices = []
++                monitor_devices = {}
+             if not monitor_devices:
+                 log.warn("could not detect any pulseaudio monitor devices")
+                 log.warn(" a test source will be used instead")
+                 src_type = "audiotestsrc"
+                 default_src_options = {"wave":2, "freq":100, "volume":0.4}
+             else:
+-                monitor_device = monitor_devices.items()[0][0]
++                monitor_device = list(monitor_devices.items())[0][0].decode("utf-8")
+                 log.info("using pulseaudio source device:")
+                 log.info(" '%s'", monitor_device)
+                 src_type = "pulsesrc"
+-- 
+2.35.1.dirty
+

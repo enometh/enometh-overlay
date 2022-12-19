@@ -1,0 +1,38 @@
+From e09d416a356bc9974f28614e93b2f18d0f3314c6 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 23 May 2022 20:52:42 +0530
+Subject: [PATCH 1/5] xpra/server/source/webcam_mixin.py:
+ (WebCamMixin.process_webcam_frame): avoid assert error
+
+Traceback (most recent call last):  File
+"/usr/lib/python3.9/site-packages/xpra/server/source/webcam_mixin.py",
+line 175, in process_webcam_frame/   assert encoding in
+self.webcam_encodings, "invalid encoding specified: %s (must be one of
+%s)" % (encoding, self.webcam_encodings)/ AssertionError: invalid
+encoding specified: b'jpeg' (must be one of ['png', 'jpeg', 'webp'])
+---
+ xpra/server/source/webcam_mixin.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/xpra/server/source/webcam_mixin.py b/xpra/server/source/webcam_mixin.py
+index 08e0a00..31dd420 100644
+--- a/xpra/server/source/webcam_mixin.py
++++ b/xpra/server/source/webcam_mixin.py
+@@ -172,7 +172,13 @@ class WebcamMixin(StubSourceMixin):
+             return False
+         try:
+             from xpra.codecs.pillow.decoder import open_only
+-            assert encoding in self.webcam_encodings, "invalid encoding specified: %s (must be one of %s)" % (encoding, self.webcam_encodings)
++            if (str(encoding) == encoding):
++                pass
++            else:
++                tmp_encoding = encoding
++                encoding = encoding.decode("utf-8")
++                print('MADHU: converted %s from encoding=%s SET=%s' % (encoding, tmp_encoding, self.webcam_encodings))
++            assert encoding in self.webcam_encodings, "invalid encoding specified: %s (must be one of %s)" % (encoding, encoding, self.webcam_encodings)
+             rgb_pixel_format = "BGRX"       #BGRX
+             img = open_only(data, (encoding,))
+             pixels = img.tobytes('raw', rgb_pixel_format)
+-- 
+2.35.1.dirty
+
