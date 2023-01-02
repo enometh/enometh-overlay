@@ -1,0 +1,71 @@
+diff --git a/data/man/meson.build b/data/man/meson.build
+index e446212..33db0bf 100644
+--- a/data/man/meson.build
++++ b/data/man/meson.build
+@@ -2,7 +2,7 @@ install_man('tilix.1')
+ 
+ po4a = find_program('po4a-translate', required: false)
+ 
+-if po4a.found()
++if false and po4a.found()
+ 
+     locales = [ 'ca', 'cs', 'de', 'en_GB', 'es', 'fr', 'hr',
+                 'it', 'nb_NO', 'nl', 'oc', 'pl', 'pt_BR', 'pt',
+diff --git a/data/meson.build b/data/meson.build
+index 9b2ea4b..35fe7c4 100644
+--- a/data/meson.build
++++ b/data/meson.build
+@@ -11,6 +11,7 @@ install_data(
+ )
+ 
+ # Install the desktop file
++if false
+ desktop_file = i18n.merge_file(
+     output: '@BASENAME@',
+     input: 'pkg/desktop/@0@.desktop.in'.format(project_id),
+@@ -19,6 +20,14 @@ desktop_file = i18n.merge_file(
+     install: true,
+     install_dir: appdir
+ )
++endif
++
++desktop_file = custom_target('desktop-file-without-po',
++    input : 'pkg/desktop/@0@.desktop.in'.format(project_id),
++    output : '@BASENAME@',
++    command : ['/bin/cp', '-apfv', '@INPUT0@', '@OUTPUT@'],
++    install : true,
++    install_dir : datadir / 'applications')
+ 
+ # Validate desktop file
+ desktop_file_validate = find_program('desktop-file-validate', required: false)
+@@ -32,7 +41,8 @@ endif
+ 
+ # Merge release information into MetaInfo file
+ tilix_metainfo_name = '@0@.appdata.xml'.format(project_id)
+-appstreamcli = find_program('appstreamcli')
++appstreamcli = find_program('appstreamcli', required: false)
++if appstreamcli.found()
+ metainfo_with_releases = custom_target('metainfo-news-merge',
+     input : ['../NEWS', 'metainfo/@0@.in'.format(tilix_metainfo_name)],
+     output : ['untranslated-@0@.appdata.xml'.format(project_id)],
+@@ -47,6 +57,7 @@ metainfo_file = i18n.merge_file(
+     install: true,
+     install_dir: datadir / 'metainfo'
+ )
++endif
+ 
+ # Validate MetaInfo file
+ if appstreamcli.found()
+diff --git a/meson.build b/meson.build
+index 79981a9..eacc0d8 100644
+--- a/meson.build
++++ b/meson.build
+@@ -102,7 +102,7 @@ xlib_dep = dependency('x11')
+ libunwind_dep = dependency('libunwind')
+ libsecret_dep = dependency('libsecret-1', required: false)
+ 
+-subdir('po')
++#subdir('po')
+ subdir('data')
+ 
+ # Build & Test
