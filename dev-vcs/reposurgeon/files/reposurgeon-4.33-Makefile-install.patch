@@ -1,0 +1,47 @@
+From e84d1f1e1105d873d5a0cb008f9b72f9d7106778 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 3 Jan 2021 11:50:28 +0530
+Subject: [PATCH] Makefile: install docs under /usr/share/doc/reposurgeon-${PV}
+ for gentoo
+
+---
+ Makefile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index ab53666..086065d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -296,10 +296,10 @@ clean:
+ #
+ install:
+ 	$(INSTALL) -d "$(target)/bin"
+-	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
++	$(INSTALL) -d "$(target)/share/doc/reposurgeon-$(VERS)"
+ 	$(INSTALL) -d "$(target)/$(mandir)/man1"
+ 	$(INSTALL) -m 755 $(INSTALLABLES) "$(target)/bin"
+-	$(INSTALL) -m 644 $(SHARED) "$(target)/share/doc/reposurgeon"
++	$(INSTALL) -m 644 $(SHARED) "$(target)/share/doc/reposurgeon-$(VERS)"
+ 	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
+ 
+ #
+@@ -307,14 +307,14 @@ install:
+ #
+ 
+ INSTALLED_BINARIES := $(INSTALLABLES:%="$(target)/bin/%")
+-INSTALLED_SHARED   := $(SHARED:%="$(target)/share/doc/reposurgeon/%")
++INSTALLED_SHARED   := $(SHARED:%="$(target)/share/doc/reposurgeon-$(VERS)/%")
+ INSTALLED_MANPAGES := $(MANPAGES:%="$(target)/$(mandir)/man1/%")
+ 
+ uninstall:
+ 	rm -f $(INSTALLED_BINARIES)
+ 	rm -f $(INSTALLED_MANPAGES)
+ 	rm -f $(INSTALLED_SHARED)
+-	rmdir "$(target)/share/doc/reposurgeon"
++	rmdir "$(target)/share/doc/reposurgeon-$(VERS)"
+ 
+ VERS=$(shell sh ./extractversion.sh <NEWS.adoc)
+ 
+-- 
+2.35.1.dirty
+
