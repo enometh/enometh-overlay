@@ -1,4 +1,4 @@
-From 02f9827c4156e3b14ce94aa20dc8b5ab73f52ee1 Mon Sep 17 00:00:00 2001
+From d0520df11fae7f106efcdce07c771168afa874a5 Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Sun, 20 Jun 2021 12:54:46 +0530
 Subject: [PATCH 2/2] git-instaweb - preserve gitweb_config.perl if it exists
@@ -10,7 +10,7 @@ especially since the doc says project_root can be set
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/git-instaweb.sh b/git-instaweb.sh
-index 4349566c89..d9f3709909 100755
+index c68f49454c..5456d3871b 100755
 --- a/git-instaweb.sh
 +++ b/git-instaweb.sh
 @@ -768,7 +768,8 @@ restart)
@@ -24,5 +24,5 @@ index 4349566c89..d9f3709909 100755
  resolve_full_httpd
  mkdir -p "$fqgitdir/gitweb/$httpd_only"
 -- 
-2.31.0
+2.35.1.dirty
 
