@@ -1,0 +1,25 @@
+From f8e47a39bfaf4e9f69676821a8688bc7f1b5e598 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 4 Jan 2021 09:27:28 +0530
+Subject: [PATCH 2/2] etc/init.d/zfs-zed: fix inifinite loop + segfault under
+ openrc when calling rc-status
+
+---
+ etc/init.d/zfs-zed.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/etc/init.d/zfs-zed.in b/etc/init.d/zfs-zed.in
+index e5256cbc..dba07cce 100755
+--- a/etc/init.d/zfs-zed.in
++++ b/etc/init.d/zfs-zed.in
+@@ -124,6 +124,6 @@ else
+ 	depend() { do_depend; }
+ 	start() { do_start; }
+ 	stop() { do_stop; }
+-	status() { do_status; }
++#	status() { do_status; }
+ 	reload() { do_reload; }
+ fi
+-- 
+2.39.2.101.g768bb238c4
+

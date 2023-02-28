@@ -1,0 +1,31 @@
+From de50fe748c49d01c4ca1147629aa9f62ce21c90e Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 13 Apr 2022 17:38:46 +0530
+Subject: [PATCH 1/2] cmd/zed/zed.c: fix regression that makes zed exit when
+ machine sleeps (on an EINTR signal)
+
+---
+ cmd/zed/zed.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/zed/zed.c b/cmd/zed/zed.c
+index e45176c0..3d3f7f4f 100644
+--- a/cmd/zed/zed.c
++++ b/cmd/zed/zed.c
+@@ -290,8 +290,12 @@ idle:
+ 		}
+ 		rv = zed_event_service(&zcp);
+ 
++		if (rv != 0) {
++		  zed_log_msg(LOG_NOTICE, "rv != 0 it is %d", rv);
++		}
+ 		/* ENODEV: When kernel module is unloaded (osx) */
+-		if (rv != 0)
++		//if (rv != 0)
++		if (rv == ENODEV)
+ 			break;
+ 	}
+ 
+-- 
+2.39.2.101.g768bb238c4
+
