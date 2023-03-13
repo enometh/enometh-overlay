@@ -10,6 +10,7 @@
 # ;madhu 210923 1.7.1-r2 -> 1.7.4
 # ;madhu 220727 1.9.0
 # ;madhu 230109 1.10.0
+# ;madhu 230313 1.11.0, fix slot on rsvg
 
 EAPI=8
 
@@ -58,7 +59,7 @@ RDEPEND="
 	media-libs/freetype:2[${MULTILIB_USEDEP}]
 	mp3? ( media-libs/libid3tag:=[${MULTILIB_USEDEP}] )
 	png? ( >=media-libs/libpng-1.6.10:0=[${MULTILIB_USEDEP}] )
-	svg? ( >=gnome-base/librsvg-2.46.0:=[${MULTILIB_USEDEP}] )
+	svg? ( >=gnome-base/librsvg-2.46.0:*[${MULTILIB_USEDEP}] )
 	tiff? ( >=media-libs/tiff-4.0.4:=[${MULTILIB_USEDEP}] )
 	webp? ( media-libs/libwebp:=[${MULTILIB_USEDEP}] )
 	zlib? ( sys-libs/zlib[${MULTILIB_USEDEP}] )
