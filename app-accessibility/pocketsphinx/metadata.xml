@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>enometh@meer.net</email>
+  </maintainer>
+  <use>
+    <flag name="sphinx-debug">compile with SPHINX_DEBUG</flag>
+    <!-- independent of debug -->
+    <flag name="fixed-point">Build using fixed-point math</flag>
+    <!-- <flag name="gstreamer">Build GStreamer plugin</flag> -->
+  </use>
+</pkgmetadata>
