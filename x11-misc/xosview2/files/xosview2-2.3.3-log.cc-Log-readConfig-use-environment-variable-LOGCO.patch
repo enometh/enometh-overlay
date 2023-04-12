@@ -1,0 +1,28 @@
+From a0c152464187cffde350278e9fab771e8ed404f1 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 5 Jun 2016 15:16:46 +0530
+Subject: [PATCH 1/4] log.cc: (Log::readConfig): use environment variable
+ LOGCONF
+
+---
+ log.cc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/log.cc b/log.cc
+index 60840f4..52a04f1 100644
+--- a/log.cc
++++ b/log.cc
+@@ -29,8 +29,9 @@ std::vector<std::pair<std::string, bool>> Log::_slist;
+ 
+ void Log::readConfig(void) {
+     _readConfig = true;
++    char *p;
+ 
+-    std::ifstream ifs(LOGCONFIGFILE);
++    std::ifstream ifs((p = getenv("LOGCONF"))? p : LOGCONFIGFILE);
+     if (ifs) {
+         std::string line;
+         while (!ifs.eof()) {
+-- 
+2.39.2.101.g768bb238c4
+

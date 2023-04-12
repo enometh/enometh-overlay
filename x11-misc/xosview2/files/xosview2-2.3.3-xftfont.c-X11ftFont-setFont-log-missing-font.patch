@@ -1,0 +1,26 @@
+From 4d69e0bdc2cda68f7180110edb665c20431721b8 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 13 Jun 2016 15:28:15 +0530
+Subject: [PATCH 2/4] xftfont.c: (X11ftFont::setFont): log missing font
+
+---
+ xftfont.cc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/xftfont.cc b/xftfont.cc
+index 20fe5b4..a85ce49 100644
+--- a/xftfont.cc
++++ b/xftfont.cc
+@@ -54,6 +54,9 @@ bool X11ftFont::setFont(const std::string &name) {
+     if (_font)
+         XftFontClose(_dsp, _font);
+     _font = XftFontOpenName(_dsp, DefaultScreen(_dsp), name.c_str());
++    if (!_font)
++	logProblem << "XftFontOpenName(" << _dsp << ", " << DefaultScreen(_dsp)
++		   << ", " << name.c_str() <<  "): failed" << std::endl;
+     return good();
+ }
+ 
+-- 
+2.39.2.101.g768bb238c4
+

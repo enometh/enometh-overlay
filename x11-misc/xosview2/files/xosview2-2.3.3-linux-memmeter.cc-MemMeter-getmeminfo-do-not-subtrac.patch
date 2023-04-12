@@ -1,0 +1,69 @@
+From 37a1c094c3c6cb67db4bd676844ff1c5a746d556 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 14 Oct 2016 16:57:40 +0530
+Subject: [PATCH 3/4] linux/memmeter.cc: (MemMeter::getmeminfo): do not
+ subtract SwapCached when calculating memused
+
+swapcache is field[3]. this makes reporting consistent with xosview-1.x
+and with older versions of procps-ng free(1)
+
+* Xdefaults.in: (xosview*memAccountSwapCached): new resource defaults
+to True. whether to exclude SwapCached from the reported available
+memory.
+* linux/memmeter.h: define boolean flag.
+* linux/memmeter.cc: (checkResources): set it. (setFields): use it.
+---
+ Xdefaults.in      | 2 +-
+ linux/memmeter.cc | 4 +++-
+ linux/memmeter.h  | 2 ++
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/Xdefaults.in b/Xdefaults.in
+index 7088ed4..3992bab 100644
+--- a/Xdefaults.in
++++ b/Xdefaults.in
+@@ -106,7 +106,7 @@ xosview*memPriority:        10
+ xosview*memDecay:           False
+ xosview*memGraph:           False
+ xosview*memUsedFormat:	    autoscale
+-
++xosview*memAccountSwapCache: True
+ 
+ 
+ ! ** Disk Meter Resources
+diff --git a/linux/memmeter.cc b/linux/memmeter.cc
+index 84a4403..40a0b10 100644
+--- a/linux/memmeter.cc
++++ b/linux/memmeter.cc
+@@ -22,6 +22,8 @@ void MemMeter::checkResources(const ResDB &rdb) {
+     setfieldcolor(2, rdb.getColor( "memCacheColor"));
+     setfieldcolor(3, rdb.getColor( "memSwapCacheColor"));
+     setfieldcolor(4, rdb.getColor( "memFreeColor"));
++
++    subtract_swapcache = rdb.isResourceTrue( "memAccountSwapCache");
+ }
+ 
+ 
+@@ -42,5 +44,5 @@ void MemMeter::setFields(void) {
+     _fields[0] = _total - _fields[4] - _fields[3] - _fields[2] - _fields[1];
+ 
+     if (_total)
+-        setUsed(_total - _fields[3] - _fields[4], _total);
++        setUsed(_total -  (subtract_swapcache ? _fields[3] : 0)  - _fields[4], _total);
+ }
+diff --git a/linux/memmeter.h b/linux/memmeter.h
+index 21ba813..608a4b8 100644
+--- a/linux/memmeter.h
++++ b/linux/memmeter.h
+@@ -20,6 +20,8 @@ public:
+ protected:
+     virtual std::vector<LineInfo> newLineInfos(void) override;
+     virtual void setFields(void) override;
++
++    bool subtract_swapcache;
+ };
+ 
+ 
+-- 
+2.39.2.101.g768bb238c4
+

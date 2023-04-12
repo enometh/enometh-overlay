@@ -1,0 +1,38 @@
+From 3563068246344b722cb420fa8c314e002a0db823 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 26 Jun 2017 17:39:57 +0530
+Subject: [PATCH 4/4] linux/btrymeter.cc: (BtryMeter::getcapacity): accomodate
+ dell where charge_{full,now} are missing but energy_{full,now} are present
+
+---
+ linux/btrymeter.cc | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/linux/btrymeter.cc b/linux/btrymeter.cc
+index 3bab95b..2f18b67 100644
+--- a/linux/btrymeter.cc
++++ b/linux/btrymeter.cc
+@@ -117,15 +117,17 @@ bool BtryMeter::getcapacity(const std::string &batDir,
+     // does not make an appearance.  Check for her backup files
+     // charge_full and charge_now.
+     const std::string capFile = batDir + "capacity";
+-    const std::string cfFile = batDir + "charge_full";
+-    const std::string cnFile = batDir + "charge_now";
++    std::string cfFile = batDir + "charge_full";
++    std::string cnFile = batDir + "charge_now";
+     if (util::fs::isfile(capFile)) {
+         if (!util::fs::readFirst(capFile, capacity)) {
+             logProblem << "error reading : " << capFile << std::endl;
+             return false;
+         }
+     }
+-    else if (util::fs::isfile(cfFile) && util::fs::isfile(cnFile)) {
++    else if ((util::fs::isfile(cfFile) && util::fs::isfile(cnFile)) ||
++	     (util::fs::isfile(cfFile = batDir + "energy_full") &&
++	      util::fs::isfile(cnFile = batDir + "energy_now"))) {
+         unsigned long charge_full = 0, charge_now = 0;
+         if (!util::fs::readFirst(cfFile, charge_full)
+           || !util::fs::readFirst(cnFile, charge_now)) {
+-- 
+2.39.2.101.g768bb238c4
+
