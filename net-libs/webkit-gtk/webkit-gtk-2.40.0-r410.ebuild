@@ -1,12 +1,11 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-
 #
 #   Time-stamp: <>
 #   Touched: Fri Feb 01 15:38:52 2019 +0530 <enometh@meer.net>
 #   Bugs-To: enometh@meer.net
 #   Status: Experimental.  Do not redistribute
-#   Copyright (C) 2019-2022 Madhu.  All Rights Reserved.
+#   Copyright (C) 2019-2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 190317 chawla openjpeg ;madhu 190320 jpeg2k
 # ;madhu 190406 2.24.0 clang. turn off the -g 18G freespace check in pkg_prepare
@@ -30,6 +29,7 @@
 # ;madhu 211208 - 2.34.1 soup3 webdriver
 # ;madhu 220529 - 2.36.3 gtk4, fix egl on mesa, -seccomp via etc/profile/package.use.force
 # ;madhu 221112 - 2.38.1-r410 - revert ebuild to gentoo (soup3 -gtk4 -soup2)
+# ;madhu 230412 - 2.40.1-r410
 
 EAPI=8
 PYTHON_REQ_USE="xml(+)"
@@ -49,7 +49,7 @@ if ${USE_GIT} ; then
 	# set this up up manually: GitHub repo downloads gigabytes
 	EGIT_REPO_URI="https://example.com/git/webkit.git"
 	EGIT_MIRROR_URI="file:///build/git-mirror"
-	EGIT_BRANCH="tmp-2.38.2"
+	EGIT_BRANCH="tmp-2.40.0"
 	EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
 	EGIT_CLONE_TYPE="shallow"
 	EGIT_SUBMODULES=()
@@ -62,7 +62,7 @@ LICENSE="LGPL-2+ BSD"
 SLOT="4.1/0" # soname version of libwebkit2gtk-4.1
 KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~sparc ~x86"
 
-IUSE="aqua avif +egl examples gamepad geolocation  gles2-only gnome-keyring +gstreamer gtk-doc +introspection pdf +jpeg2k +jumbo-build lcms seccomp spell systemd test wayland X woff webp hyphen elogind webdriver jpegxl"
+IUSE="aqua avif +egl examples gamepad geolocation  gles2-only gnome-keyring +gstreamer gtk-doc +introspection pdf +jpeg2k +jumbo-build lcms seccomp spell systemd test wayland X woff webp hyphen elogind webdriver webrtc jpegxl"
 
 # gstreamer with opengl/gles2 needs egl
 REQUIRED_USE="
@@ -73,8 +73,8 @@ REQUIRED_USE="
 	?? ( elogind systemd )
 "
 
-# Tests fail to link for inexplicable reasons
-# https://bugs.webkit.org/show_bug.cgi?id=148210
+# Tests do not run when built from tarballs
+# https://bugs.webkit.org/show_bug.cgi?id=215986
 RESTRICT="test"
 
 RDEPEND="
@@ -86,6 +86,7 @@ RDEPEND="
 	>=media-libs/harfbuzz-1.4.2:=[icu(+)]
 	>=dev-libs/icu-61.2:=
 	media-libs/libjpeg-turbo:0=
+	>=media-libs/libepoxy-1.4.0
 	>=net-libs/libsoup-3.0.8:3.0[introspection?]
 	>=dev-libs/libxml2-2.8.0:2
 	>=media-libs/libpng-1.4:0=
@@ -94,7 +95,7 @@ RDEPEND="
 	>=app-accessibility/at-spi2-core-2.46.0:2
 	webp? ( media-libs/libwebp:= )
 
-	>=dev-libs/glib-2.67.1:2
+	>=dev-libs/glib-2.70.0:2
 	>=dev-libs/libxslt-1.1.7
 	woff? ( media-libs/woff2 )
 	gnome-keyring? ( app-crypt/libsecret )
@@ -156,6 +157,7 @@ BDEPEND="
 	dev-util/gdbus-codegen
 	dev-util/glib-utils
 	>=dev-util/gperf-3.0.1
+	dev-util/unifdef
 	>=sys-devel/bison-2.4.3
 	|| ( >=sys-devel/gcc-7.3 >=sys-devel/clang-5 )
 	sys-devel/gettext
@@ -166,13 +168,9 @@ BDEPEND="
 	virtual/perl-Carp
 	virtual/perl-JSON-PP
 
-	gtk-doc? ( >=dev-util/gtk-doc-1.32 )
+	gtk-doc? ( dev-util/gi-docgen )
 	geolocation?  ( >=app-misc/geoclue-2.1.5:2.0 )
 "
-#	test? (
-#		dev-python/pygobject:3[python_targets_python2_7]
-#		x11-themes/hicolor-icon-theme
-#	)
 
 #S="${WORKDIR}/${MY_P}"
 
@@ -262,10 +260,9 @@ src_configure() {
 		-DENABLE_UNIFIED_BUILDS=$(usex jumbo-build)
 		-DENABLE_VIDEO=$(usex gstreamer)
 		-DUSE_GSTREAMER_WEBRTC=$(usex gstreamer)
+		-DENABLE_WEB_RTC=$(usex webrtc)
 		-DUSE_GSTREAMER_TRANSCODER=$(usex gstreamer)
 		-DENABLE_WEBGL=ON
-		# Supported only under ANGLE
-		-DENABLE_WEBGL2=OFF
 		-DENABLE_WEB_AUDIO=$(usex gstreamer)
 		# Source/cmake/OptionsGTK.cmake
 		-DENABLE_GLES2=$(usex gles2-only)
@@ -275,6 +272,7 @@ src_configure() {
 		-DENABLE_QUARTZ_TARGET=$(usex aqua)
 		-DENABLE_WAYLAND_TARGET=$(usex wayland)
 		-DENABLE_X11_TARGET=$(usex X)
+		-DUSE_GBM=ON
 		-DUSE_AVIF=$(usex avif)
 		-DUSE_GTK4=OFF # $(usex gtk4)
 		-DENABLE_WEBDRIVER=$(usex webdriver)
@@ -334,4 +332,7 @@ src_install() {
 
 pkg_postinst() {
 	optfeature "geolocation service (used at runtime if available)" "app-misc/geoclue"
+	optfeature "Common Multimedia codecs" "media-plugins/gst-plugins-meta"
+	optfeature "(MPEG-)DASH support" "media-plugins/gst-plugins-dash"
+	optfeature "HTTP-Live-Streaming support" "media-plugins/gst-plugins-hls"
 }
