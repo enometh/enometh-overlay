@@ -1,0 +1,159 @@
+From 9b80e9f4d929a1d7276b39fcc04a3cfa71219fba Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@meer.net>
+Date: Tue, 15 Jul 2014 17:41:45 +0530
+Subject: [PATCH 2/3] summarize traffic totals per page
+
+- hosts_db.c: (format_table): cookie_in, cookie_out, cookie_total,
+  cookie_host: keep track of localip and count running totals in
+  cookie_*. Print a table when cookie_host is set.
+
+Second Cut:
+> On Jan 16, 2013 at 13:40:32 +0530, Madhu wrote
+>
+> The new local ip design, (with support for multiple capture
+> interfaces, commit 9043fa3), introduces some challenges.  Eg. in
+> supporting the use case above, or Eg. in supporting the html summary
+> information hack I sent on 14-May-2009.
+>
+> 	The common issue may be that of remembering what interfaces
+> 	darkstat was instructed to listen to at startup, and what
+> 	addresses are linked to that.
+>
+> At present, against git, I have a kludge which keeps a global struct
+> local_ips, and add to this from add_ip (in localip.c); however this
+> exposes the problem that localip_update() is getting called too often,
+> (the comment disappeared from cap.c!) --- a lot of useless checking
+> has to be done to push only new items to my global local_ips struct.
+>
+> 	When the data comes from an exported db file, one initializes
+> 	this global local_ips struct from a user specified list of ip
+> 	addresses which are "deemed local", throughout that session.
+>
+
+Initial cut of the suggestion:
+
+On Apr 22, 2009 at 10:16:39PM +0530, Madhu wrote:
+> - Suggestion 1: A summary showing the totals of the traffic on each
+>   page when limiting the number of hosts displayed per page in the
+>   hosts view, preferably in human readable form (i.e. KB or
+>   MB). This could just be a fraction of the totals
+---
+ hosts_db.c | 30 ++++++++++++++++++++++++++++--
+ localip.c  | 24 ++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+), 2 deletions(-)
+
+diff --git a/hosts_db.c b/hosts_db.c
+index c1dab21..209357b 100644
+--- a/hosts_db.c
++++ b/hosts_db.c
+@@ -13,6 +13,7 @@
+ #include "dns.h"
+ #include "err.h"
+ #include "hosts_db.h"
++#include "localip.h"
+ #include "db.h"
+ #include "html.h"
+ #include "ncache.h"
+@@ -930,8 +931,8 @@ hashtable_list_buckets(struct hashtable *ht)
+    for (pos=0, i=0; i<ht->size; i++) {
+       struct bucket *b = ht->table[i];
+       while (b != NULL) {
+-         table[pos++] = b;
+-         b = b->next;
++	 table[pos++] = b;
++	 b = b->next;
+       }
+    }
+    assert(pos == ht->count);
+@@ -973,6 +974,9 @@ format_table(struct str *buf, struct hashtable *ht, unsigned int start,
+    const struct bucket **table;
+    unsigned int i, end;
+    int alt = 0;
++   struct bucket cookie_host_data, * cookie_host = NULL;
++   uint64_t cookie_in, cookie_out, cookie_total;
++   extern struct local_ips * local_ips;
+ 
+    table = hashtable_list_buckets(ht);
+ 
+@@ -992,14 +996,36 @@ format_table(struct str *buf, struct hashtable *ht, unsigned int start,
+    qsort_buckets(table, ht->count, start, end, sort);
+    ht->format_cols_func(buf);
+ 
++   cookie_in = cookie_out = cookie_total = 0;
++   cookie_host = &cookie_host_data;   
++   cookie_host->in = cookie_host->out = cookie_host->total = 0;
++
+    for (i=start; i<end; i++) {
+       ht->format_row_func(buf, table[i]);
+       alt = !alt; /* alternate class for table rows */
++
++      if (! is_localip(&((table[i]->u.host).addr), local_ips)) {
++	 cookie_in += table[i]->out;
++	 cookie_out += table[i]->in;
++	 cookie_total += table[i]->total;
++      } else {
++	 cookie_host->out += table[i]->out;
++	 cookie_host->in += table[i]->in;
++	 cookie_host->total += table[i]->total;
++      }
+    }
+    free(table);
+    str_append(buf, "</table>\n");
++
++   if (cookie_host != NULL) {
++      str_appendf(buf, "<table>\n<tr><td></td><td>In</td><td>Out</td><td>Total</td></tr>\n");
++      str_appendf(buf, "<tr><td>This Page</td><td class=num>%'qu</td><td class=num>%'qu</td><td class=num>%'qu</td></tr>\n", cookie_in, cookie_out, cookie_total);
++      str_appendf(buf, "<tr><td>Total</td><td class=num>%'qu</td><td class=num>%'qu</td><td class=num>%'qu</td></tr>\n", cookie_host->in, cookie_host->out, cookie_host->total);
++      str_appendf(buf, "<tr><td>Percent</td><td class=num>%'qu</td><td class=num>%'qu</td><td class=num>%'qu</td></tr>\n</table>\n", 100*cookie_in/(cookie_host->in==0?1:cookie_host->in), 100*cookie_out/(cookie_host->out==0?1:cookie_host->out), 100*cookie_total/(cookie_host->total==0?1:cookie_host->total));
++   }
+ }
+ 
++
+ /* ---------------------------------------------------------------------------
+  * Web interface: sorted table of hosts.
+  */
+diff --git a/localip.c b/localip.c
+index 19972c5..e9a4937 100644
+--- a/localip.c
++++ b/localip.c
+@@ -33,6 +33,29 @@
+ # include <sys/ioctl.h>
+ #endif
+ 
++static struct local_ips local_ips_kludge;
++static struct addr local_addrs_kludge[12];
++struct local_ips *local_ips = NULL;
++
++void kludge_local_addr(struct addr *a) {
++  if (local_ips == NULL) {
++    localip_init(local_ips = &local_ips_kludge);
++    local_ips->addrs = local_addrs_kludge;
++  }
++  if (is_localip(a,&local_ips_kludge)) {
++     verbosef("add_ip:local_ips_kludge: already there: %s (iface %s)", 
++	      addr_to_str(a),"FIXME");
++   } else {
++    if (local_ips->num_addrs > 11) {
++      force_dumps();
++      err(1,"MADHU: FIXME HARDCODED CONSTANT: 2012-07");
++    }
++    assert (local_ips->num_addrs <= 11);
++    local_addrs_kludge[local_ips->num_addrs] = *a;
++    (local_ips->num_addrs)++;
++  }
++}
++     
+ void localip_init(struct local_ips *ips) {
+    ips->is_valid = 0;
+    ips->last_update_mono = 0;
+@@ -66,6 +89,7 @@ static void add_ip(const char *iface,
+    }
+    ips->addrs[*idx] = *a;
+    (*idx)++;
++   kludge_local_addr(a);
+ }
+ 
+ /* Returns 0 on failure. */
+-- 
+2.39.2.101.g768bb238c4
+

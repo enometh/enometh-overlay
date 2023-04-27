@@ -1,0 +1,27 @@
+From 08766a591e4dda8eedcf2fe51d03ad1bf14030c5 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 2 Aug 2016 15:54:26 +0530
+Subject: [PATCH 3/3] cdefs.h: define restrict - compilation fix
+
+---
+ cdefs.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/cdefs.h b/cdefs.h
+index 05c8172..4dda836 100644
+--- a/cdefs.h
++++ b/cdefs.h
+@@ -17,6 +17,10 @@
+ # define _printflike_(fmtarg, firstvararg)
+ #endif
+ 
++#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901
++# define restrict __restrict
++#endif
++
+ #ifndef MAX
+ # define MAX(a,b) ((a) > (b) ? (a) : (b))
+ #endif
+-- 
+2.39.2.101.g768bb238c4
+

@@ -1,0 +1,72 @@
+#!/sbin/openrc-run
+# Copyright 1999-2023 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+#
+# madhu 200510: reworked. 1. support import export 2. use command_args
+# and default openrc start stop
+
+IF=${SVCNAME##*.}
+
+if [ -n "${IF}" -a "${SVCNAME}" != "darkstat" ] ; then
+	pidfile=/run/darkstat.${IF}.pid
+else
+	pidfile=/run/darkstat.pid
+fi
+command="/usr/sbin/darkstat"
+command_args="--chroot ${CHROOT:-__CHROOT__} --pidfile ${pidfile} ${DARKSTAT_OPTS}"
+name="darkstat on ${IF:-eth0}"
+
+depend() {
+	need net
+}
+
+chkconfig() {
+    if [ -z "${CHROOT}" ]; then
+	eerror "this version of darkstat logs to the specified CHROOT"
+    fi
+    return 0
+#	need net
+}
+
+start_pre() {
+	if [ -n "${IF}" -a "${SVCNAME}" != "darkstat" ] ; then
+		if [ ! -f "/etc/conf.d/darkstat.${IF}" ] ; then
+			einfo "It's possible to have distinct config in /etc/conf.d/darkstat.${IF}."
+		fi
+		INTERFACE=${IF}
+	else
+		if [ ! -f "/etc/conf.d/darkstat" ] ; then
+			ewarn "/etc/conf.d/darkstat does not exist. Falling on defaults."
+		fi
+	fi
+
+	if [ -z "${INTERFACE}" ]; then
+		ewarn "No interface specified. Trying to use eth0."
+		INTERFACE="eth0"
+	fi
+
+	EXPORT=`date +%Y%m%d%H%M%S`.$INTERFACE
+	IMPEXARGS="--export ${EXPORT}"
+	IMPORT="$(cd /var/lib/darkstat; ls -t | head -1)"
+	if [ -z ${NOIMPORT} -a -f /var/lib/darkstat/${IMPORT} ]; then
+	    IMPEXARGS="${IMPEXARGS} --import ${IMPORT}"
+	fi
+
+	command_args+=" -i ${INTERFACE}"
+	[ -n "${PORT}" ] && command_args+=" -p ${PORT}"
+	[ -n "${ADDRESS}" ] && command_args+=" -b ${ADDRESS}"
+	[ -n "${DAYLOGFILE}" ] && command_args+=" --daylog ${DAYLOGFILE}"
+
+	# Mon 11 May 2020 08:54:43 IST madhu: adding a -f '' empty
+	# FILTER confuses the shit out of openrc pid_is_argv, which
+	# doesn't find the process in /proc and reports the service as
+	# crashed
+
+	[ -n "${FILTER}" ] && command_args+=" -f '${FILTER}'"
+	[ -n "${IMPEXARGS}" ] && command_args+=" ${IMPEXARGS}"
+
+	# If ${pidfile} exist darkstat fails to start
+	[ -f ${pidfile} ] && \
+	/sbin/start-stop-daemon --stop --pidfile ${pidfile}
+	return 0
+}
