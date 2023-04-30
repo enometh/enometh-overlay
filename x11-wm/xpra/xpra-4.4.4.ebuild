@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,6 +10,7 @@
 # ;madhu 221219 4.3.4 -> 4.4.3 with patches for py9, drop the gentoo
 # ;test patch
 #
+# ;madhu 230429 4.4.4
 
 EAPI=8
 USE_GIT=false
@@ -18,11 +19,12 @@ if ${USE_GIT} || [[  ${PV} = 9999* ]]; then
 	EGIT_REPO_URI="https://github.com/Xpra-org/xpra.git"
 	inherit git-r3
 else
-	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
+#	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
+	SRC_URI="https://xpra.org/src/${P}.tar.xz"
 	KEYWORDS="~amd64 ~x86"
 fi
 
-PYTHON_COMPAT=( python3_{8,9,10} )
+PYTHON_COMPAT=( python3_{9..11} )
 DISTUTILS_SINGLE_IMPL=yes
 DISTUTILS_USE_SETUPTOOLS=no
 
@@ -144,7 +146,8 @@ python_prepare_all() {
 		-i setup.py || die
 
 	if use minimal; then
-		sed -r -e 's/^(pam|scripts|xdg_open)_ENABLED.*/\1_ENABLED=False/' \
+		sed -r -e '/pam_ENABLED/s/DEFAULT/False/' \
+			-e 's/^(xdg_open)_ENABLED = .*/\1_ENABLED = False/' \
 			-i setup.py || die
 	fi
 }
@@ -212,6 +215,7 @@ python_install_all() {
 		mv -vnT "${ED}"/usr/lib/udev "${ED}${dir}" || die
 	else
 		rm -vr "${ED}"/usr/lib/udev || die
+#		rm -v "${ED}"/usr/bin/xpra_udev_product_version || die
 	fi
 }
 
