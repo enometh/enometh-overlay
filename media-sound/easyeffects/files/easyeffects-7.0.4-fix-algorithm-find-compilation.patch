@@ -1,0 +1,10 @@
+--- easyeffects-7.0.4-orig/src/util.cpp	2023-05-01 19:58:14.000000000 +0530
++++ easyeffects-7.0.4/src/util.cpp	2023-05-16 22:43:59.760430883 +0530
+@@ -20,6 +20,7 @@
+ #include "util.hpp"
+ 
+ #include <utility>
++#include <algorithm>
+ 
+ namespace util {
+ 
