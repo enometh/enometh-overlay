@@ -1,20 +1,24 @@
-# Copyright 2022 Gentoo Authors
+# Copyright 2022-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
 #   Touched: Thu Mar 24 21:34:35 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
-#   Copyright (C) 2022 Madhu.  All Rights Reserved.
+#   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 220324 1.1.0 1.1.0-2-gee83dd7 - use locally installed gi-gendoc to avoid polluting the filesystem with the ugly shipped fonts
-# ;madhu 221023 1.2.0 TODO:  call xdg_icon_cache_update() in pkg_postinst() and pkg_postrm() - checkout the specific commit
+# ;madhu 221023 1.2.0 1.2.0-45-gf6a5dea TODO:  call xdg_icon_cache_update() in pkg_postinst() and pkg_postrm() - checkout the specific commit
+# ;madhu 230517 1.3.2 (skip 1.3.rc-188-g0c154e2, build from tarball)
+# ;madhu 230517 1.3.2-r1 bc77eca4ee7d4d72 1.3.rc-144-g96a28b6 for 1.4alpha, use -examples without appstream
 
 EAPI=8
-PYTHON_COMPAT=( python3_{8..11} )
-VALA_MIN_API_VERSION="0.52"
-USE_GIT=true
+
+PYTHON_COMPAT=( python3_{9..11} )
 inherit gnome.org meson python-any-r1 vala virtualx
+USE_GIT=true
+
+MY_COMMIT=96a28b62d189b79b4f2118b8e2ba40809d1cc914
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
@@ -29,6 +33,7 @@ if ${USE_GIT}; then
 	inherit git-r3
 	EGIT_REPO_URI=https://gitlab.gnome.org/GNOME/libadwaita.git
 	EGIT_BRANCH=main
+	EGIT_COMMIT=$MY_COMMIT
 	EGIT_CLONE_TYPE=shallow
 	EGIT_SUBMODULES=()
 fi
@@ -36,30 +41,21 @@ fi
 KEYWORDS="~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
 
 RDEPEND="
-	>=dev-libs/glib-2.66:2
-	>=gui-libs/gtk-4.5.0:4[introspection?]
+	>=dev-libs/glib-2.72:2
+	>=gui-libs/gtk-4.9.5:4[introspection?]
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
 "
-DEPEND="${RDEPEND}
-	test? ( dev-libs/appstream-glib )"
+DEPEND="${RDEPEND}"
 BDEPEND="
 	${PYTHON_DEPS}
 	vala? ( $(vala_depend) )
-	>=dev-util/meson-0.59.0
 	dev-util/glib-utils
 	sys-devel/gettext
 	virtual/pkgconfig
+	examples? ( dev-libs/appstream-glib )
+	test? ( dev-libs/appstream-glib )
 "
-
-if ${USE_GIT}; then
-BDEPEND+="
-	gtk-doc? (
-		>=dev-util/gi-docgen-2021.6
-		app-text/docbook-xml-dtd:4.3
-	)
-"
-fi
 
 src_prepare() {
 	echo > po/LINGUAS
@@ -75,7 +71,7 @@ src_configure() {
 		-Dprofiling=false
 		$(meson_feature introspection)
 		$(meson_use vala vapi)
-
+#		-Dgtk_doc=false # we ship pregenerated docs
 		$(meson_use test tests)
 		$(meson_use examples)
 	)
