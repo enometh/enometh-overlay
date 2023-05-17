@@ -1,0 +1,30 @@
+From 7b6b67941d58cce740052da81b4339b481f263ed Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 3 Feb 2022 13:09:31 +0530
+Subject: [PATCH] mesonbuild/envconfig.py: (detect_compiler_cache): prefer
+ ccache
+
+---
+ mesonbuild/envconfig.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/mesonbuild/envconfig.py b/mesonbuild/envconfig.py
+index 90117c1..9f74f6d 100644
+--- a/mesonbuild/envconfig.py
++++ b/mesonbuild/envconfig.py
+@@ -406,8 +406,12 @@ class BinaryTable:
+     @staticmethod
+     def detect_compiler_cache() -> T.List[str]:
+         # Sccache is "newer" so it is assumed that people would prefer it by default.
++        ccache1 = BinaryTable.detect_ccache()
+         cache = BinaryTable.detect_sccache()
+         if cache:
++            if ccache1:
++                print("MADHU: sccache and ccache detected. preferring ccache");
++                return ccache1
+             return cache
+         return BinaryTable.detect_ccache()
+ 
+-- 
+2.39.2.101.g768bb238c4
+
