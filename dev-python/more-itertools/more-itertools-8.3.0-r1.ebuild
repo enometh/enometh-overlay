@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -14,7 +14,7 @@ EAPI=7
 _PYTHON_ALLOW_PY37=1
 #;madhu 221021 set PYTHON_ALLOW_PY31 in python-any-r1.eclass:(_python_any_set_globals_ and use it in python-utils-r1.eclass:(_python_set_impls) to set up supp
 PYTHON_COMPAT_NO_STRICT=true
-PYTHON_COMPAT=( python3_{7..10} pypy3 )
+PYTHON_COMPAT=( python3_{7..11} pypy3 )
 
 inherit distutils-r1
 
