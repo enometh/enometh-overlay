@@ -1,7 +1,7 @@
 # Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2023-02-24 15:34:10 IST>
+#   Time-stamp: <>
 #   Touched: Thu Jan 06 17:28:27 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -9,6 +9,7 @@
 #
 # ;madhu 220106 0.4.5-r3
 # ;madhu 230224 0.4.13 - undo handoffs to the pipewire ebuild IUSE doc, introspection. TODO add doxygen, lxml, sphinxbuild
+#;madhu 230624  0.4.14
 
 EAPI=8
 
@@ -34,8 +35,6 @@ else
 	KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
 fi
 
-KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
-
 DESCRIPTION="Replacement for pipewire-media-session"
 HOMEPAGE="https://gitlab.freedesktop.org/pipewire/wireplumber"
 
@@ -58,12 +57,13 @@ BDEPEND="
 	dev-util/glib-utils
 	sys-devel/gettext
 	introspection? ( dev-libs/gobject-introspection )
+	test? ( sys-apps/dbus )
 "
 
 DEPEND="
 	${LUA_DEPS}
 	>=dev-libs/glib-2.62
-	>=media-video/pipewire-0.3.53-r1:=
+	>=media-video/pipewire-0.3.65-r1:=
 	virtual/libintl
 	elogind? ( sys-auth/elogind )
 	systemd? ( sys-apps/systemd )
