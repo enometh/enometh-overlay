@@ -1,7 +1,7 @@
 # Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2023-02-24 15:11:01 IST>
+#   Time-stamp: <2023-06-23 16:00:19 IST>
 #   Touched: Fri Jun 11 03:56:00 2021 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -19,6 +19,8 @@
 # ;madhu 220420 0.3.50-r1 - don't make alsa-plugins[pulseaudio] a hard dep.
 # ;madhu 220915 0.3.57 - remove all gentoo sound-server nonsense. pipewire alsa and pulseaudio should coexist on the same system
 # ;madhu 230224 0.3.66-r1 - keep IUSE=udev
+# ;madhu 230602 0.3.61-r2
+# ;madhu 230623 0.3.71-r3
 
 EAPI=8
 
@@ -101,6 +103,7 @@ BDEPEND="
 	virtual/pkgconfig
 	${PYTHON_DEPS}
 	$(python_gen_any_dep 'dev-python/docutils[${PYTHON_USEDEP}]')
+	dbus? ( dev-util/gdbus-codegen )
 	doc? (
 		app-doc/doxygen
 		media-gfx/graphviz
@@ -127,21 +130,15 @@ RDEPEND="
 	)
 	dbus? ( sys-apps/dbus[${MULTILIB_USEDEP}] )
 	echo-cancel? ( media-libs/webrtc-audio-processing:0 )
-	extra? (
-		>=media-libs/libsndfile-1.0.20
-	)
+	extra? ( >=media-libs/libsndfile-1.0.20 )
 	ffmpeg? ( media-video/ffmpeg:= )
-	flatpak? (
-		dev-libs/glib
-	)
+	flatpak? ( dev-libs/glib )
 	gstreamer? (
 		>=dev-libs/glib-2.32.0:2
 		>=media-libs/gstreamer-1.10.0:1.0
 		media-libs/gst-plugins-base:1.0
 	)
-	gsettings? (
-		>=dev-libs/glib-2.26.0:2
-	)
+	gsettings? ( >=dev-libs/glib-2.26.0:2 )
 	jack-client? ( >=media-sound/jack2-1.9.10:2[dbus] )
 	jack-sdk? (
 		!media-sound/jack-audio-connection-kit
@@ -149,15 +146,12 @@ RDEPEND="
 	)
 	lv2? ( media-libs/lilv )
 	modemmanager? ( >=net-misc/modemmanager-1.10.0 )
-	pipewire-alsa? (
-		>=media-libs/alsa-lib-1.1.7[${MULTILIB_USEDEP}]
-	)
+	pipewire-alsa? ( >=media-libs/alsa-lib-1.1.7[${MULTILIB_USEDEP}] )
+	sound-server? ( !media-sound/pulseaudio-daemon )
 	readline? ( sys-libs/readline:= )
 	ssl? ( dev-libs/openssl:= )
 	systemd? ( sys-apps/systemd )
-	system-service? (
-		acct-user/pipewire
-	)
+	system-service? ( acct-user/pipewire )
 	v4l? ( media-libs/libv4l )
 	X? (
 		media-libs/libcanberra
@@ -253,7 +247,7 @@ multilib_src_configure() {
 		$(meson_feature pipewire-alsa) # Allows integrating ALSA apps into PW graph
 		-Dspa-plugins=enabled
 		-Dalsa=enabled # Allows using kernel ALSA for sound I/O (NOTE: media-session is gone so IUSE=alsa/spa_alsa/alsa-backend might be possible)
-		-Dcompress-offload=disabled # Matches upstream, tinycompress unpackaged too
+		-Dcompress-offload=disabled # TODO: tinycompress unpackaged
 		-Daudiomixer=enabled # Matches upstream
 		-Daudioconvert=enabled # Matches upstream
 		$(meson_native_use_feature bluetooth bluez5)
@@ -266,6 +260,7 @@ multilib_src_configure() {
 		$(meson_native_use_feature bluetooth bluez5-codec-aac)
 		$(meson_native_use_feature bluetooth bluez5-codec-aptx)
 		$(meson_native_use_feature bluetooth bluez5-codec-ldac)
+		$(meson_native_use_feature bluetooth opus)
 		$(meson_native_use_feature bluetooth bluez5-codec-opus)
 		$(meson_native_use_feature bluetooth libusb) # At least for now only used by bluez5 native (quirk detection of adapters)
 		$(meson_native_use_feature echo-cancel echo-cancel-webrtc) #807889
@@ -317,6 +312,10 @@ multilib_src_configure() {
 	meson_src_configure
 }
 
+multilib_src_test() {
+	meson_src_test --timeout-multiplier 10
+}
+
 multilib_src_install() {
 	# Our custom DOCS do not exist in multilib source directory
 	DOCS= meson_src_install
@@ -325,6 +324,7 @@ multilib_src_install() {
 multilib_src_install_all() {
 	einstalldocs
 
+# FIXME madhu
 #	insinto /etc/security/limits.d
 #	doins ${limitsdfile}
 
@@ -362,10 +362,12 @@ multilib_src_install_all() {
 
 	if ! use systemd; then
 		insinto /etc/xdg/autostart
-		newins "${FILESDIR}"/pipewire.desktop-r1 pipewire.desktop
+		newins "${FILESDIR}"/pipewire.desktop-r2 pipewire.desktop
 
 		exeinto /usr/bin
-		newexe "${FILESDIR}"/gentoo-pipewire-launcher.in gentoo-pipewire-launcher
+		newexe "${FILESDIR}"/gentoo-pipewire-launcher.in-r2 gentoo-pipewire-launcher
+
+		doman "${FILESDIR}"/gentoo-pipewire-launcher.1
 
 		# Disable pipewire-pulse if sound-server is disabled.
 		#;madhu 230224
@@ -388,7 +390,7 @@ pkg_preinst() {
 	HAD_SYSTEM_SERVICE=0
 
 	if has_version "media-video/pipewire[sound-server(-)]" ; then
-		HAD_SOUND_SERVER=0
+		HAD_SOUND_SERVER=1
 	fi
 
 	if has_version "media-video/pipewire[system-service(-)]" ; then
@@ -405,13 +407,16 @@ pkg_postinst() {
 	for ver in ${REPLACING_VERSIONS} ; do
 		if ver_test ${ver} -le 0.3.66-r1 ; then
 			elog ">=pipewire-0.3.66 uses the 'pipewire' group to manage permissions"
-			elog "and limits needed to function smoothly."
-			elog "1. Please make sure your user is in the 'pipewire' group for correct"
-			elog "PAM limits behavior! You can add your account with:"
+			elog "and limits needed to function smoothly:"
+			elog
+			elog "1. Please make sure your user is in the 'pipewire' group for"
+			elog "the best experience with realtime scheduling (PAM limits behavior)!"
+			elog "You can add your account with:"
 			elog " usermod -aG pipewire <youruser>"
 			elog
-			elog "2. It is recommended that you remove your user from the 'audio' group"
-			elog "as it can interfere with fast user switching:"
+			elog "2. For the best experience with fast user switching, it is recommended"
+			elog "that you remove your user from the 'audio' group unless you rely on the"
+			elog "audio group for device access control or ACLs.:"
 			elog " usermod -rG audio <youruser>"
 			elog
 
