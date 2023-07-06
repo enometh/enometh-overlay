@@ -1,0 +1,112 @@
+From e9e0488f6cffa99b93323f35d04dd1331ebfed73 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 5 Jul 2023 23:29:52 +0530
+Subject: [PATCH 2/2] gtk-doc: meson integration
+
+---
+ .../libgnomekbd/libgnomekbd-docs.xml          | 48 +++++++++++++++++++
+ docs/reference/libgnomekbd/meson.build        | 10 ++++
+ meson.build                                   |  4 ++
+ meson_options.txt                             |  2 +
+ 4 files changed, 64 insertions(+)
+ create mode 100644 docs/reference/libgnomekbd/libgnomekbd-docs.xml
+ create mode 100644 docs/reference/libgnomekbd/meson.build
+
+diff --git a/docs/reference/libgnomekbd/libgnomekbd-docs.xml b/docs/reference/libgnomekbd/libgnomekbd-docs.xml
+new file mode 100644
+index 0000000..6844cfb
+--- /dev/null
++++ b/docs/reference/libgnomekbd/libgnomekbd-docs.xml
+@@ -0,0 +1,48 @@
++<?xml version="1.0"?>
++<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
++               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
++[
++  <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
++  <!ENTITY % gtkdocentities SYSTEM "xml/gtkdocentities.ent">
++  %gtkdocentities;
++]>
++<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
++  <bookinfo>
++    <title>&package_name; Reference Manual</title>
++    <releaseinfo>
++      for &package_string;.
++      The latest version of this documentation can be found on-line at
++      <ulink role="online-location" url="http://[SERVER]/&package_name;/index.html">http://[SERVER]/&package_name;/</ulink>.
++    </releaseinfo>
++  </bookinfo>
++
++  <chapter>
++    <title>[Insert title here]</title>
++    <xi:include href="xml/gkbd-config-private.xml"/>
++    <xi:include href="xml/gkbd-configuration.xml"/>
++    <xi:include href="xml/gkbd-desktop-config.xml"/>
++    <xi:include href="xml/gkbd-indicator.xml"/>
++    <xi:include href="xml/gkbd-indicator-config.xml"/>
++    <xi:include href="xml/gkbd-indicator-marshal.xml"/>
++    <xi:include href="xml/gkbd-keyboard-config.xml"/>
++    <xi:include href="xml/gkbd-keyboard-drawing.xml"/>
++    <xi:include href="xml/gkbd-keyboard-drawing-marshal.xml"/>
++    <xi:include href="xml/gkbd-status.xml"/>
++    <xi:include href="xml/gkbd-util.xml"/>
++  </chapter>
++  <!-- enable this when you use gobject types
++  <chapter id="object-tree">
++    <title>Object Hierarchy</title>
++    <xi:include href="xml/tree_index.sgml"/>
++  </chapter>
++  -->
++  <index id="api-index-full">
++    <title>API Index</title>
++    <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
++  </index>
++  <index id="deprecated-api-index" role="deprecated">
++    <title>Index of deprecated API</title>
++    <xi:include href="xml/api-index-deprecated.xml"><xi:fallback /></xi:include>
++  </index>
++  <xi:include href="xml/annotation-glossary.xml"><xi:fallback /></xi:include>
++</book>
+diff --git a/docs/reference/libgnomekbd/meson.build b/docs/reference/libgnomekbd/meson.build
+new file mode 100644
+index 0000000..b9d53cc
+--- /dev/null
++++ b/docs/reference/libgnomekbd/meson.build
+@@ -0,0 +1,10 @@
++gnome.gtkdoc('libgnomekbd',
++  main_sgml: 'libgnomekbd-docs.xml',
++  dependencies: libgnomekbd_dep,
++  ignore_headers: [],
++#  scan_args: '--deprecated-guards="GNOME_DISABLE_DEPRECATED"',
++  mkdb_args: ['--xml-mode', '--output-format=xml'],
++  html_args: [],
++  src_dir: 'libgnomekbd', #join_paths(meson.source_root(), 'libgnomekbd'),
++  install: true
++)
+diff --git a/meson.build b/meson.build
+index db110da..f4427ad 100644
+--- a/meson.build
++++ b/meson.build
+@@ -54,6 +54,10 @@ subdir('libgnomekbd')
+ 
+ subdir('po')
+ 
++if get_option('gtk_doc')
++  subdir('docs/reference/libgnomekbd')
++endif
++
+ if get_option('tests')
+   subdir('test')
+ endif
+diff --git a/meson_options.txt b/meson_options.txt
+index fef3b89..2d170e9 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -7,3 +7,5 @@ option('vapi',
+ option('tests',
+        type : 'boolean', value : true,
+        description: 'Enable tests')
++option('gtk_doc', type: 'boolean', value: 'true',
++       description : 'Build API reference and tools documentation')
+-- 
+2.39.2.101.g768bb238c4
+
