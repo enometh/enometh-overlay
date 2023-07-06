@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2021 GNOME Foundation
+#
+# SPDX-License-Identifier: CC0-1.0
+
+[library]
+name = "libgnomekbd"
+browse_url = "https://gitlab.gnome.org/GNOME/libgnomekbd/"
+repository_url = "https://gitlab.gnome.org/GNOME/libgnomekbd.git"
+devhelp = true
+search_index = true
+dependencies = ["Xkl-1.0", "GObject-2.0"]
+
+  [dependencies."Xkl-1.0"]
+  name = "libxklavier"
+  description = "The base type system library"
+  docs_url = "https://www.freedesktop.org/wiki/Software/LibXklavier"
+
+
+  [dependencies."GObject-2.0"]
+  name = "GObject"
+  description = "The base type system library"
+  docs_url = "https://docs.gtk.org/gobject/"
+
+[extra]
+urlmap_file = "urlmap.js"
+
+[theme]
+name = "basic"
+show_index_summary = true
