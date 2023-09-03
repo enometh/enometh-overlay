@@ -1,0 +1,25 @@
+From ebc7f0ae45f9dbfed4bba22e50b7cabaad074a4d Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 23 Oct 2022 23:16:20 +0530
+Subject: [PATCH 5/5] src/terminal-client-utils.cc: fix typo spurious include
+ gdk/gdk.h
+
+---
+ src/terminal-client-utils.cc | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/terminal-client-utils.cc b/src/terminal-client-utils.cc
+index cea473e..81ba2ed 100644
+--- a/src/terminal-client-utils.cc
++++ b/src/terminal-client-utils.cc
+@@ -36,7 +36,6 @@
+ #include <gio/gio.h>
+ 
+ #ifndef TERMINAL_NAUTILUS
+-#include <gdk/gdk.h>
+ #if defined(TERMINAL_COMPILATION) && defined(GDK_WINDOWING_X11)
+ #include <gdk/gdkx.h>
+ #endif
+-- 
+2.39.2.101.g768bb238c4
+

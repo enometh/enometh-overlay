@@ -1,0 +1,138 @@
+From 73a8bada6410e46aec0118680b42197fe8dbb62a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 2 Oct 2018 22:58:58 +0530
+Subject: [PATCH 3/5] toggle-tabs
+
+---
+ src/terminal-accels.cc     |  3 +++
+ src/terminal-menubar.ui.in | 14 ++++++++++++++
+ src/terminal-prefs.cc      |  3 ++-
+ src/terminal-window.cc     | 17 +++++++++++++++++
+ 4 files changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/src/terminal-accels.cc b/src/terminal-accels.cc
+index 6629810..23e410e 100644
+--- a/src/terminal-accels.cc
++++ b/src/terminal-accels.cc
+@@ -81,6 +81,7 @@
+ #define KEY_ZOOM_NORMAL         "zoom-normal"
+ #define KEY_ZOOM_OUT            "zoom-out"
+ #define KEY_SWITCH_TAB_PREFIX   "switch-to-tab-"
++#define KEY_TOGGLE_TABS		"toggle-tabs"
+ 
+ #if 1
+ /*
+@@ -155,6 +156,7 @@ static KeyEntry search_entries[] = {
+ 
+ static KeyEntry view_entries[] = {
+   ENTRY (N_("Hide and Show Menubar"), KEY_TOGGLE_MENUBAR, "menubar-visible", nullptr, nullptr),
++  ENTRY (N_("Hide and Show Tabs"),    KEY_TOGGLE_TABS,    "toggle-tabs",     nullptr, nullptr),
+   ENTRY (N_("Full Screen"),           KEY_FULL_SCREEN,    "fullscreen",      nullptr, nullptr),
+   ENTRY (N_("Zoom In"),               KEY_ZOOM_IN,        "zoom-in",         nullptr, nullptr),
+   ENTRY (N_("Zoom Out"),              KEY_ZOOM_OUT,       "zoom-out",        nullptr, nullptr),
+@@ -173,6 +175,7 @@ static KeyEntry tabs_entries[] = {
+   ENTRY_MDI (N_("Move Tab to the Left"),   KEY_MOVE_TAB_LEFT,  "tab-move-left",    nullptr, nullptr),
+   ENTRY_MDI (N_("Move Tab to the Right"),  KEY_MOVE_TAB_RIGHT, "tab-move-right",   nullptr, nullptr),
+   ENTRY_MDI (N_("Detach Tab"),             KEY_DETACH_TAB,     "tab-detach",       nullptr, nullptr),
++  ENTRY_MDI (N_("Hide and Show Tabs"), KEY_TOGGLE_TABS, "toggle-tabs",             nullptr, nullptr),
+   ENTRY_MDI (nullptr, KEY_SWITCH_TAB_PREFIX "1", "active-tab", "i", "0"),
+   ENTRY_MDI (nullptr, KEY_SWITCH_TAB_PREFIX "2", "active-tab", "i", "1"),
+   ENTRY_MDI (nullptr, KEY_SWITCH_TAB_PREFIX "3", "active-tab", "i", "2"),
+diff --git a/src/terminal-menubar.ui.in b/src/terminal-menubar.ui.in
+index 794d92d..8eebbbd 100644
+--- a/src/terminal-menubar.ui.in
++++ b/src/terminal-menubar.ui.in
+@@ -97,6 +97,12 @@
+           <attribute name="action">win.menubar-visible</attribute>
+           <attribute name="hidden-when">action-disabled</attribute>
+         </item>
++
++        <item>
++          <attribute name="label" translatable="no">_Toggle Tabs</attribute>
++          <attribute name="action">win.tabs-toggle</attribute>
++        </item>
++
+         <item>
+           <attribute name="label" translatable="yes">_Full Screen</attribute>
+           <attribute name="action">win.fullscreen</attribute>
+@@ -222,6 +228,14 @@
+           <attribute name="action">win.tab-detach</attribute>
+         </item>
+       </section>
++      <!--madhu -->
++      <section>
++        <item>
++          <attribute name="label" translatable="no">_Toggle Tabs</attribute>
++          <attribute name="action">win.tabs-toggle</attribute>
++        </item>
++      </section>
++
+     </submenu>
+     <submenu>
+       <WITH_MNEMONIC><attribute name="label" translatable="yes">_Help</attribute></WITH_MNEMONIC>
+diff --git a/src/terminal-prefs.cc b/src/terminal-prefs.cc
+index 437c58a..4db793f 100644
+--- a/src/terminal-prefs.cc
++++ b/src/terminal-prefs.cc
+@@ -729,7 +729,8 @@ terminal_prefs_show_preferences(GSettings* profile,
+   TerminalApp *app = terminal_app_get ();
+   PrefData *data;
+   GtkWidget *dialog, *tree_view;
+-  GtkWidget *show_menubar_button, *disable_mnemonics_button, *disable_menu_accel_button;
++  // ;madhu 181002
++  GtkWidget *show_menubar_button, *show_tabs_button, *disable_mnemonics_button, *disable_menu_accel_button;
+   GtkWidget *disable_shortcuts_button;
+   GtkWidget *theme_variant_label, *theme_variant_combo;
+   GtkWidget *new_terminal_mode_label, *new_terminal_mode_combo;
+diff --git a/src/terminal-window.cc b/src/terminal-window.cc
+index 36eb7ce..f758af0 100644
+--- a/src/terminal-window.cc
++++ b/src/terminal-window.cc
+@@ -950,6 +950,19 @@ action_tab_detach_cb (GSimpleAction *action,
+   gtk_window_present_with_time (GTK_WINDOW (new_window), gtk_get_current_event_time ());
+ }
+ 
++static void
++action_tabs_toggle_cb (GSimpleAction *action,
++                      GVariant *parameter,
++                      gpointer user_data)
++{
++  //;madhu 181002
++  TerminalWindow *window = TERMINAL_WINDOW( user_data );
++  GtkNotebook* notebook = GTK_NOTEBOOK ( terminal_window_get_mdi_container (window) );
++  gboolean setting = gtk_notebook_get_show_tabs (notebook);
++  gtk_notebook_set_show_tabs (notebook, setting ? FALSE : TRUE);
++  terminal_window_update_size (window);
++}
++
+ static void
+ action_help_cb (GSimpleAction *action,
+                 GVariant *parameter,
+@@ -1640,6 +1653,7 @@ terminal_window_update_tabs_actions_sensitivity (TerminalWindow *window)
+   g_simple_action_set_enabled (lookup_action (window, "tab-move-left"), not_first_lr || wrap);
+   g_simple_action_set_enabled (lookup_action (window, "tab-move-right"), not_last_lr || wrap);
+   g_simple_action_set_enabled (lookup_action (window, "tab-detach"), not_only);
++  g_simple_action_set_enabled (lookup_action (window, "tabs_toggle"), 1);
+ }
+ 
+ static GtkNotebook *
+@@ -1823,6 +1837,7 @@ screen_show_popup_menu_cb (TerminalScreen *screen,
+   /* Only show this if the WM doesn't show the menubar */
+   if (g_action_get_enabled (G_ACTION (lookup_action (window, "menubar-visible"))))
+     g_menu_append (section7, _("Show _Menubar"), "win.menubar-visible");
++  g_menu_append (section7, _("_Toggle Tabs"), "win.tabs-toggle");
+   if (g_action_get_enabled (G_ACTION (lookup_action (window, "leave-fullscreen"))))
+     g_menu_append (section7, _("L_eave Full Screen"), "win.leave-fullscreen");
+ 
+@@ -2141,6 +2156,8 @@ terminal_window_init (TerminalWindow *window)
+     { "select-all",          action_select_all_cb,       nullptr,   nullptr, nullptr },
+     { "size-to",             action_size_to_cb,          "(uu)", nullptr, nullptr },
+     { "tab-detach",          action_tab_detach_cb,       nullptr,   nullptr, nullptr },
++    //;madhu 181002
++    { "tabs-toggle",         action_tabs_toggle_cb,      nullptr,   nullptr, nullptr },
+     { "tab-move-left",       action_tab_move_left_cb,    nullptr,   nullptr, nullptr },
+     { "tab-move-right",      action_tab_move_right_cb,   nullptr,   nullptr, nullptr },
+     { "tab-switch-left",     action_tab_switch_left_cb,  nullptr,   nullptr, nullptr },
+-- 
+2.39.2.101.g768bb238c4
+

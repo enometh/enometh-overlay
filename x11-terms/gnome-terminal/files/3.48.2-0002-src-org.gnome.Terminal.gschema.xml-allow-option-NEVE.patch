@@ -1,0 +1,40 @@
+From d351fdde6dda2ca1932b2a0f2b7760e9520cb997 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 4 Oct 2018 21:51:11 +0530
+Subject: [PATCH 2/5] src/org.gnome.Terminal.gschema.xml: allow option NEVER
+ for TabsbarPolicy
+
+---
+ src/org.gnome.Terminal.gschema.xml | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/org.gnome.Terminal.gschema.xml b/src/org.gnome.Terminal.gschema.xml
+index 882b251..c7e8785 100644
+--- a/src/org.gnome.Terminal.gschema.xml
++++ b/src/org.gnome.Terminal.gschema.xml
+@@ -43,7 +43,7 @@
+    <enum id='org.gnome.Terminal.TabsbarPolicy'>
+     <value nick='always' value='0'/>
+     <value nick='automatic' value='1'/>
+-    <!-- <value nick='never' value='2'/> -->
++    <value nick='never' value='2'/><!-- ;madhu 181002 -->
+   </enum>
+ 
+    <enum id='org.gnome.Terminal.ThemeVariant'>
+@@ -410,6 +410,13 @@
+       <default>'disabled'</default>
+       <summary>Keyboard shortcut to toggle the visibility of the menubar</summary>
+     </key>
++
++    <!-- ;madhu 181002 -->
++    <key name="toggle-tabs" type="s">
++      <default>'disabled'</default>
++      <summary>Keyboard shortcut to toggle the visibility of the tabs</summary>
++    </key>
++
+     <key name="read-only" type="s">
+       <default>'disabled'</default>
+       <summary>Keyboard shortcut to toggle the read-only state</summary>
+-- 
+2.39.2.101.g768bb238c4
+

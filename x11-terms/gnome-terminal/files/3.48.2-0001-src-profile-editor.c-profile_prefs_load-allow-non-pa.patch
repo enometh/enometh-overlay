@@ -1,0 +1,26 @@
+From fc144c1431ffe2a3b1f8f57bea6530f6aec8aa6e Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 2 Oct 2018 20:44:19 +0530
+Subject: [PATCH 1/5] src/profile-editor.c: (profile_prefs_load): allow
+ non-pango-monospace fonts
+
+---
+ src/profile-editor.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/profile-editor.cc b/src/profile-editor.cc
+index 0cb99b6..7357ec4 100644
+--- a/src/profile-editor.cc
++++ b/src/profile-editor.cc
+@@ -1325,7 +1325,7 @@ profile_prefs_load (const char *uuid, GSettings *profile)
+                                             (GSettingsBindSetMapping) enum_to_string,
+                                             terminal_exit_action_get_type, nullptr);
+   w = (GtkWidget*) gtk_builder_get_object (builder, "font-selector");
+-  gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w), monospace_filter, nullptr, nullptr);
++//;madhu 181002  gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w), monospace_filter, nullptr, nullptr);
+ #if GTK_CHECK_VERSION (3, 24, 0)
+   gtk_font_chooser_set_level (GTK_FONT_CHOOSER (w),
+ 			      GtkFontChooserLevel(GTK_FONT_CHOOSER_LEVEL_FAMILY |
+-- 
+2.39.2.101.g768bb238c4
+
