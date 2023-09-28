@@ -1,7 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <>
+#   Time-stamp: <2023-09-28 04:38:14 MDT>
 #   Touched: Wed Jan 30 21:43:07 2019 +0530 <enometh@meer.net>
 #   Bugs-To: enometh@meer.net
 #   Status: Experimental.  Do not redistribute
@@ -12,7 +12,9 @@
 # ;madhu 200330 - use git
 # ;madhu 210921 - 1.12.1 - amd64 only - use git, no asdf, bootstrap from
 # ;               installed version, doc in dev-lisp/ccldoc, BP1
-# ;               bootrtrap patch
+# ;               bootstrap patch
+# ;
+# ;madhu 230928 - 1.12.2 GIT  v1.12.2-10-g7c2ebad
 #
 #
 # "eclass" notes
@@ -26,10 +28,12 @@
 # installed version of ${PN} to bootstrap the new version instead of
 # downloading a binary package.
 
-EAPI=7
+EAPI=8
 
 USE_GIT=true
 USE_BOOTSTRAP_INSTALLED=false
+
+MY_GIT_COMMIT="7c2ebad51efd68e8ca2f8f2186ed6f4c71c51079"
 
 inherit flag-o-matic multilib toolchain-funcs vcs-clean
 
@@ -48,14 +52,15 @@ MY_PN=ccl
 # installed clozurecl version instead of fetching a binary snapshot.
 
 x=${PV}
+if [[ $x =~ pre ]]; then
 x=$(ver_rs 2 - $x)
 x=$(ver_rs 3 . $x)
 x=${x/-pre./-dev.}
+fi
 
 my_base=${x%%.$(ver_cut 4)}
 PLVL=$(ver_cut 4)
 PLVL=${PLVL:+.${PLVL}}
-
 
 DESCRIPTION="Common Lisp implementation, derived from Digitool's MCL product"
 HOMEPAGE="https://ccl.clozure.com"
@@ -63,7 +68,8 @@ HOMEPAGE="https://ccl.clozure.com"
 SRC_URI=""
 if ${USE_GIT}; then
 	inherit git-r3
-	EGIT_REPO_URI="https://github.com/Clozure/ccl.git"
+#	EGIT_REPO_URI="https://github.com/Clozure/ccl.git"
+	EGIT_REPO_URI="https://github.com/enometh/ccl.git"
 
 	# control GIT variables:
 	# EGIT_BRANCH=master
@@ -75,9 +81,11 @@ if ${USE_GIT}; then
 	# EGIT_OVERRIDE_BRANCH_CLOZURE_CCL=madhu-tip
 	# EGIT_OVERRIDE_BRANCH_CLOZURE_CCL
 	# EGIT_OVERRIDE_COMMIT_CLOZURE_CCL
-	# EGIT_CLONE_TYPE=shallow
 
-	EGIT_OVERRIDE_BRANCH_CLOZURE_CCL=madhu-tip
+	EGIT_OVERRIDE_BRANCH_ENOMETH_CCL=madhu-tip
+
+	#;madhu 230928 TODO may need to manually copy shallow to $GIT_DIR
+	#EGIT_OVERRIDE_CLONE_TYPE_ENOMETH_CCL=shallow
 
 	# XXX set the git checkout dir to the ${S} directory that the source
 	# tarball would unpack into
@@ -91,7 +99,6 @@ else
 			https://github.com/Clozure/ccl/archive/v${my_base}.4.tar.gz -> ${P}.tar.gz
 		)"
 fi
-
 
 if ! ${USE_BOOTSTRAP_INSTALLED}; then 	# use the binary snapshots
 	SRC_URI+="
@@ -114,7 +121,6 @@ fi
 # get doc via dev-lisp/ccldoc package
 # doc? ( https://ccl.clozure.com/docs/ccl.html )
 
-
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
@@ -135,7 +141,6 @@ S="${WORKDIR}"/${MY_PN}-${x}
 ENVD="${T}/50ccl"
 
 PATCHES=(
-		#"${FILESDIR}"/${P}-no-pie-32.patch
 )
 
 # bootstrap patch
@@ -164,7 +169,7 @@ src_prepare() {
 	fi
 # no asdf
 #	cp "${EPREFIX}/usr/share/common-lisp/source/asdf/build/asdf.lisp" tools/ || die
-	cp ${FILESDIR}/${BP1} .
+	cp ${FILESDIR}/${BP1} . -apiv
 }
 
 src_configure() {
@@ -184,6 +189,7 @@ src_compile() {
 
 	unset CCL_DEFAULT_DIRECTORY
 	./${CCL_RUNTIME} -n -b -Q -e \
+	 "(ccl:set-development-environment)" -e \
 	 "(load \"$BP1\")" -e \
 	 '(ccl:rebuild-ccl :full t)' -e '(ccl:quit)' || die "Compilation failed"
 
@@ -208,7 +214,7 @@ src_install() {
 	echo "CCL_DEFAULT_DIRECTORY=${prefix_dir}" > "${ENVD}"
 	doenvd "${ENVD}"
 
-	dosym "${target_dir}/${CCL_RUNTIME}" /usr/bin/ccl
+	dosym "${prefix_dir}/${CCL_RUNTIME}" /usr/bin/ccl
 	dodoc doc/release-notes.txt
 
 	if use doc ; then
