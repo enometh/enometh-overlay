@@ -1,7 +1,7 @@
 # Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2023-09-28 04:38:14 MDT>
+#   Time-stamp: <>
 #   Touched: Wed Jan 30 21:43:07 2019 +0530 <enometh@meer.net>
 #   Bugs-To: enometh@meer.net
 #   Status: Experimental.  Do not redistribute
@@ -31,7 +31,7 @@
 EAPI=8
 
 USE_GIT=true
-USE_BOOTSTRAP_INSTALLED=false
+USE_BOOTSTRAP_INSTALLED=true
 
 MY_GIT_COMMIT="7c2ebad51efd68e8ca2f8f2186ed6f4c71c51079"
 
@@ -83,6 +83,7 @@ if ${USE_GIT}; then
 	# EGIT_OVERRIDE_COMMIT_CLOZURE_CCL
 
 	EGIT_OVERRIDE_BRANCH_ENOMETH_CCL=madhu-tip
+	EGIT_COMMIT=$MY_COMMIT
 
 	#;madhu 230928 TODO may need to manually copy shallow to $GIT_DIR
 	#EGIT_OVERRIDE_CLONE_TYPE_ENOMETH_CCL=shallow
