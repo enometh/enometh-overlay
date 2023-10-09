@@ -1,0 +1,88 @@
+From 1f3127414c27b20e0609b36a810d394aa745771a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 8 Oct 2023 10:02:30 +0530
+Subject: [PATCH 2/2] meson: make bwrap optional
+
+---
+ meson_options.txt   | 4 ++++
+ src/meson.build     | 7 +++----
+ src/validate-icon.c | 4 ++++
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/meson_options.txt b/meson_options.txt
+index 42da780..e943a97 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -1,3 +1,7 @@
++option('bwrap',
++       type: 'feature',
++       value: 'enabled',
++       description: 'Use bwrap (requires seccomp) for sandboxing for e.g. icon validation. Recommended.')
+ option('dbus-service-dir',
+        type: 'string',
+        value: '',
+diff --git a/src/meson.build b/src/meson.build
+index 44d2d51..9247db8 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -153,9 +153,9 @@ configure_file(
+   install_dir: dbus_service_dir,
+ )
+ 
+-helper_def = ''
++helper_defs = []
+ if bwrap.found()
+-  helper_def = '-DHELPER="@0@"'.format(bwrap.full_path())
++  helper_defs = helper_defs + [ '-DHELPER="@0@"'.format(bwrap.full_path()) ]
+ endif
+ 
+ executable(
+@@ -164,8 +164,7 @@ executable(
+   dependencies: [gdk_pixbuf_dep],
+   c_args: [
+       '-D_GNU_SOURCE=1',
+-      helper_def
+-  ],
++  ] +  helper_defs,
+   install: true,
+   install_dir: libexecdir,
+ )
+diff --git a/src/validate-icon.c b/src/validate-icon.c
+index 8aee542..6531862 100644
+--- a/src/validate-icon.c
++++ b/src/validate-icon.c
+@@ -119,6 +119,7 @@ validate_icon (const char *arg_width,
+   return 0;
+ }
+ 
++#ifdef HELPER
+ G_GNUC_NULL_TERMINATED
+ static void
+ add_args (GPtrArray *argv_array, ...)
+@@ -131,6 +132,7 @@ add_args (GPtrArray *argv_array, ...)
+     g_ptr_array_add (argv_array, g_strdup (arg));
+   va_end (args);
+ }
++#endif
+ 
+ const char *
+ flatpak_get_bwrap (void)
+@@ -147,6 +149,7 @@ flatpak_get_bwrap (void)
+ }
+ 
+ 
++#ifdef HELPER
+ static gboolean
+ path_is_usrmerged (const char *dir)
+ {
+@@ -249,6 +252,7 @@ rerun_in_sandbox (const char *arg_width,
+   g_printerr ("Icon validation: execvpe %s: %s\n", flatpak_get_bwrap (), g_strerror (errno));
+   return 1;
+ }
++#endif
+ 
+ static gboolean opt_sandbox;
+ 
+-- 
+2.39.2.101.g768bb238c4
+

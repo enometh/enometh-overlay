@@ -1,0 +1,41 @@
+From b3292c55802b565ef24ad6ed2da078bf295f554e Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 8 Oct 2023 09:56:26 +0530
+Subject: [PATCH 1/2] meson: make flatpak optional
+
+---
+ meson.build       | 2 +-
+ meson_options.txt | 4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 2254c0d..2bf6b09 100644
+--- a/meson.build
++++ b/meson.build
+@@ -21,7 +21,7 @@ endif
+ 
+ flatpak_intf_dir = get_option('flatpak-interfaces-dir')
+ if flatpak_intf_dir == ''
+-    flatpak_required = host_machine.system() in ['linux']
++    flatpak_required = get_option('flatpak')
+     flatpak_dep = dependency('flatpak', version: '>= 1.5.0', required : flatpak_required)
+     if flatpak_dep.found()
+       flatpak_intf_dir = flatpak_dep.get_variable(pkgconfig: 'interfaces_dir')
+diff --git a/meson_options.txt b/meson_options.txt
+index edcbcd8..42da780 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -2,6 +2,10 @@ option('dbus-service-dir',
+        type: 'string',
+        value: '',
+        description: 'directory for dbus service files (default: PREFIX/share/dbus-1/services)')
++option('flatpak',
++       type: 'feature',
++       value: 'enabled',
++       description: 'Enable flatpak integration')
+ option('flatpak-interfaces-dir',
+        type: 'string',
+        value: '',
+-- 
+2.39.2.101.g768bb238c4
+
