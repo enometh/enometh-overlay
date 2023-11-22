@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,11 +8,15 @@
 #   Copyright (C) 2022 Madhu.  All Rights Reserved.
 #
 # ;madhu 221013 1.20.2 targets mupdf-1.20.3
+# ;madhu 231122 1.23.6 targets mupdf-1.23.6 (not uninstalled, USE=-system-mupdf)
+# the new setup.py doesn't have a `build' action, only a `bdist_wheel' which distutils has no clue about. copy the old setup.py to make it work, see patch.
 
 EAPI=8
 
-DISTUTILS_USE_SETUPTOOLS=bdepend
-PYTHON_COMPAT=( python3_{8..11} )
+DISTUTILS_EXT=1
+PYTHON_COMPAT=( python3_{9..12} )
+DISTUTILS_USE_PEP517=
+PYTHON_COMPAT=( python3_{10..11} )
 inherit distutils-r1
 
 RESTRICT="test"
@@ -27,7 +31,7 @@ KEYWORDS="amd64 x86"
 SRC_URI="https://github.com/pymupdf/PyMuPDF/archive/refs/tags/${PV}.tar.gz -> ${P}.tar.gz"
 
 # target mupdf version
-MUPDF_PV="1.20.3"
+MUPDF_PV="1.23.6"
 
 # build mupdf from local git repo
 USE_GIT_FOR_MUPDF=true
@@ -38,7 +42,7 @@ if ${USE_GIT_FOR_MUPDF}; then
 	inherit git-r3
 	EGIT_REPO_URI="file:///build/git-mirror/mupdf.git"
 	EGIT_CLONE_TYPE="shallow"
-	EGIT_BRANCH="madhu-${MUPDF_PV}"
+	EGIT_BRANCH="tmp-madhu-${MUPDF_PV}"
 	EGIT_SUBMODULES=()
 	EGIT_CHECKOUT_DIR="${WORKDIR}/mupdf-${MUPDF_PV}-source"
 else
@@ -46,7 +50,7 @@ else
 fi
 
 reexport_env_vars() {
-	if use system-mupdf; then
+	if use system-mupdf ; then
 		export PYMUPDF_SETUP_MUPDF_BUILD=""
 		export PYMUPDF_SETUP_TGZ=""
 	else
@@ -58,11 +62,17 @@ reexport_env_vars() {
 src_prepare() {
 	default
 	if use system-mupdf; then
-		eapply ${FILESDIR}/PyMuPDF-1.20.2-no-third-party.patch
+		einfo "madhu 231122 NOT SUPPORTED for ${P}"
+		:
+#		eapply ${FILESDIR}/PyMuPDF-1.20.2-no-third-party.patch
 	elif ${USE_GIT_FOR_MUPDF}; then
-		eapply ${FILESDIR}/PyMuPDF-1.20.2-revert-mupdf-1.18-Makefile.patch
+# ;madhu 231122 -- reverted in tmp-madhu-${MUPDF_PV}
+		:
+#		eapply ${FILESDIR}/PyMuPDF-1.20.2-revert-mupdf-1.18-Makefile.patch
 	fi
 	reexport_env_vars
+	eapply 	${FILESDIR}/${P}-setup-old.py-package-fitz.table.patch
+	cp -apfvb --backup=t setup-old.py setup.py || die
 	distutils-r1_src_prepare
 }
 
