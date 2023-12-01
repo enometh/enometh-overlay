@@ -12,6 +12,7 @@
 #
 # ;madhu 230429 4.4.4
 # ;madhu 231007 5.0.6 -- use PYTHON_TARGETS=python3_9 PYTHON_SINGLE_TARGET=python3_9
+# ;madhu 231201 5.0.4 - cython update.
 
 EAPI=8
 USE_GIT=true
@@ -22,7 +23,7 @@ if ${USE_GIT} ||  [[ ${PV} = 9999* ]]; then
 #	EGIT_REPO_URI="file:///7/gtk/xpra/.git"
 # copy shallow manually
 #sudo -u portage cp /7/gtk/xpra/.git/shallow /gentoo/git3-src/7_gtk_xpra_.git/shallow
-#	EGIT_BRANCH=madhu-5.0.3
+	EGIT_BRANCH=madhu-5.0.4
 	KEYWORDS="~amd64 ~x86"
 else
 #	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
@@ -31,7 +32,7 @@ else
 	KEYWORDS="~amd64 ~x86"
 fi
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{9..12} )
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_SINGLE_IMPL=yes
 DISTUTILS_EXT=1
@@ -131,7 +132,7 @@ DEPEND+="
 #;madhu 231007 virtual-pandoc
 BDEPEND="
 	$(python_gen_cond_dep '
-		>=dev-python/cython-0.16[${PYTHON_USEDEP}]
+		>=dev-python/cython-3.0.6[${PYTHON_USEDEP}]
 	')
 	virtual/pkgconfig
 	doc? ( app-text/pandoc )
