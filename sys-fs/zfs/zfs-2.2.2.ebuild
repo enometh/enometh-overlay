@@ -12,6 +12,7 @@
 # ;madhu 220804 2.1.5-r5
 # ;madhu 230228 2.1.9 include patches
 # ;madhu 230803 2.2.0_rc3
+# ;madhu 231203 2.2.0 - phew. features off
 
 EAPI=8
 
