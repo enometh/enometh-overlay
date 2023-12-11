@@ -11,14 +11,15 @@
 # ;madhu 221023 1.2.0 1.2.0-45-gf6a5dea TODO:  call xdg_icon_cache_update() in pkg_postinst() and pkg_postrm() - checkout the specific commit
 # ;madhu 230517 1.3.2 (skip 1.3.rc-188-g0c154e2, build from tarball)
 # ;madhu 230517 1.3.2-r1 bc77eca4ee7d4d72 1.3.rc-144-g96a28b6 for 1.4alpha, use -examples without appstream
+# ;madhu 231210 1.4.0-r1 (1.5alpha) 1.4.0-33-g42c04e0
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{10..12} )
 inherit gnome.org meson python-any-r1 vala virtualx
 USE_GIT=true
 
-MY_COMMIT=96a28b62d189b79b4f2118b8e2ba40809d1cc914
+MY_COMMIT=42c04e038f19b2123560da662692d65480a67931
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
@@ -38,15 +39,16 @@ if ${USE_GIT}; then
 	EGIT_SUBMODULES=()
 fi
 
-KEYWORDS="~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 
 RDEPEND="
-	>=dev-libs/glib-2.72:2
-	>=gui-libs/gtk-4.9.5:4[introspection?]
+	>=dev-libs/glib-2.76:2
+	>=gui-libs/gtk-4.11.3:4[introspection?]
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
 "
-DEPEND="${RDEPEND}"
+DEPEND="${RDEPEND}
+	x11-base/xorg-proto"
 BDEPEND="
 	${PYTHON_DEPS}
 	vala? ( $(vala_depend) )
@@ -58,6 +60,7 @@ BDEPEND="
 "
 
 src_prepare() {
+	sed -i -e "s/^subdir('po')/#&/g" meson.build
 	echo > po/LINGUAS
 	default
 	use vala && vala_setup
