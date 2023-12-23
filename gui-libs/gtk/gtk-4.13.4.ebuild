@@ -259,7 +259,7 @@ src_install() {
 	else
 		mkdir -pv ${ED}/usr/share/gtk-doc/html
 		for i in gdk4 gdk4-wayland gdk4-x11 gsk4 gtk4; do
-			mv -iv ${ED}/usr/share/doc/$i /usr/share/gtk-doc/html/$i
+			mv -iv ${ED}/usr/share/doc/$i/$i /usr/share/gtk-doc/html/$i
 		done
 	fi
 }
