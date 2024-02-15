@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Gentoo Authors
+# Copyright 2022-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -12,14 +12,15 @@
 # ;madhu 230517 1.3.2 (skip 1.3.rc-188-g0c154e2, build from tarball)
 # ;madhu 230517 1.3.2-r1 bc77eca4ee7d4d72 1.3.rc-144-g96a28b6 for 1.4alpha, use -examples without appstream
 # ;madhu 231210 1.4.0-r1 (1.5alpha) 1.4.0-33-g42c04e0
+# ;madhu 240215 1.5_beta (1.5.beta-7-ge8f1582)
 
 EAPI=8
 
 PYTHON_COMPAT=( python3_{10..12} )
-inherit gnome.org meson python-any-r1 vala virtualx
+inherit gnome.org meson python-any-r1 vala virtualx gnome-versioning
 USE_GIT=true
 
-MY_COMMIT=42c04e038f19b2123560da662692d65480a67931
+MY_COMMIT=e8f15828e3daf9e6b0e67e3dfd4fb179ba8b37b4
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
@@ -37,6 +38,7 @@ if ${USE_GIT}; then
 	EGIT_COMMIT=$MY_COMMIT
 	EGIT_CLONE_TYPE=shallow
 	EGIT_SUBMODULES=()
+	S=${WORKDIR}/${P}
 fi
 
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
@@ -44,6 +46,7 @@ KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 RDEPEND="
 	>=dev-libs/glib-2.76:2
 	>=gui-libs/gtk-4.11.3:4[introspection?]
+	dev-libs/appstream:=
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
 "
@@ -55,8 +58,6 @@ BDEPEND="
 	dev-util/glib-utils
 	sys-devel/gettext
 	virtual/pkgconfig
-	examples? ( dev-libs/appstream-glib )
-	test? ( dev-libs/appstream-glib )
 "
 
 src_prepare() {
