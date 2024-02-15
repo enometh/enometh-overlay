@@ -1,0 +1,27 @@
+From 1a8b3c7c285a01c49337a58a218b613eb5c5cb9a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 15 Feb 2024 16:06:20 +0530
+Subject: [PATCH] doc/dbus/meson.build: xsltproc -nonet
+
+do not contact freedesktop.org after violating network-sandbox on
+build
+---
+ doc/dbus/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/doc/dbus/meson.build b/doc/dbus/meson.build
+index 12ebce6..911bf31 100644
+--- a/doc/dbus/meson.build
++++ b/doc/dbus/meson.build
+@@ -18,7 +18,7 @@ foreach iface: ifaces
+     iface_ref,
+     input: files(join_paths(gnome_session_dir, iface + '.xml')),
+     output: iface_ref,
+-    command: [xsltproc, '--output', '@OUTPUT@', spec_to_docbook, '@INPUT@']
++    command: [xsltproc, '--nonet',  '--output', '@OUTPUT@', spec_to_docbook, '@INPUT@']
+   )
+ endforeach
+ 
+-- 
+2.39.2.101.g768bb238c4
+

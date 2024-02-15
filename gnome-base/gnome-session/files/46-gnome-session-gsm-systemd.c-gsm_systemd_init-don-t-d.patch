@@ -1,0 +1,31 @@
+From 6091dde5118e3bd8ab6625623e9e6d96d50658c9 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 30 May 2019 08:56:27 +0530
+Subject: [PATCH 2/4] gnome-session/gsm-systemd.c: (gsm_systemd_init): don't
+ die without system bus
+
+---
+ gnome-session/gsm-systemd.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/gnome-session/gsm-systemd.c b/gnome-session/gsm-systemd.c
+index cf30a4b..6dc7be0 100644
+--- a/gnome-session/gsm-systemd.c
++++ b/gnome-session/gsm-systemd.c
+@@ -380,9 +380,11 @@ gsm_systemd_init (GsmSystemd *manager)
+         manager->priv->delay_inhibit_fd = -1;
+ 
+         bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
+-        if (bus == NULL)
+-                g_error ("Failed to connect to system bus: %s",
++        if (bus == NULL) {
++                g_warning ("Failed to connect to system bus: %s",
+                          error->message);
++                return;
++        }
+         manager->priv->sd_proxy =
+                 g_dbus_proxy_new_sync (bus,
+                                        0,
+-- 
+2.39.2.101.g768bb238c4
+
