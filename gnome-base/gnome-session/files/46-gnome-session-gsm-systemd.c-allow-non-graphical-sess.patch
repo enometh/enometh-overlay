@@ -1,0 +1,28 @@
+From 2c04746c853dd59adb4843adbf7aba9b53574853 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 23 Mar 2020 07:19:09 +0530
+Subject: [PATCH 3/4] gnome-session/gsm-systemd.c: allow non-graphical sessions
+
+---
+ gnome-session/gsm-systemd.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gnome-session/gsm-systemd.c b/gnome-session/gsm-systemd.c
+index 6dc7be0..f115c2f 100644
+--- a/gnome-session/gsm-systemd.c
++++ b/gnome-session/gsm-systemd.c
+@@ -283,9 +283,10 @@ _systemd_session_is_graphical (const char *session_id)
+         }
+ 
+         if (!g_strv_contains (graphical_session_types, type)) {
+-                g_debug ("Session '%s' is not a graphical session (type: '%s')",
++                g_debug ("Session '%s' is not a graphical session (type: '%s') - MADHU IGNORING",
+                          session_id,
+                          type);
++                return TRUE;
+                 return FALSE;
+         }
+ 
+-- 
+2.39.2.101.g768bb238c4
+
