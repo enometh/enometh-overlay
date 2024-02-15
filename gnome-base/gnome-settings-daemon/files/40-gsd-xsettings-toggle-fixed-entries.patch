@@ -1,0 +1,30 @@
+diff --git a/plugins/xsettings/gsd-xsettings-manager.c b/plugins/xsettings/gsd-xsettings-manager.c
+index 07ec543..57e7cd9 100644
+--- a/plugins/xsettings/gsd-xsettings-manager.c
++++ b/plugins/xsettings/gsd-xsettings-manager.c
+@@ -445,19 +445,19 @@ fixed_int (GsdXSettingsManager *manager,
+ #define DEFAULT_COLOR_PALETTE "black:white:gray50:red:purple:blue:light blue:green:yellow:orange:lavender:brown:goldenrod4:dodger blue:pink:light green:gray10:gray30:gray75:gray90"
+ 
+ static FixedEntry fixed_entries [] = {
+-        { "Gtk/MenuImages",          fixed_false_int },
+-        { "Gtk/ButtonImages",        fixed_false_int },
+-        { "Gtk/ShowInputMethodMenu", fixed_false_int },
+-        { "Gtk/ShowUnicodeMenu",     fixed_false_int },
++        { "Gtk/MenuImages",          fixed_true_int },
++        { "Gtk/ButtonImages",        fixed_true_int },
++        { "Gtk/ShowInputMethodMenu", fixed_true_int },
++        { "Gtk/ShowUnicodeMenu",     fixed_true_int },
+         { "Gtk/AutoMnemonics",       fixed_true_int },
+         { "Gtk/DialogsUseHeader",    fixed_true_int },
+         { "Gtk/SessionBusId",        fixed_bus_id },
+-        { "Gtk/ShellShowsAppMenu",   fixed_false_int },
++        { "Gtk/ShellShowsAppMenu",   fixed_true_int },
+         { "Gtk/ColorPalette",        fixed_string,      { .str = DEFAULT_COLOR_PALETTE } },
+         { "Net/FallbackIconTheme",   fixed_string,      { .str = "gnome" } },
+         { "Gtk/ToolbarStyle",        fixed_string,      { .str =  "both-horiz" } },
+         { "Gtk/ToolbarIconSize",     fixed_string,      { .str = "large" } },
+-        { "Gtk/CanChangeAccels",     fixed_false_int },
++        { "Gtk/CanChangeAccels",     fixed_true_int },
+         { "Gtk/TimeoutInitial",      fixed_int,         { .num = 200 } },
+         { "Gtk/TimeoutRepeat",       fixed_int,         { .num = 20 } },
+         { "Gtk/ColorScheme",         fixed_string,      { .str = "" } },
