@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,11 +8,13 @@
 #   Copyright (C) 2022 Madhu.  All Rights Reserved.
 #
 # ;madhu 221013 1.3.0 - leave DISTUTILS_USE_PEP517 empty to default to "legacy" with the dev-python/pyproject2setuppy hack instead of poetry
+# ;madhu 240216 1.3.4  use poetry-core
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{8..11} )
+PYTHON_COMPAT=( python3_{9..12} )
 inherit distutils-r1
+DISTUTILS_USE_PEP517=poetry
 
 MY_PN="pdf.tocgen"
 S=${WORKDIR}/${MY_PN}-${PV}
