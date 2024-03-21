@@ -36,7 +36,7 @@ PYTHON_REQ_USE="xml(+)"
 PYTHON_COMPAT=( python3_{9..12} )
 USE_RUBY="ruby26 ruby30 ruby31 ruby32"
 
-USE_GIT=true
+USE_GIT=false
 FAKEBUILD=true
 
 # FAKEBUILD skips cmake_src_compile and cmake_src_install, but copies
@@ -86,6 +86,7 @@ RESTRICT="test"
 # Softblocking webkit-gtk-2.38:4 as we going to use webkit-2.38:4.1's WebKitDriver binary
 
 # 	media-libs/libglvnd
+# 	!<net-libs/webkit-gtk-2.38:4
 RDEPEND="
 	>=x11-libs/cairo-1.16.0[X?]
 	>=media-libs/fontconfig-2.13.0:1.0
@@ -150,7 +151,6 @@ RDEPEND="
 	systemd? ( sys-apps/systemd:= )
 	elogind? (  sys-auth/elogind:= )
 	gamepad? ( >=dev-libs/libmanette-0.2.4 )
-	!<net-libs/webkit-gtk-2.38:4
 
 	webdriver? ( !net-libs/webkit-gtk-webdriver )
 	!webdriver? ( net-libs/webkit-gtk-webdriver )
