@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <2022-07-05 17:06:32 IST>
@@ -11,9 +11,11 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{8..10} pypy3 )
+DISTUTILS_USE_PEP517=setuptools
+PYTHON_COMPAT=( python3_{9..12} pypy3 )
+PYTHON_REQ_USE="ssl(+),threads(+)"
 
-inherit bash-completion-r1 distutils-r1
+inherit bash-completion-r1 distutils-r1 pypi
 
 DESCRIPTION="The PyPA recommended tool for installing Python packages"
 HOMEPAGE="
@@ -21,9 +23,16 @@ HOMEPAGE="
 	https://pypi.org/project/pip/
 	https://github.com/pypa/pip/
 "
-SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
+# SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
+#SRC_URI="
+#	https://github.com/pypa/pip/archive/${PV}.tar.gz -> ${P}.gh.tar.gz
+#"
+# files.pythonhosted.org/packages/94/59/6638090c25e9bc4ce0c42817b5a234e183872a1129735a9330c472cc2056/pip-24.0.tar.gz /gentoo/distfiles
 
-LICENSE="FTL"
+LICENSE="MIT"
+# bundled deps
+LICENSE+=" Apache-2.0 BSD BSD-2 ISC LGPL-2.1+ MPL-2.0 PSF-2"
+
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
