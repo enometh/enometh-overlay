@@ -1,0 +1,45 @@
+From 8a89e3de5bbf2e39487042b5b9919bb2dc0d463b Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 17 Apr 2024 14:02:20 +0530
+Subject: [PATCH] gci/gci_convert.linux.{86_64,powerpc64}: fix stray quotes in
+ #if 0 blocks
+
+clang-14 doesn't choke but gcc-3.2.1 chokes
+---
+ gci/gci_convert.linux.86_64     | 4 ++--
+ gci/gci_convert.linux.powerpc64 | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/gci/gci_convert.linux.86_64 b/gci/gci_convert.linux.86_64
+index 3164cc2..936ba63 100644
+--- a/gci/gci_convert.linux.86_64
++++ b/gci/gci_convert.linux.86_64
+@@ -57,8 +57,8 @@
+ 
+ #if 0
+ 
+-             AMD's Opteron uses argument passing on the floating point unit
+-             which isn't supported by GCI!
++             AMD\'s Opteron uses argument passing on the floating point unit
++             which isn\'t supported by GCI!
+ #endif
+ #define GCI_Fr        strtold
+ #define GCI_Fw(s,v)   sprintf( s, "%.*LE", LDBL_MANT_DIG/3, v )
+diff --git a/gci/gci_convert.linux.powerpc64 b/gci/gci_convert.linux.powerpc64
+index 5df7170..378cb09 100644
+--- a/gci/gci_convert.linux.powerpc64
++++ b/gci/gci_convert.linux.powerpc64
+@@ -55,8 +55,8 @@
+ 
+ #if 0
+ 
+-             AMD's Opteron uses argument passing on the floating point unit
+-             which isn't supported by GCI!
++             AMD\'s Opteron uses argument passing on the floating point unit
++             which isn\'t supported by GCI!
+ 
+ #define GCI_Fr       strtold
+ #define GCI_Fw(s,v)  sprintf( s, "%.*LE", LDBL_MANT_DIG/3, v )
+-- 
+2.39.2.101.g768bb238c4
+
