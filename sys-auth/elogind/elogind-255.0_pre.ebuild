@@ -1,7 +1,7 @@
 # Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2022-12-12 07:27:26 IST>
+#   Time-stamp: <>
 #   Touched: Fri Apr 26 13:26:46 2019 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -29,6 +29,7 @@
 # ;madhu 221212 250.0_pre
 # ;madhu 230115 252.0_pre
 # ;madhu 240116 254.0_pre
+# ;madhu 240507 255.0_pre loses merged-usr, git patches installation of emptydirs, udev_reload
 
 EAPI=8
 USE_GIT=true
@@ -120,6 +121,8 @@ src_configure() {
 	local debugmode=""
 	if use debug; then
 		debugmode="-Ddebug-extra=['elogind']" #'hashmap'
+#;madhu 240507
+		EMESON_BUILDTYPE="debug"
 	fi
 
 	# Duplicating C[XX]FLAGS in LDFLAGS is deprecated and will become
@@ -135,22 +138,24 @@ src_configure() {
 		-Dpamlibdir=$(getpam_mod_dir)
 		-Dudevrulesdir="${EPREFIX}$(get_udevdir)"/rules.d
 		--libdir="${EPREFIX}"/usr/$(get_libdir)
-		-Drootlibdir="${EPREFIX}"/$(get_libdir)
-		-Drootlibexecdir="${EPREFIX}"/$(get_libdir)/elogind
-		-Drootprefix="${EPREFIX}/"
+#;madhu 240507 - merged-usr shennanigans
+#		-Drootlibdir="${EPREFIX}"/$(get_libdir)
+#		-Drootlibexecdir="${EPREFIX}"/$(get_libdir)/elogind
+#		-Drootprefix="${EPREFIX}/"
 		-Dbashcompletiondir="${EPREFIX}/usr/share/bash-completion/completions"
 		-Dman=auto
 		-Dsmack=true
 		-Dcgroup-controller=openrc
 		-Ddefault-hierarchy=${cgroupmode}
 		-Ddefault-kill-user-processes=false
-		-Dacl=$(usex acl true false)
+		-Dacl=$(usex acl enabled disabled)
 # html docs are a mess of broken symlinks
 #		-Dhtml=$(usex doc auto false)
-		-Daudit=$(usex audit true false)
-		--buildtype $(usex debug debug release)
-		-Dpam=$(usex pam true false)
-		-Dselinux=$(usex selinux true false)
+		-Daudit=$(usex audit enabled disabled)
+##;madhu 240507 - portage forces the use of the EMESON_BUILDTYPE envvar
+# 		--buildtype $(usex debug debug release)
+		$(meson_feature pam)
+		-Dselinux=$(usex selinux enabled disabled)
 		-Dtests=$(usex test true false)
 		-Dutmp=$(usex elibc_musl false true)
 
@@ -170,7 +175,7 @@ src_install() {
 
 	newinitd "${FILESDIR}"/${PN}.init-r1 ${PN}
 
-	sed -e "s|@libdir@|$(get_libdir)|" "${FILESDIR}"/${PN}.conf.in > ${PN}.conf || die
+	sed -e "s|@libexecdir@|$(get_libdir)|" "${FILESDIR}"/${PN}.conf.in-r1 > ${PN}.conf || die
 	newconfd ${PN}.conf ${PN}
 }
 
@@ -207,4 +212,12 @@ pkg_postinst() {
 			elog "when the first service calls it via dbus."
 		fi
 	fi
+}
+
+pkg_postinst() {
+	udev_reload
+}
+
+pkg_postrm() {
+	udev_reload
 }
