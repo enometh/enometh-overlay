@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -11,20 +11,20 @@
 # ;madhu 190317 - convert to a 9999 build
 # ;madhu 191125 - copy to 1.16.3-r2
 # ;madhu 211121 - 21.2.1-r5 (USE_GIT) 21.2.1-115-g6aa02de4c
+# ;madhu 240516 - 24.5.10  (USE_GIT) 24.5.10-248-gb32ccc3d8
 
-EAPI=7
+EAPI=8
 
 USE_GIT=true
 
 inherit readme.gentoo-r1
 
-MY_P=ecl-${PV}
 DESCRIPTION="ECL is an embeddable Common Lisp implementation"
 HOMEPAGE="https://common-lisp.net/project/ecl/"
 
 if [[ "${PV}" == 9999 ]] || ${USE_GIT} ; then
-	#EGIT_REPO_URI="https://gitlab.com/embeddable-common-lisp/ecl.git"
-	EGIT_REPO_URI="https://gitlab.common-lisp.net/embeddable-common-lisp/ecl.git"
+	EGIT_REPO_URI="https://gitlab.com/embeddable-common-lisp/ecl.git"
+#	EGIT_REPO_URI="https://gitlab.common-lisp.net/embeddable-common-lisp/ecl.git"
 	inherit git-r3
 
 	EGIT_BRANCH="develop"
@@ -35,36 +35,35 @@ if [[ "${PV}" == 9999 ]] || ${USE_GIT} ; then
 #S="${EGIT_CHECKOUT_DIR}"
 
 else
-SRC_URI="https://common-lisp.net/project/ecl/static/files/release/${MY_P}.tgz"
+SRC_URI="https://common-lisp.net/project/ecl/static/files/release/${P}.tgz"
 S="${WORKDIR}/${MY_P}"
 fi
 
 LICENSE="BSD-2 LGPL-2.1+"
 SLOT="0/${PV}"
-KEYWORDS="~amd64 ~ppc ~sparc ~x86 ~amd64-linux"
-IUSE="cxx +debug emacs gengc precisegc cpu_flags_x86_sse +threads +unicode X"
-# test phase only works if ecls already installed #516876
+KEYWORDS="amd64 ~ppc ppc64 ~sparc x86 ~amd64-linux"
+IUSE="cxx debug emacs gengc precisegc cpu_flags_x86_sse +threads +unicode X"
+# test phase only works if ecl already installed #516876
 RESTRICT="test"
 
 #CDEPEND		">=dev-lisp/asdf-2.33-r3:="
 #DEPEND		app-text/texi2html
+#RDEPEND virtual/libffi:=
 
 RDEPEND="dev-libs/gmp:0
-		virtual/libffi:=
 		dev-libs/libatomic_ops
 		>=dev-libs/boehm-gc-7.1[threads?]"
 DEPEND="${RDEPEND}
-		app-text/texi2html
+		sys-apps/texinfo
 		emacs? ( >=app-editors/emacs-23.1:* >=app-eselect/eselect-emacs-1.12 )"
 
-#S="${WORKDIR}"/${MY_P}
 DOCS=( README.md CHANGELOG )
 
 PATCHES=(
 	"${FILESDIR}/${PN}-16.1.3-headers-gentoo.patch"
 	"${FILESDIR}/${PN}-16.1.3-build.patch"
 	"${FILESDIR}/${PN}-21.2.1-donotcompressinfo.patch"
-	"${FILESDIR}/${PN}-21.2.1-extend-ffi-defcallback-to-support-exported-symbols.patch"
+	"${FILESDIR}/${PN}-24.5.10-extend-ffi-defcallback-to-support-exported-symbols.patch"
 )
 
 src_prepare() {
@@ -76,6 +75,7 @@ src_prepare() {
 #		$(use_with unicode unicode-names) \
 # 		--enable-longdouble=yes \
 # 		--with-defsystem \
+#		--enable-libatomic=system \
 
 src_configure() {
 	econf \
@@ -83,14 +83,13 @@ src_configure() {
 		--enable-boehm=system \
 		--with-asdf=no \
 		--with-defsystem=no \
-		--with-ieee-fp=yes
+		--with-ieee-fp=yes \
 		--with-dffi \
 		$(use_with cxx) \
 		$(use_enable gengc) \
 		$(use_enable precisegc) \
 		$(use_enable debug) \
 		$(use_with debug debug-cflags) \
-		--enable-libatomic=system \
 		$(use_with cpu_flags_x86_sse sse) \
 		$(use_enable threads) \
 		$(use_enable unicode) \
@@ -108,10 +107,13 @@ src_compile() {
 		touch build/TAGS
 	fi
 
+	## for /proc/self/clear_refs (see #867052)
+	addpredict /proc
+
 	emake
 }
 
-src_install () {
+src_install() {
 	default
 
 	readme.gentoo_create_doc

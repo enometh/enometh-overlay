@@ -1,4 +1,4 @@
-From 4908ccae5fa90c93235c299766d1a67c435a7f2f Mon Sep 17 00:00:00 2001
+From 68e75402b12dafd74e5c22e297552095a6beb7fd Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Sun, 7 Jun 2020 11:28:57 +0530
 Subject: [PATCH] extend ffi:defcallback to support exported symbols
@@ -9,8 +9,8 @@ elements then a non-NIL third element indicates that the callback should
 be exported.  In this case the c-name of the callback is derived from
 NAME via LISP-TO-C-NAME.
 
-* src/cmp/cmppass2-ffi.lsp: (t3-defcallback): arrange to export this
-c-name with extern linkage
+* src/cmp/cmpbackend-cxx/cmppass2-top.lsp: (t3defcallback): arrange to
+export this c-name with extern linkage
 
 This patch extends ffi:defcallback so the NAME argument can be
 of the form (lisp-name call-type export-p)
@@ -41,16 +41,50 @@ main(int argc, char **argv)
 
 $ gcc hello_eg.c -L . -lhello -ldl -lecl
 $ LD_LIBRARY_PATH=`pwd` ./a.out
+
+240516 - t3callback
 ---
- src/cmp/cmppass1-ffi.lsp | 25 ++++++++++++++++++-------
- src/cmp/cmppass2-ffi.lsp | 14 +++++++++++---
+ src/cmp/cmpbackend-cxx/cmppass2-top.lsp | 14 +++++++++++---
+ src/cmp/cmppass1-ffi.lsp                | 25 ++++++++++++++++++-------
  2 files changed, 29 insertions(+), 10 deletions(-)
 
+diff --git a/src/cmp/cmpbackend-cxx/cmppass2-top.lsp b/src/cmp/cmpbackend-cxx/cmppass2-top.lsp
+index 85fdcfe3d..8348e67de 100644
+--- a/src/cmp/cmpbackend-cxx/cmppass2-top.lsp
++++ b/src/cmp/cmpbackend-cxx/cmppass2-top.lsp
+@@ -265,7 +265,9 @@
+     (wt-nl-close-many-braces 0)))
+ 
+ (defun t3callback (lisp-name c-name c-name-constant return-type return-type-code
+-                       arg-types arg-type-constants call-type &aux (return-p t))
++                       arg-types arg-type-constants call-type
++                       export-callback-p
++                       &aux (return-p t))
+   (declare (ignore lisp-name))
+   (with-bir-env (:env 0 :level 0 :volatile "volatile ")
+     (when (eql return-type :void)
+@@ -278,8 +280,14 @@
+                   (:stdcall "__stdcall ")
+                   (t (cmperr "DEFCALLBACK does not support ~A as calling convention"
+                              call-type)))))
+-      (wt-nl-h "static " return-type-name " " fmod c-name "(")
+-      (wt-nl1  "static " return-type-name " " fmod c-name "(")
++      (wt-nl-h (if export-callback-p
++                   "extern "
++                   "static ")
++               return-type-name " " fmod c-name "(")
++      (wt-nl1  (if export-callback-p
++                   "__attribute__((visibility(\"default\"))) "
++                   "static ")
++               return-type-name " " fmod c-name "(")
+       (loop with comma = ""
+             for var in vars
+             for type in arg-types
 diff --git a/src/cmp/cmppass1-ffi.lsp b/src/cmp/cmppass1-ffi.lsp
-index d3c19ae3e..04e9c80c5 100644
+index 84be2eeef..466fd3cc6 100644
 --- a/src/cmp/cmppass1-ffi.lsp
 +++ b/src/cmp/cmppass1-ffi.lsp
-@@ -144,6 +144,13 @@
+@@ -138,6 +138,13 @@
  ;;; types like :fixnum or :sse2. Another argument against such
  ;;; approach is semantic equivalence between interpreted and compiled
  ;;; versions of the special form. -- jd 2019-11-27
@@ -64,7 +98,7 @@ index d3c19ae3e..04e9c80c5 100644
  (defun c1-defcallback (args)
    (destructuring-bind (name return-type arg-list &rest body)
        args
-@@ -152,12 +159,15 @@
+@@ -146,12 +153,15 @@
            ((and (consp return-type)
                  (member (first return-type) '(* array)))
             (setf return-type :pointer-void)))
@@ -86,7 +120,7 @@ index d3c19ae3e..04e9c80c5 100644
        (dolist (i arg-list)
          (unless (consp i)
            (cmperr "Syntax error in CALLBACK form: C type is missing in argument ~A "i))
-@@ -170,7 +180,8 @@
+@@ -164,7 +174,8 @@
                    (foreign-elt-type-code return-type)
                    (reverse arg-types)
                    (reverse arg-type-constants)
@@ -96,38 +130,6 @@ index d3c19ae3e..04e9c80c5 100644
              *callbacks*)
        (c1expr
         `(progn
-diff --git a/src/cmp/cmppass2-ffi.lsp b/src/cmp/cmppass2-ffi.lsp
-index 09d367cf2..86a1113f9 100644
---- a/src/cmp/cmppass2-ffi.lsp
-+++ b/src/cmp/cmppass2-ffi.lsp
-@@ -494,7 +494,9 @@
-                       collect c))))
- 
- (defun t3-defcallback (lisp-name c-name c-name-constant return-type return-type-code
--                       arg-types arg-type-constants call-type &aux (return-p t))
-+                       arg-types arg-type-constants call-type
-+                       export-callback-p
-+                       &aux (return-p t))
-   (when (eql return-type :void)
-     (setf return-p nil))
-   (let ((return-type-name (rep-type->c-name (ffi::%convert-to-arg-type return-type)))
-@@ -503,8 +505,14 @@
-                 (:stdcall "__stdcall ")
-                 (t (cmperr "DEFCALLBACK does not support ~A as calling convention"
-                            call-type)))))
--    (wt-nl-h "static " return-type-name " " fmod c-name "(")
--    (wt-nl1  "static " return-type-name " " fmod c-name "(")
-+    (wt-nl-h (if export-callback-p
-+                 "extern "
-+                 "static ")
-+             return-type-name " " fmod c-name "(")
-+    (wt-nl1  (if export-callback-p
-+                 "__attribute__((visibility(\"default\"))) "
-+                 "static ")
-+             return-type-name " " fmod c-name "(")
-     (loop with comma = ""
-           for n from 0
-           for type in arg-types
 -- 
-2.31.0
+2.39.2.101.g768bb238c4
 
