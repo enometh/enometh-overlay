@@ -1,0 +1,31 @@
+From 91af6315cd126be7c3dd43294a51bfb838acc1ee Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 09:23:57 +0530
+Subject: [PATCH] cmake/modules/luajit.cmake: use bundled luajit 2.1.0-beta3
+
+---
+ cmake/modules/luajit.cmake | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/cmake/modules/luajit.cmake b/cmake/modules/luajit.cmake
+index 77b6c45..c991c2a 100644
+--- a/cmake/modules/luajit.cmake
++++ b/cmake/modules/luajit.cmake
+@@ -82,8 +82,12 @@ else()
+ 			else()
+ 				ExternalProject_Add(luajit
+ 					PREFIX "${PROJECT_BINARY_DIR}/luajit-prefix"
+-					GIT_REPOSITORY "https://github.com/LuaJIT/LuaJIT"
+-					GIT_TAG "f3c856915b4ce7ccd24341e8ac73e8a9fd934171"
++#					GIT_REPOSITORY "https://github.com/LuaJIT/LuaJIT"
++#					GIT_TAG "f3c856915b4ce7ccd24341e8ac73e8a9fd934171"
++				URL "https://github.com/LuaJIT/LuaJIT/archive/v2.1.0-beta3.tar.gz"
++				URL_HASH "SHA256=409f7fe570d3c16558e594421c47bdd130238323c9d6fd6c83dedd2aaeb082a8"
++
++				DOWNLOAD_EXTRACT_TIMESTAMP 1
+ 					CONFIGURE_COMMAND ""
+ 					BUILD_COMMAND make
+ 					BUILD_IN_SOURCE 1
+-- 
+2.39.2.101.g768bb238c4
+

@@ -1,0 +1,53 @@
+From c5f8c6035a3ed9b9c5c46b902ef63dc63fe12e22 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 13:10:53 +0530
+Subject: [PATCH 4/5] userspace/sysdig/CMakeLists.txt: link {c,}sysdig with
+ JSONCPP_LIB
+
+---
+ userspace/sysdig/CMakeLists.txt | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/userspace/sysdig/CMakeLists.txt b/userspace/sysdig/CMakeLists.txt
+index 60f8072..35209dd 100644
+--- a/userspace/sysdig/CMakeLists.txt
++++ b/userspace/sysdig/CMakeLists.txt
+@@ -104,13 +104,22 @@ target_include_directories(
+ 		..
+ 	)
+ 
++# include(jsoncpp)
++#	if (USE_BUNDLED_JSONCPP)
++#	  add_dependencies(sysdig jsoncpp)
++#	  add_dependencies(csysdig jsoncpp)
++#	endif()
++
++
+ if(NOT WIN32)
+ 	include_directories(${PROJECT_BINARY_DIR}/driver/src)
+ 
+ 	target_link_libraries(sysdig
+ 		sinsp
+ 		"${LUAJIT_LIB}"
+-		"${YAMLCPP_LIB}")
++		"${YAMLCPP_LIB}"
++		"${JSONCPP_LIB}"
++	      )
+ 
+ 	if(USE_BUNDLED_NCURSES)
+ 		add_dependencies(csysdig ncurses)
+@@ -120,7 +129,10 @@ if(NOT WIN32)
+ 		sinsp
+ 		"${LUAJIT_LIB}"
+ 		"${CURSES_LIBRARIES}"
+-		"${YAMLCPP_LIB}")
++		"${YAMLCPP_LIB}"
++		"${JSONCPP_LIB}"
++
++	      )
+ 
+ 	add_subdirectory(man)
+ 
+-- 
+2.39.2.101.g768bb238c4
+

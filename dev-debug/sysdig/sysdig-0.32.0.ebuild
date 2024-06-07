@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <2023-07-04 11:06:15 IST>
@@ -54,6 +54,7 @@ RDEPEND="${LUA_DEPS}
 	app-misc/jq
 	dev-cpp/tbb:=
 	dev-cpp/yaml-cpp:=
+	dev-libs/jsoncpp
 	dev-libs/libb64:=
 	dev-libs/openssl:=
 	dev-libs/protobuf:=
@@ -61,19 +62,25 @@ RDEPEND="${LUA_DEPS}
 	net-libs/grpc:=
 	net-misc/curl
 	sys-libs/ncurses:=
-	sys-libs/zlib:="
+	sys-libs/zlib:=
+	virtual/libelf:="
 
 DEPEND="${RDEPEND}
 	dev-cpp/nlohmann_json
 	dev-cpp/valijson
 	virtual/os-headers"
 
-## for now pin the driver to the same ebuild version
-##PDEPEND="modules? ( =dev-util/scap-driver-${PV}* )"
+# for now pin the driver to the same ebuild version
+#PDEPEND="modules? ( =dev-debug/scap-driver-${PV}* )"
 
 src_prepare() {
 	# manually apply patch to falcosecurity-libs dependency
 	sed -i -e 's:-ggdb::' CMakeLists.txt || die
+
+	# force C++14 standard for libs & main
+	sed -i -e 's:-std=c++0x:-std=c++14:' "${WORKDIR}"/libs-${LIBS_COMMIT}/cmake/modules/CompilerFlags.cmake || die
+	sed -i -e 's:-std=c++0x:-std=c++14:' -e 's:-ggdb::'  CMakeLists.txt || die
+
 	cmake_src_prepare
 }
 
@@ -84,7 +91,7 @@ src_configure() {
 		-DBUILD_BPF=ON
 
 		-DUSE_BUNDLED_B64=OFF
-		-DUSE_BUNDLED_JSOCNCPP=OFF
+		-DUSE_BUNDLED_JSONCPP=OFF
 		-DUSE_BUNDLED_RE2=OFF
 		-DUSE_BUNDLED_TBB=OFF
 		-DUSE_BUNDLED_VALIJSON=OFF
@@ -114,6 +121,12 @@ src_configure() {
 	)
 
 	cmake_src_configure
+}
+
+src_compile() {
+	export ARCH="$(tc-arch-kernel)"
+	echo src_compile CCACHE_DIR=$CCACHE_DIR KBUILD_OUTPUT=$KBUILD_OUTPUT ARCH=$ARCH
+	cmake_src_compile
 }
 
 src_install() {

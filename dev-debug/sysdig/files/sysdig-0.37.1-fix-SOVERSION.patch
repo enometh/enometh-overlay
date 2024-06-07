@@ -1,0 +1,46 @@
+From aafcf303756c1c51bd7a507b6db68e6b3ea24b1b Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 13:12:12 +0530
+Subject: [PATCH 5/5] cmake/modules/falcosecurity-libs.cmake: fix SOVERSIONS
+
+Otherwise with BUILD_SHARED_LIBS=1 the sharedlib version is set to
+SOVERSION.
+
+- unconditionally set FALCOSECURITY_LIBS_VERSION to current version even
+  if user is setting FALCOSECURITY_LIBS_SOURCE_DIR to cmake.
+- set  FALCOSECURITY_SHARED_LIBS_SOVERSION from it just like
+  falcoscecurtylibs does
+---
+ cmake/modules/falcosecurity-libs.cmake | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/cmake/modules/falcosecurity-libs.cmake b/cmake/modules/falcosecurity-libs.cmake
+index 247c8b8..8a6b560 100644
+--- a/cmake/modules/falcosecurity-libs.cmake
++++ b/cmake/modules/falcosecurity-libs.cmake
+@@ -25,7 +25,7 @@ file(MAKE_DIRECTORY ${FALCOSECURITY_LIBS_CMAKE_WORKING_DIR})
+ set(USE_BUNDLED_DRIVER OFF CACHE BOOL "")
+ 
+ if(FALCOSECURITY_LIBS_SOURCE_DIR)
+-  set(FALCOSECURITY_LIBS_VERSION "0.0.0-local")
++  set(FALCOSECURITY_LIBS_VERSION "0.16.0")
+   message(STATUS "Using local version of falcosecurity/libs: '${FALCOSECURITY_LIBS_SOURCE_DIR}'")
+ else()
+   # FALCOSECURITY_LIBS_VERSION accepts a git reference (branch name, commit hash, or tag) to the falcosecurity/libs repository.
+@@ -103,6 +103,13 @@ endif()
+ 
+ include(CompilerFlags)
+ 
++include(versions)
++if (BUILD_SHARED_LIBS)
++        get_shared_libs_versions(FALCOSECURITY_SHARED_LIBS_VERSION FALCOSECURITY_SHARED_LIBS_SOVERSION)
++        message(STATUS "Shared library version: ${FALCOSECURITY_SHARED_LIBS_VERSION}")
++        message(STATUS "Shared library soversion: ${FALCOSECURITY_SHARED_LIBS_SOVERSION}")
++endif()
++
+ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   include(driver)
+ endif()
+-- 
+2.39.2.101.g768bb238c4
+
