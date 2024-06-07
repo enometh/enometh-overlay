@@ -1,0 +1,26 @@
+From 402077ab7e0d1d570767a1b6265229f808726eea Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 07:43:08 +0530
+Subject: [PATCH 2/2] driver/bpf/configure/Makefile.inc.in: adjust env -i to
+ include KBUILD_OUTPUT and CCACHE_DIR
+
+---
+ driver/bpf/configure/Makefile.inc.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/driver/bpf/configure/Makefile.inc.in b/driver/bpf/configure/Makefile.inc.in
+index 71db39f..d963fb0 100644
+--- a/driver/bpf/configure/Makefile.inc.in
++++ b/driver/bpf/configure/Makefile.inc.in
+@@ -1,7 +1,7 @@
+ MODULE_MAKEFILE_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+ 
+ # Run the module build.sh (wrapper for make) script with an empty environment, but PATH
+-HAS_@CONFIGURE_MODULE@ := $(shell env -i CLANG="$(CLANG)" LLC="$(LLC)" PATH="$(PATH)" KERNELDIR="$(KERNELDIR)" sh $(MODULE_MAKEFILE_DIR)/build.sh ; echo $$?)
++HAS_@CONFIGURE_MODULE@ := $(shell env -i CCACHE_DIR="$(CCACHE_DIR)" KBUILD_OUTPUT="$(KBUILD_OUTPUT)" CLANG="$(CLANG)" LLC="$(LLC)" PATH="$(PATH)" KERNELDIR="$(KERNELDIR)" sh $(MODULE_MAKEFILE_DIR)/build.sh ; echo $$?)
+ 
+ ifeq ($(HAS_@CONFIGURE_MODULE@),0)
+ $(info [configure-bpf] Setting HAS_@CONFIGURE_MODULE@ flag)
+-- 
+2.39.2.101.g768bb238c4
+

@@ -1,0 +1,28 @@
+From e1cc0e927a0004983d31f58deb1b645b1d52c302 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 12:52:00 +0530
+Subject: [PATCH 1/5] cmake/modules/falcosecurity-libs.cmake: include
+ include(CompilerFlags)
+
+otherwise with BUILD_SHARED_LIBS=1 does not pick up ENABLE_PIC and
+-DCMAKE_POSITION_INDEPENDENT_CODE and linking fails
+---
+ cmake/modules/falcosecurity-libs.cmake | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/cmake/modules/falcosecurity-libs.cmake b/cmake/modules/falcosecurity-libs.cmake
+index 7cee8a3..7a1ce33 100644
+--- a/cmake/modules/falcosecurity-libs.cmake
++++ b/cmake/modules/falcosecurity-libs.cmake
+@@ -101,6 +101,8 @@ elseif(CREATE_TEST_TARGETS AND NOT COMPILER_SUPPORTS_CXX17)
+ 	message(FATAL_ERROR "Your compiler doesn't support c++17: cannot include gtest and create test targets.")
+ endif()
+ 
++include(CompilerFlags)
++
+ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+   include(driver)
+ endif()
+-- 
+2.39.2.101.g768bb238c4
+
