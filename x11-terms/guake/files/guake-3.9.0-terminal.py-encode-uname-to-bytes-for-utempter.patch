@@ -1,0 +1,28 @@
+From 785b49496d72991cb11043e701075c01c2263797 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 7 Jun 2024 06:50:56 +0530
+Subject: [PATCH] guake/terminal.py: encode uname to bytes before giving it to
+ utempter
+
+This prevents a single character from showing up
+in the utmp_host field in utmp
+---
+ guake/terminal.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/guake/terminal.py b/guake/terminal.py
+index fd5684e..99a5fa4 100644
+--- a/guake/terminal.py
++++ b/guake/terminal.py
+@@ -595,7 +595,7 @@ class GuakeTerminal(Vte.Terminal):
+             raise TypeError("pid must be an int")
+ 
+         if libutempter is not None:
+-            libutempter.utempter_add_record(self.get_pty().get_fd(), os.uname()[1])
++            libutempter.utempter_add_record(self.get_pty().get_fd(), str.encode(os.uname()[1]))
+         self.pid = pid
+         return pid
+ 
+-- 
+2.39.2.101.g768bb238c4
+
