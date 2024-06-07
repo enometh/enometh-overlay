@@ -15,3 +15,5 @@ move sys-devel/gdb dev-debug/gdb
 move app-doc/xmltoman app-text/xmltoman
 move app-doc/doxygen app-text/doxygen
 move sys-kernel/installkernel-gentoo sys-kernel/installkernel
+move dev-util/sysdig dev-debug/sysdig
+move dev-util/bpftrace dev-debug/bpftrace
