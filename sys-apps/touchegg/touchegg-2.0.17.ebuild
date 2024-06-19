@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #
@@ -11,6 +11,7 @@
 # https://data.gpo.zugaina.org/waffle-builds/sys-apps/touchegg/touchegg-2.0.11.ebuild
 #
 # ;madhu 211226 2.0.12 2.0.12-7-g5166e31
+# ;madhu 240619 2.0.17 2.0.17-3-g686bff3
 
 EAPI=7
 
