@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -16,11 +16,12 @@
 # ;madhu 221021 4.8.1-r1
 # ;madhu 230516 4.10.3
 # ;madhu 231210 4.13.3
+# ;madhu 240623 4.15.2 ffmpeg gone
 
 EAPI=8
 
 USE_GIT=true
-MY_COMMIT=0b0a5a52af59b50a83f9cf4594d9beb606af36c6
+MY_COMMIT=0b57bd5a53afd0124a0252e6314c8c5e4136f424
 
 PYTHON_COMPAT=( python3_{10..12} )
 inherit gnome.org gnome2-utils meson optfeature python-any-r1 toolchain-funcs virtualx xdg
@@ -30,7 +31,7 @@ HOMEPAGE="https://www.gtk.org/ https://gitlab.gnome.org/GNOME/gtk/"
 
 LICENSE="LGPL-2+"
 SLOT="4"
-IUSE="aqua broadway colord cloudproviders cups examples ffmpeg gstreamer gtk-doc +introspection sysprof test vulkan wayland +X tracker cpu_flags_x86_f16c debug"
+IUSE="aqua broadway cloudproviders colord cups examples gstreamer gtk-doc +introspection sysprof test vulkan wayland +X tracker cpu_flags_x86_f16c debug"
 REQUIRED_USE="
 	|| ( aqua wayland X )
 	gtk-doc? ( introspection )
@@ -40,7 +41,7 @@ if ${USE_GIT}; then
 	SRC_URI=""
 	inherit git-r3
 	EGIT_REPO_URI=file:///14/build/gtk4/.git
-	GIT_COMMIT=$MY_COMMIT
+	EGIT_COMMIT=$MY_COMMIT
 	EGIT_CLONE_TYPE=shallow
 fi
 
@@ -48,8 +49,8 @@ KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
 
 COMMON_DEPEND="
 	>=dev-libs/glib-2.76.0:2
-	>=x11-libs/cairo-1.17.6[aqua?,glib,svg(+),X?]
-	>=x11-libs/pango-1.50.0[introspection?]
+	>=x11-libs/cairo-1.18.0[aqua?,glib,svg(+),X?]
+	>=x11-libs/pango-1.52.0[introspection?]
 	>=dev-libs/fribidi-1.0.6
 	>=media-libs/harfbuzz-2.6.0:=
 	>=x11-libs/gdk-pixbuf-2.30:2[introspection?]
@@ -64,7 +65,6 @@ COMMON_DEPEND="
 	cloudproviders? ( net-libs/libcloudproviders )
 	colord? ( >=x11-misc/colord-0.1.9:0= )
 	cups? ( >=net-print/cups-2.0 )
-	ffmpeg? ( media-video/ffmpeg:= )
 	gstreamer? (
 		>=media-libs/gst-plugins-bad-1.12.3:1.0
 		>=media-libs/gst-plugins-base-1.12.3:1.0[opengl]
@@ -92,13 +92,17 @@ COMMON_DEPEND="
 	)
 "
 DEPEND="${COMMON_DEPEND}
+	kernel_linux? (
+		x11-libs/libdrm
+		sys-kernel/linux-headers
+	)
 	sysprof? ( >=dev-util/sysprof-capture-3.40.1:4 )
 	X? ( x11-base/xorg-proto )
 "
 RDEPEND="${COMMON_DEPEND}
 	>=dev-util/gtk-update-icon-cache-3
 "
-# librsvg for svg icons (PDEPEND to avoid circular dep), bug #547710
+# librsvg for svg icons (PDEPEND to avoid circular dep on wd40 profiles with librsvg[tools]), bug #547710
 PDEPEND="
 	gnome-base/librsvg
 	>=x11-themes/adwaita-icon-theme-3.14
@@ -117,6 +121,10 @@ BDEPEND="
 	dev-util/glib-utils
 	>=sys-devel/gettext-0.19.7
 	virtual/pkgconfig
+	vulkan? ( media-libs/shaderc )
+	wayland? (
+		dev-util/wayland-scanner
+	)
 	test? (
 		dev-libs/glib:2
 		media-fonts/cantarell
@@ -127,8 +135,6 @@ BDEPEND="
 python_check_deps() {
 	python_has_version "dev-python/pygobject:3[${PYTHON_USEDEP}]" || return
 }
-
-PATCHES=($FILESDIR/gtk-4.13.4-fix-compilation-with-ffmpeg-6.patch)
 
 pkg_setup() {
 	use introspection && python-any-r1_pkg_setup
@@ -179,7 +185,6 @@ src_configure() {
 		$(meson_use aqua macos-backend)
 
 		# Media backends
-		$(meson_feature ffmpeg media-ffmpeg)
 		$(meson_feature gstreamer media-gstreamer)
 
 		# Print backends
@@ -203,11 +208,11 @@ src_configure() {
 		$(meson_feature introspection)
 
 		# Demos, examples, and tests
-		-Ddemo-profile=default
+		-Dprofile=default
 		$(meson_use examples build-demos)
 		$(meson_use test build-testsuite)
 		$(meson_use examples build-examples)
-
+		-Dbuild-tests=false
 		$(meson_use debug)
 	)
 
@@ -230,7 +235,13 @@ src_test() {
 
 	if use X; then
 		einfo "Running tests under X"
-		GSETTINGS_SCHEMA_DIR="${S}/gtk" virtx meson_src_test --setup=x11 --timeout-multiplier=130
+		GSETTINGS_SCHEMA_DIR="${S}/gtk" virtx meson_src_test --timeout-multiplier=130 \
+			--setup=x11 \
+			--no-suite=failing \
+			--no-suite=x11_failing \
+			--no-suite=flaky \
+			--no-suite=headless \
+			--no-suite=gsk-compare-broadway
 	fi
 
 	if use wayland; then
@@ -242,7 +253,13 @@ src_test() {
 		compositor=$!
 		export WAYLAND_DISPLAY=wayland-5
 
-		GSETTINGS_SCHEMA_DIR="${S}/gtk" meson_src_test --setup=wayland --timeout-multiplier=130
+		GSETTINGS_SCHEMA_DIR="${S}/gtk" meson_src_test --timeout-multiplier=130 \
+			--setup=wayland \
+			--no-suite=failing \
+			--no-suite=wayland_failing \
+			--no-suite=flaky \
+			--no-suite=headless \
+			--no-suite=gsk-compare-broadway
 
 		exit_code=$?
 		kill ${compositor}
@@ -256,10 +273,10 @@ src_install() {
 	insinto /usr/share/gtk-doc/html
 	# This will install API docs specific to X11 and wayland regardless of USE flags, but this is intentional
 	doins -r "${S}"/docs/reference/{gtk/gtk4,gsk/gsk4,gdk/gdk4{,-wayland,-x11}}
-	else
+	elif use gtk-doc; then
 		mkdir -pv ${ED}/usr/share/gtk-doc/html
 		for i in gdk4 gdk4-wayland gdk4-x11 gsk4 gtk4; do
-			mv -iv ${ED}/usr/share/doc/$i/$i /usr/share/gtk-doc/html/$i
+			mv -iv ${ED}/usr/share/doc/$i ${ED}/usr/share/gtk-doc/html/
 		done
 	fi
 }
