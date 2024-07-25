@@ -13,6 +13,7 @@
 # ;madhu 230517 1.3.2-r1 bc77eca4ee7d4d72 1.3.rc-144-g96a28b6 for 1.4alpha, use -examples without appstream
 # ;madhu 231210 1.4.0-r1 (1.5alpha) 1.4.0-33-g42c04e0
 # ;madhu 240215 1.5_beta (1.5.beta-7-ge8f1582)
+# ;madhu 240725 1.6_alpha (1.6.alpha-38-g3441dca5)
 
 EAPI=8
 
@@ -20,7 +21,7 @@ PYTHON_COMPAT=( python3_{10..12} )
 inherit gnome.org meson python-any-r1 vala virtualx gnome-versioning
 USE_GIT=true
 
-MY_COMMIT=e8f15828e3daf9e6b0e67e3dfd4fb179ba8b37b4
+MY_COMMIT=3441dca514c3696f81b5c5c4c2a2cf557fae70a9
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
@@ -45,7 +46,7 @@ KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 
 RDEPEND="
 	>=dev-libs/glib-2.76:2
-	>=gui-libs/gtk-4.11.3:4[introspection?]
+	>=gui-libs/gtk-4.13.4:4[introspection?]
 	dev-libs/appstream:=
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
