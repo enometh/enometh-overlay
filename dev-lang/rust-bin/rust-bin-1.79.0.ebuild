@@ -18,6 +18,10 @@
 # ;madhu 220311 1.59
 # ;madhu 221214 1.65 USE=-abi_x86_32
 # ;madhu 240725 1.79
+#
+# ;madhu 240725 this is all bullshit. unpack rust-bin under somewhere
+# and use stow to put links to the components under /opt/rust. except
+# this wont work rustc expects to stat <rust-bin-root>/rustc/lib/.
 
 EAPI=8
 
