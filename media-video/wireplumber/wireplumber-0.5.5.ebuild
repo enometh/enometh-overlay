@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,10 +10,12 @@
 # ;madhu 220106 0.4.5-r3
 # ;madhu 230224 0.4.13 - undo handoffs to the pipewire ebuild IUSE doc, introspection. TODO add doxygen, lxml, sphinxbuild
 #;madhu 230624  0.4.14
+#;madhu 240725  0.5.5 - (disable doc.  still support introspection by forcing a ptython dependency including lxml)
 
 EAPI=8
 
 USE_GIT=false
+PYTHON_COMPAT=( python3_{9..13} )
 
 # 1. Please regularly check (even at the point of bumping) Fedora's packaging
 # for needed backports at https://src.fedoraproject.org/rpms/wireplumber/tree/rawhide
@@ -24,7 +26,10 @@ USE_GIT=false
 
 LUA_COMPAT=( lua5-{3,4} )
 
-inherit lua-single meson systemd
+inherit python-any-r1  lua-single meson systemd
+
+DESCRIPTION="Replacement for pipewire-media-session"
+HOMEPAGE="https://gitlab.freedesktop.org/pipewire/wireplumber"
 
 if [[ ${PV} == 9999 ]] || ${USE_GIT} ; then
 	EGIT_REPO_URI="https://gitlab.freedesktop.org/pipewire/${PN}.git"
@@ -32,14 +37,11 @@ if [[ ${PV} == 9999 ]] || ${USE_GIT} ; then
 	inherit git-r3
 else
 	SRC_URI="https://gitlab.freedesktop.org/pipewire/${PN}/-/archive/${PV}/${P}.tar.bz2"
-	KEYWORDS="amd64 arm arm64 ~loong ppc ppc64 ~riscv ~sparc x86"
+	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
 fi
 
-DESCRIPTION="Replacement for pipewire-media-session"
-HOMEPAGE="https://gitlab.freedesktop.org/pipewire/wireplumber"
-
 LICENSE="MIT"
-SLOT="0/0.4"
+SLOT="0/0.5"
 IUSE="elogind system-service systemd test doc introspection"
 
 REQUIRED_USE="
@@ -60,20 +62,32 @@ BDEPEND="
 	test? ( sys-apps/dbus )
 "
 
+# introspection? or  doc? but ebuild(5) doesn't have the syntax
+BDEPEND+="
+	${PYTHON_DEPS}
+"
+
+python_check_deps() {
+	python_has_version "dev-python/lxml[${PYTHON_USEDEP}]"
+}
+
+pkg_setup ()
+{
+	lua-single_pkg_setup "$@"
+	# if use introspection or use doc
+	python-any-r1_pkg_setup "$@"
+}
+
 DEPEND="
 	${LUA_DEPS}
-	>=dev-libs/glib-2.62
-	>=media-video/pipewire-0.3.65-r1:=
+	>=dev-libs/glib-2.68
+	>=media-video/pipewire-1.0.5:=
 	virtual/libintl
 	elogind? ( sys-auth/elogind )
 	systemd? ( sys-apps/systemd )
 "
-
-# Any dev-lua/* deps get declared like this inside RDEPEND:
-#	$(lua_gen_cond_dep '
-#		dev-lua/<NAME>[${LUA_USEDEP}]
-#	')
-RDEPEND="${DEPEND}
+RDEPEND="
+	${DEPEND}
 	system-service? (
 		acct-user/pipewire
 		acct-group/pipewire
@@ -84,7 +98,10 @@ DOCS=( {NEWS,README}.rst )
 
 PATCHES=(
 #;madhu 230224 - no gentoo patches
-#	"${FILESDIR}"/${PN}-0.4.10-config-disable-sound-server-parts.patch # defer enabling sound server parts to media-video/pipewire
+	# Defer enabling sound server parts to media-video/pipewire
+	# TODO: Soon, we should be able to migrate to just a dropin at
+	# /usr/share. See https://gitlab.freedesktop.org/pipewire/wireplumber/-/issues/652#note_2399735.
+#	"${FILESDIR}"/${PN}-0.4.81-config-disable-sound-server-parts.patch
 )
 
 src_prepare() {
@@ -97,7 +114,10 @@ src_configure() {
 		-Ddaemon=true
 		-Dtools=true
 		-Dmodules=true
-		$(meson_feature doc)
+		# Ebuild not wired up yet (Sphinx, Doxygen?)
+		# $(meson_feature doc)
+		-Ddoc=disabled
+		# Only used for Sphinx doc generation
 		$(meson_feature introspection)
 		-Dsystem-lua=true # We always unbundle everything we can
 		-Dsystem-lua-version=$(ver_cut 1-2 $(lua_get_version))
@@ -117,12 +137,8 @@ src_configure() {
 src_install() {
 	meson_src_install
 
-	# We copy the default config, so that Gentoo tools can pick up on any
-	# updates and /etc does not end up with stale overrides.
-	# If a reflinking CoW filesystem is used (e.g. Btrfs), then the files
-	# will not actually get stored twice until modified.
-	insinto /etc
-	doins -r "${ED}"/usr/share/wireplumber
+	mv "${ED}"/usr/share/doc/wireplumber/* "${ED}"/usr/share/doc/${PF} || die
+	rmdir "${ED}"/usr/share/doc/wireplumber || die
 }
 
 pkg_postinst() {
@@ -139,6 +155,7 @@ pkg_postinst() {
 		ewarn "or, if it does exist, that any reference to"
 		ewarn "${EROOT}/usr/bin/pipewire-media-session is commented out (begins with a #)."
 	fi
+
 	if use system-service; then
 		ewarn
 		ewarn "WARNING: you have enabled the system-service USE flag, which installs"
