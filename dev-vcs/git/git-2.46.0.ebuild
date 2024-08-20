@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -22,38 +22,32 @@
 # ;madhu 220225 2.35.1
 # ;madhu 230215 2.39.2
 # ;madhu 230928 2.42.0
+# ;madhu 240820 2.46.0
 
 EAPI=8
 
 GENTOO_DEPEND_ON_PERL=no
-USE_GIT=false
+USE_GIT=true
 USE_EXPORTED_TARBALLS=false
 
 # bug #329479: git-remote-testgit is not multiple-version aware
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 
 inherit toolchain-funcs perl-module bash-completion-r1 optfeature plocale python-single-r1 systemd
 
 #madhu PLOCALES="bg ca de es fr is it ko pt_PT ru sv vi zh_CN"
 PLOCALES=""
 
-MY_PV="${PV/_rc/.rc}"
-MY_P="${PN}-${MY_PV}"
-
-DOC_VER="${MY_PV}"
-
-DESCRIPTION="stupid content tracker: distributed VCS designed for speed and efficiency"
-HOMEPAGE="https://www.git-scm.com/"
-
 if  ${USE_GIT} || [[ ${PV} == *9999 ]] ; then
+	EGIT_REPO_URI="https://git.kernel.org/pub/scm/git/git.git"
+
 	inherit git-r3
-	EGIT_REPO_URI="git://git.kernel.org/pub/scm/git/git.git"
 
 	if ${USE_GIT}; then
 	EGIT_BRANCH="maint"
-#	EGIT_COMMIT=43c8a30d150ecede9709c1f2527c8fba92c65f40
+#	EGIT_COMMIT=fa3b914457773d5a0bb02b382862dafd1c4c357e
 	EGIT_SUBMODULES=()
-	EGIT_MANPAGES_COMMIT=a4249a0dcfc6c75656d48fb76997cc06fc1398e2
+	EGIT_MANPAGES_COMMIT=885b0bc44fbb2949f305eb38a14ad431becd0b22
 	EGIT_CLONE_TYPE=shallow
 
 	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-cygwin ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
@@ -80,7 +74,7 @@ else
 	[[ ${PV/rc} != ${PV} ]] && SRC_URI_KORG+='/testing'
 
 if ${USE_EXPORTED_TARBALLS}; then
-    :
+	:
 #madhu exported via
 # git config tar.tar.xz.command "xz -c"
 #git archive -o /gentoo/local-portage/rodistdirs/git-manpages-2.25.1-exported.tar.xz --prefix=git-manpages-2.25.1/ remotes/origin/man
@@ -105,6 +99,13 @@ fi
 	fi
 fi
 
+MY_PV="${PV/_rc/.rc}"
+MY_P="${PN}-${MY_PV}"
+
+DOC_VER="${MY_PV}"
+
+DESCRIPTION="stupid content tracker: distributed VCS designed for speed and efficiency"
+HOMEPAGE="https://www.git-scm.com/"
 
 S="${WORKDIR}"/${MY_P}
 
@@ -289,7 +290,7 @@ src_unpack() {
 if ${USE_EXPORTED_TARBALLS}; then
 		unpack ${MY_P}${EXPORT_SUFFIX}.tar.${SRC_URI_SUFFIX}
 else
-    		unpack ${MY_P}.tar.${SRC_URI_SUFFIX}
+			unpack ${MY_P}.tar.${SRC_URI_SUFFIX}
 fi
 
 		cd "${S}" || die
@@ -343,7 +344,10 @@ src_prepare() {
 
 	if use prefix ; then
 		# bug #757309
-		eapply "${FILESDIR}"/git-2.37.2-darwin-prefix-gettext.patch
+		sed -i \
+			-e 's:/usr/local/opt/gettext/:/do/not/look/elsewhere/:g' \
+			-e 's:/opt/homebrew/:/do/not/look/elsewhere/:g' \
+			config.mak.uname || die
 	fi
 
 	sed -i \
@@ -653,7 +657,6 @@ src_install() {
 	local contrib_objects=(
 		buildsystems
 		fast-import
-		hg-to-git
 		hooks
 		remotes2config.sh
 		rerere-train.sh
