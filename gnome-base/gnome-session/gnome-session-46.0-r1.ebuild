@@ -48,6 +48,7 @@
 # ;madhu 210413 40.0
 # ;madhu 220130 41.3
 # ;madhu 240215 45.0-r1
+# ;madhu 240821 46.0-r1
 
 EAPI=8
 
@@ -59,9 +60,9 @@ HOMEPAGE="https://gitlab.gnome.org/GNOME/gnome-session"
 
 LICENSE="GPL-2+"
 SLOT="0"
-KEYWORDS="~alpha amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux"
 IUSE="doc elogind systemd +flashback"
-# There is a null backend available, thus ?? not ^^
+# 46.0 There is a no longer a null backend available othewise  ?? not ^^
 REQUIRED_USE="?? ( elogind systemd )"
 
 # 	media-libs/libglvnd[X]
@@ -73,10 +74,9 @@ COMMON_DEPEND="
 	x11-libs/libX11
 	>=gnome-base/gnome-desktop-3.34.2:3=
 	>=dev-libs/json-glib-0.10
-	media-libs/mesa[egl(+),gles2,X(+)]
+	media-libs/mesa
 	media-libs/libepoxy
 	x11-libs/libXcomposite
-
 	systemd? ( >=sys-apps/systemd-242:0= )
 	elogind? ( >=sys-auth/elogind-239.4 )
 	flashback? (
@@ -97,7 +97,7 @@ COMMON_DEPEND="
 RDEPEND="${COMMON_DEPEND}
 	>=gnome-base/gnome-settings-daemon-3.35.91
 	>=gnome-base/gsettings-desktop-schemas-0.1.7
-	sys-apps/dbus[X]
+	sys-apps/dbus[elogind=,systemd=,X]
 
 	x11-misc/xdg-user-dirs
 	x11-misc/xdg-user-dirs-gtk
@@ -117,10 +117,10 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-3.38.0-meson-Support-elogind.patch
+	"${FILESDIR}"/${PN}-46.0-meson-Support-elogind.patch
 	${FILESDIR}/46-gnome-session-gsm-systemd.c-gsm_systemd_init-don-t-d.patch
 	${FILESDIR}/46-gnome-session-gsm-systemd.c-allow-non-graphical-sess.patch
-	${FILESDIR}/64-doc-dbus-meson.build-xsltproc-nonet.patch
+	${FILESDIR}/46-doc-dbus-meson.build-xsltproc-nonet.patch
 )
 
 src_prepare() {
@@ -136,15 +136,10 @@ src_prepare() {
 src_configure() {
 	local emesonargs=(
 		-Ddeprecation_flags=false
-		$(meson_use elogind)
 		-Dsession_selector=true # gnome-custom-session
-		$(meson_use systemd)
-		-Dsystemd_session=$(usex systemd default disable)
-		$(meson_use systemd systemd_journal)
 		$(meson_use doc docbook)
-		-Dsystemduserunitdir="$(systemd_get_userunitdir)"
-		-Dconsolekit=false
 		-Dman=true
+		-Dsystemduserunitdir="$(systemd_get_userunitdir)"
 	)
 	meson_src_configure
 }

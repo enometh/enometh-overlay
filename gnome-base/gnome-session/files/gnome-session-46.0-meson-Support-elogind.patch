@@ -1,0 +1,32 @@
+From dc30cb78f000c63186515dc5b00bc9e7e30553f3 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 30 Apr 2019 00:30:05 +0530
+Subject: [PATCH 1/5] 46.0-meson-Support-elogind.patch
+
+---
+ meson.build | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 5844765..a555fed 100644
+--- a/meson.build
++++ b/meson.build
+@@ -113,8 +113,13 @@ if systemd_userunitdir == ''
+                                                  pkgconfig_define: ['prefix', session_prefix])
+ endif
+ 
+-libsystemd_dep = dependency('libsystemd', version: '>= 209', required: true)
+-session_bin_deps += libsystemd_dep
++libsystemd_dep = dependency('libsystemd', version: '>= 209', required: false)
++if libsystemd_dep.found()
++  session_bin_deps += libsystemd_dep
++else
++  elogind_dep = dependency('libelogind', version: '>=209', required: true)
++  session_bin_deps += elogind_dep
++endif
+ 
+ configure_file(
+   output: 'config.h',
+-- 
+2.46.0.27.gfa3b914457
+
