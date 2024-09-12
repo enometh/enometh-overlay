@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -18,55 +18,64 @@
 # ;madhu 211005 v4.2.4-8-g839fb7f
 # ;madhu 211215 v4.2.6-7-ge14fc65
 # ;madhu 230803 v4.3.5-17-gf08c5d4 -- fix install phase to not touch ${S}, do not ship distfiles. symlink distfiles to distdir manually (not checked in). catch git describe failures in shallow repositories.
+# ;madhu 240913 4.3.15-9-g70ba0d8
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..11} )
+PYTHON_COMPAT=( python3_{10..12} )
+USE_GIT=true
 
 inherit bash-completion-r1 python-single-r1
 
 # Whenever you bump a GKPKG, check if you have to move
 # or add new patches!
-VERSION_BCACHE_TOOLS="1.0.8_p20141204"
+VERSION_BCACHE_TOOLS="1.0.8_p20141204" #"1.1_p20230217"
+# boost-1.84.0 needs dev-build/b2 packaged
 VERSION_BOOST="1.74.0" #"1.79.0"
-VERSION_BTRFS_PROGS="5.9" #"5.15"
-VERSION_BUSYBOX="1.34.1"
-VERSION_COREUTILS="8.32"
-VERSION_CRYPTSETUP="2.4.1"
+VERSION_BTRFS_PROGS="5.9" #"6.7.1"
+VERSION_BUSYBOX="1.36.1"
+VERSION_COREUTILS="9.5" #"9.4"
+VERSION_CRYPTSETUP="2.7.4" #"2.6.1"
 VERSION_DMRAID="1.0.0.rc16-3"
-VERSION_DROPBEAR="2020.81"
+VERSION_DROPBEAR="2020.81" #"2022.83"
 VERSION_EUDEV="3.2.10"
-VERSION_EXPAT="2.4.1"
-VERSION_E2FSPROGS="1.46.4"
+VERSION_EXPAT="2.6.3" #"2.5.0"
+VERSION_E2FSPROGS="1.47.0"
 VERSION_FUSE="2.9.9"
+# gnupg-2.x needs several new deps packaged
 VERSION_GPG="1.4.23"
 VERSION_HWIDS="20210613"
-VERSION_ISCSI="2.0.878"
-VERSION_JSON_C="0.13.1"
-VERSION_KMOD="29"
-VERSION_LIBAIO="0.3.112"
-VERSION_LIBGCRYPT="1.9.3" #"1.9.4"
-VERSION_LIBGPGERROR="1.42" #"1.43"
-VERSION_LIBXCRYPT="4.4.23" #"4.4.36"
-VERSION_LVM="2.02.188"
+# open-iscsi-2.1.9 static build not working yet
+VERSION_ISCSI="2.0.878" #"2.1.8"
+# json-c-0.17 needs gkbuild ported to meson
+VERSION_JSON_C="0.17"
+VERSION_KMOD="31"
+VERSION_LIBAIO="0.3.112" #"0.3.113"
+VERSION_LIBGCRYPT="1.9.3" #"1.10.3"
+VERSION_LIBGPGERROR="1.42" #"1.47"
+VERSION_LIBXCRYPT="4.4.36"
+VERSION_LVM="2.03.22"
 VERSION_LZO="2.10"
-VERSION_MDADM="4.1"
-VERSION_POPT="1.18"
-VERSION_STRACE="5.14"
-VERSION_THIN_PROVISIONING_TOOLS="0.8.5" #"0.9.0"
+VERSION_MDADM="4.3" #"4.2"
+VERSION_POPT="1.19"
+VERSION_STRACE="6.10" # "6.7"
+VERSION_THIN_PROVISIONING_TOOLS="0.9.0"
+# unionfs-fuse-3.4 needs fuse:3
 VERSION_UNIONFS_FUSE="2.0"
-VERSION_UTIL_LINUX="2.37.2"
-VERSION_XFSPROGS="5.10.0" #"5.13.0"
-VERSION_XZ="5.2.5"
-VERSION_ZLIB="1.2.11"
-VERSION_ZSTD="1.5.0"
+VERSION_USERSPACE_RCU="0.10.2" #"0.14.0"
+VERSION_UTIL_LINUX="2.38" #"2.39.3"
+VERSION_XFSPROGS="5.10.0" #"6.4.0"
+VERSION_XZ="5.6.1" #"5.4.2"
+VERSION_ZLIB="1.2.11" #"1.3.1"
+VERSION_ZSTD="1.5.6" #"1.5.5"
 VERSION_KEYUTILS="1.6.3"
-VERSION_USERSPACE_RCU="0.10.2"
 
 #	https://dev.gentoo.org/~blueness/eudev/eudev-${VERSION_EUDEV}.tar.gz
 #	file:///gentoo/distfiles/systemd-${VERSION_EUDEV}.tar.gz
 
 # 	https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/snapshot/keyutils-${VERSION_KEYUTILS}.tar.gz
+
+#	https://git.kernel.org/pub/scm/linux/kernel/git/colyli/bcache-tools.git/snapshot/a5e3753516bd39c431def86c8dfec8a9cea1ddd4.tar.gz -> bcache-tools-${VERSION_BCACHE_TOOLS}.tar.gz
 
 COMMON_URI="
 	https://github.com/g2p/bcache-tools/archive/399021549984ad27bf4a13ae85e458833fe003d7.tar.gz -> bcache-tools-${VERSION_BCACHE_TOOLS}.tar.gz
@@ -89,7 +98,7 @@ COMMON_URI="
 	https://releases.pagure.org/libaio/libaio-${VERSION_LIBAIO}.tar.gz
 	mirror://gnupg/libgcrypt/libgcrypt-${VERSION_LIBGCRYPT}.tar.bz2
 	mirror://gnupg/libgpg-error/libgpg-error-${VERSION_LIBGPGERROR}.tar.bz2
-	https://github.com/besser82/libxcrypt/archive/v${VERSION_LIBXCRYPT}.tar.gz -> libxcrypt-${VERSION_LIBXCRYPT}.tar.gz
+	https://github.com/besser82/libxcrypt/releases/download/v${VERSION_LIBXCRYPT}/libxcrypt-${VERSION_LIBXCRYPT}.tar.xz
 	https://mirrors.kernel.org/sourceware/lvm2/LVM2.${VERSION_LVM}.tgz
 	https://www.oberhumer.com/opensource/lzo/download/lzo-${VERSION_LZO}.tar.gz
 	https://www.kernel.org/pub/linux/utils/raid/mdadm/mdadm-${VERSION_MDADM}.tar.xz
@@ -97,6 +106,7 @@ COMMON_URI="
 	https://github.com/strace/strace/releases/download/v${VERSION_STRACE}/strace-${VERSION_STRACE}.tar.xz
 	https://github.com/jthornber/thin-provisioning-tools/archive/v${VERSION_THIN_PROVISIONING_TOOLS}.tar.gz -> thin-provisioning-tools-${VERSION_THIN_PROVISIONING_TOOLS}.tar.gz
 	https://github.com/rpodgorny/unionfs-fuse/archive/v${VERSION_UNIONFS_FUSE}.tar.gz -> unionfs-fuse-${VERSION_UNIONFS_FUSE}.tar.gz
+	https://lttng.org/files/urcu/userspace-rcu-${VERSION_USERSPACE_RCU}.tar.bz2
 	https://www.kernel.org/pub/linux/utils/util-linux/v${VERSION_UTIL_LINUX:0:4}/util-linux-${VERSION_UTIL_LINUX}.tar.xz
 	https://www.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-${VERSION_XFSPROGS}.tar.xz
 	https://tukaani.org/xz/xz-${VERSION_XZ}.tar.gz
@@ -104,8 +114,6 @@ COMMON_URI="
 	https://github.com/facebook/zstd/archive/v${VERSION_ZSTD}.tar.gz -> zstd-${VERSION_ZSTD}.tar.gz
 	https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/snapshot/keyutils-${VERSION_KEYUTILS}.tar.gz
 "
-
-USE_GIT=true
 
 if [[ ${PV} == 9999* ]] || ${USE_GIT} ; then
 	EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/${PN}.git"
@@ -115,13 +123,11 @@ if [[ ${PV} == 9999* ]] || ${USE_GIT} ; then
 	inherit git-r3
 	S="${WORKDIR}/${P}"
 	SRC_URI="${COMMON_URI}"
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~mips ppc ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 else
-#	SRC_URI="https://dev.gentoo.org/~whissi/dist/genkernel/${P}.tar.xz
-# anathema
-	SRC_URI="https://dev.gentoo.org/~sam/distfiles/${CATEGORY}/${PN}/${P}.tar.xz
+	SRC_URI="https://dev.gentoo.org/~bkohler/dist/${P}.tar.xz
 		${COMMON_URI}"
-	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~mips ppc ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="Gentoo automatic kernel building scripts"
@@ -129,7 +135,6 @@ HOMEPAGE="https://wiki.gentoo.org/wiki/Genkernel https://gitweb.gentoo.org/proj/
 
 LICENSE="GPL-2"
 SLOT="0"
-RESTRICT=""
 IUSE="ibm +firmware"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
@@ -138,28 +143,31 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 # because genkernel will usually build things like LVM2, cryptsetup,
 # mdadm... during initramfs generation which will require these
 # things.
-DEPEND=""
+DEPEND="
+	app-text/asciidoc
+"
+#;madhu 240912
+#echo app-alternatives/yacc-1-r2 > /etc/portage/profile/bison
+#echo app-alternatives/lex-0-r1 > /etc/portage/profile/flex
+
 RDEPEND="${PYTHON_DEPS}
-	app-arch/cpio
+	app-alternatives/cpio
 	>=app-misc/pax-utils-1.2.2
 	app-portage/elt-patches
 	app-portage/portage-utils
 	dev-util/gperf
 	sys-apps/sandbox
-	sys-devel/autoconf
-	sys-devel/autoconf-archive
-	sys-devel/automake
-	sys-devel/bc
-	sys-devel/bison
-	sys-devel/flex
-	sys-devel/libtool
+	dev-build/autoconf
+	dev-build/autoconf-archive
+	dev-build/automake
+	app-alternatives/bc
+	app-alternatives/yacc
+	app-alternatives/lex
+	dev-build/libtool
 	virtual/pkgconfig
 	elibc_glibc? ( sys-libs/glibc[static-libs(+)] )
-	firmware? ( sys-kernel/linux-firmware )"
-
-if [[ ${PV} == 9999* ]] ||  ${USE_GIT} ; then
-	DEPEND="${DEPEND} app-text/asciidoc"
-fi
+	firmware? ( sys-kernel/linux-firmware )
+"
 
 PATCHES=(
 )
@@ -195,62 +203,10 @@ src_prepare() {
 		popd >/dev/null || die
 	fi
 
-	# Update software.sh
-	sed -i \
-		-e "s:VERSION_BCACHE_TOOLS:${VERSION_BCACHE_TOOLS}:"\
-		-e "s:VERSION_BOOST:${VERSION_BOOST}:"\
-		-e "s:VERSION_BTRFS_PROGS:${VERSION_BTRFS_PROGS}:"\
-		-e "s:VERSION_BUSYBOX:${VERSION_BUSYBOX}:"\
-		-e "s:VERSION_COREUTILS:${VERSION_COREUTILS}:"\
-		-e "s:VERSION_CRYPTSETUP:${VERSION_CRYPTSETUP}:"\
-		-e "s:VERSION_DMRAID:${VERSION_DMRAID}:"\
-		-e "s:VERSION_DROPBEAR:${VERSION_DROPBEAR}:"\
-		-e "s:VERSION_EUDEV:${VERSION_EUDEV}:"\
-		-e "s:VERSION_EXPAT:${VERSION_EXPAT}:"\
-		-e "s:VERSION_E2FSPROGS:${VERSION_E2FSPROGS}:"\
-		-e "s:VERSION_FUSE:${VERSION_FUSE}:"\
-		-e "s:VERSION_GPG:${VERSION_GPG}:"\
-		-e "s:VERSION_HWIDS:${VERSION_HWIDS}:"\
-		-e "s:VERSION_ISCSI:${VERSION_ISCSI}:"\
-		-e "s:VERSION_JSON_C:${VERSION_JSON_C}:"\
-		-e "s:VERSION_KMOD:${VERSION_KMOD}:"\
-		-e "s:VERSION_LIBAIO:${VERSION_LIBAIO}:"\
-		-e "s:VERSION_LIBGCRYPT:${VERSION_LIBGCRYPT}:"\
-		-e "s:VERSION_LIBGPGERROR:${VERSION_LIBGPGERROR}:"\
-		-e "s:VERSION_LIBXCRYPT:${VERSION_LIBXCRYPT}:"\
-		-e "s:VERSION_LVM:${VERSION_LVM}:"\
-		-e "s:VERSION_LZO:${VERSION_LZO}:"\
-		-e "s:VERSION_MDADM:${VERSION_MDADM}:"\
-		-e "s:VERSION_MULTIPATH_TOOLS:${VERSION_MULTIPATH_TOOLS}:"\
-		-e "s:VERSION_POPT:${VERSION_POPT}:"\
-		-e "s:VERSION_STRACE:${VERSION_STRACE}:"\
-		-e "s:VERSION_THIN_PROVISIONING_TOOLS:${VERSION_THIN_PROVISIONING_TOOLS}:"\
-		-e "s:VERSION_UNIONFS_FUSE:${VERSION_UNIONFS_FUSE}:"\
-		-e "s:VERSION_USERSPACE_RCU:${VERSION_USERSPACE_RCU}:"\
-		-e "s:VERSION_UTIL_LINUX:${VERSION_UTIL_LINUX}:"\
-		-e "s:VERSION_XFSPROGS:${VERSION_XFSPROGS}:"\
-		-e "s:VERSION_XZ:${VERSION_XZ}:"\
-		-e "s:VERSION_ZLIB:${VERSION_ZLIB}:"\
-		-e "s:VERSION_ZSTD:${VERSION_ZSTD}:"\
-		"${S}"/defaults/software.sh \
-		|| die "Could not adjust versions"
-}
-
-src_compile() {
-	if [[ ${PV} == 9999* ]] || ${USE_GIT} ; then
-		emake
-	fi
-}
-
-src_install() {
-	insinto /etc
-	doins "${S}"/genkernel.conf
-
-	doman genkernel.8
-	dodoc AUTHORS ChangeLog README TODO
-	dobin genkernel
-#;madhu 230803 retard - make ebuild install repeatable, don't touch the source directory S but remove the files from ED.
-#	rm -f genkernel genkernel.8 AUTHORS ChangeLog README TODO genkernel.conf
+	# Export all the versions that may be used by genkernel build.
+	for v in $(set |awk -F= '/^VERSION_/{print $1}') ; do
+	export ${v}
+	done
 
 	if use ibm ; then
 		cp "${S}"/arch/ppc64/kernel-2.6{-pSeries,} || die
@@ -258,13 +214,15 @@ src_install() {
 		cp "${S}"/arch/ppc64/kernel-2.6{.g5,} || die
 	fi
 
-	insinto /usr/share/genkernel
-	doins -r "${S}"/*
+}
 
-	rm -fv ${ED}/usr/share/genkernel/{genkernel,genkernel.8,AUTHORS,ChangeLog,README,TODO,genkernel.conf}
+src_compile() {
+	emake PREFIX=/usr
+}
 
-	fperms +x /usr/share/genkernel/gen_worker.sh
-	fperms +x /usr/share/genkernel/path_expander.py
+src_install() {
+	emake DESTDIR="${D}" PREFIX=/usr install
+	dodoc AUTHORS ChangeLog README TODO
 
 	python_fix_shebang "${ED}"/usr/share/genkernel/path_expander.py
 
