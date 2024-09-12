@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -13,12 +13,13 @@
 # ;madhu 230228 2.1.9 include patches
 # ;madhu 230803 2.2.0_rc3
 # ;madhu 231203 2.2.0 - phew. features off
+# ;madhu 240912 2.2.6 - PYTHON_TARGETS=python3_9
 
 EAPI=8
 
 DISTUTILS_OPTIONAL=1
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{10..11} )
+PYTHON_COMPAT=( python3_{9..12} )
 
 inherit autotools bash-completion-r1 dist-kernel-utils distutils-r1 flag-o-matic linux-info pam systemd udev usr-ldscript
 
@@ -26,10 +27,10 @@ DESCRIPTION="Userland utilities for ZFS Linux kernel module"
 HOMEPAGE="https://github.com/openzfs/zfs"
 
 if [[ ${PV} == "9999" ]]; then
-	inherit git-r3 linux-mod
+	inherit git-r3
 	EGIT_REPO_URI="https://github.com/openzfs/zfs.git"
 else
-	VERIFY_SIG_OPENPGP_KEY_PATH=${BROOT}/usr/share/openpgp-keys/openzfs.asc
+	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/openzfs.asc
 	inherit verify-sig
 
 	MY_P="${P/_rc/-rc}"
@@ -38,7 +39,7 @@ else
 	S="${WORKDIR}/${MY_P}"
 
 	if [[ ${PV} != *_rc* ]]; then
-		KEYWORDS="~amd64 ~arm64 ~ppc64 ~riscv ~sparc"
+		KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~sparc"
 	fi
 fi
 
@@ -47,7 +48,7 @@ LICENSE="BSD-2 CDDL MIT"
 # possible candidates: libuutil, libzpool, libnvpair. Those do not provide stable abi, but are considered.
 # see libsoversion_check() below as well
 SLOT="0/5"
-IUSE="custom-cflags debug dist-kernel kernel-builtin minimal nls pam python +rootfs selinux test-suite"
+IUSE="custom-cflags debug dist-kernel kernel-builtin minimal nls pam python +rootfs selinux test-suite unwind"
 
 DEPEND="
 	dev-libs/openssl:=
@@ -60,6 +61,7 @@ DEPEND="
 	python? (
 		$(python_gen_cond_dep 'dev-python/cffi[${PYTHON_USEDEP}]' 'python*')
 	)
+	unwind? ( sys-libs/libunwind:= )
 "
 
 BDEPEND="
@@ -79,6 +81,10 @@ if [[ ${PV} != "9999" ]] ; then
 	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-openzfs )"
 fi
 
+#;madhu 240912
+# echo app-alternatives/cpio-0 > /etc/portage/profile/package.provided/cpio
+# echo app-alternatives/bc-0 > /etc/portage/profile/package.provided/bc
+
 # awk is used for some scripts, completions, and the Dracut module
 RDEPEND="
 	${DEPEND}
@@ -88,7 +94,7 @@ RDEPEND="
 	sys-fs/udev-init-scripts
 	dist-kernel? ( virtual/dist-kernel:= )
 	rootfs? (
-		app-arch/cpio
+		app-alternatives/cpio
 		app-misc/pax-utils
 	)
 	selinux? ( sec-policy/selinux-zfs )
@@ -96,7 +102,7 @@ RDEPEND="
 		app-shells/ksh
 		sys-apps/kmod[tools]
 		sys-apps/util-linux
-		sys-devel/bc
+		app-alternatives/bc
 		sys-block/parted
 		sys-fs/lsscsi
 		sys-fs/mdadm
@@ -121,7 +127,8 @@ PATCHES=(
 
 	"${FILESDIR}/"2.1.9-cmd-zed-zed.c-fix-regression-that-makes-zed-exit-whe.patch
 	"${FILESDIR}"/2.1.9-etc-init.d-zfs-zed-fix-inifinite-loop-segfault-under.patch
-
+	"${FILESDIR}"/2.2.2-no-USER_NS.patch
+#	"${FILESDIR}"/2.2.3-musl.patch
 )
 
 pkg_pretend() {
@@ -237,6 +244,7 @@ src_configure() {
 		$(use_enable nls)
 		$(use_enable pam)
 		$(use_enable python pyzfs)
+		$(use_with unwind libunwind)
 		--disable-static
 		$(usex minimal --without-python --with-python="${EPYTHON}")
 	)
