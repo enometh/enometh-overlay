@@ -1,4 +1,4 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -9,17 +9,17 @@
 #
 # ;madhu 221024 4.0.0 slot 0 ssh-agent optional, delete conflicting
 # ;files here instead of in gcr-3.41.1
+# ;madhu 240915 4.2.1
 
 EAPI=8
-PYTHON_COMPAT=( python3_{8..11} )
 
-inherit gnome.org gnome2-utils meson python-any-r1 vala xdg
+inherit flag-o-matic gnome.org gnome2-utils meson vala xdg
 
 DESCRIPTION="Libraries for cryptographic UIs and accessing PKCS#11 modules"
 HOMEPAGE="https://gitlab.gnome.org/GNOME/gcr"
 
 LICENSE="GPL-2+ LGPL-2+"
-SLOT="4/gcr4.4-gck2.2" # subslot = soname and soversion of libgcr and libgck
+SLOT="4/gcr-4.4-gck-2.2" # subslot = soname and soversion of libgcr and libgck
 
 IUSE="gtk gtk-doc +introspection systemd test +vala ssh-agent"
 REQUIRED_USE="
@@ -28,7 +28,7 @@ REQUIRED_USE="
 "
 RESTRICT="!test? ( test )"
 
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~x86-linux ~sparc-solaris ~x86-solaris"
+KEYWORDS="~alpha amd64 arm arm64 ~ia64 ~loong ~mips ppc ppc64 ~riscv sparc x86 ~amd64-linux ~x86-linux"
 
 DEPEND="
 	>=dev-libs/glib-2.68.0:2
@@ -39,14 +39,13 @@ DEPEND="
 	gtk? ( gui-libs/gtk:4[introspection?] )
 	>=sys-apps/dbus-1
 	introspection? ( >=dev-libs/gobject-introspection-1.58:= )
+	!<app-crypt/gcr-3.41.1
 "
-
-# 	!<app-crypt/gcr-3.41.1-r1
+# 	!<app-crypt/gcr-3.41.1-r2
 
 RDEPEND="${DEPEND}"
 PDEPEND="app-crypt/gnupg"
 BDEPEND="
-	${PYTHON_DEPS}
 	gtk? ( dev-libs/libxml2:2 )
 	dev-util/gdbus-codegen
 	dev-util/glib-utils
@@ -57,10 +56,6 @@ BDEPEND="
 	vala? ( $(vala_depend) )
 "
 
-pkg_setup() {
-	python-any-r1_pkg_setup
-}
-
 src_prepare() {
 	default
 	sed -i -e "s/^subdir('po')/#subdir('po')/g" meson.build
@@ -69,6 +64,7 @@ src_prepare() {
 }
 
 src_configure() {
+	filter-lto # https://gitlab.gnome.org/GNOME/gcr/-/issues/43
 	local emesonargs=(
 		$(meson_use introspection)
 		$(meson_use gtk gtk4)
