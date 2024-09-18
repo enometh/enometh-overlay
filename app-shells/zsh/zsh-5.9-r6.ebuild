@@ -1,7 +1,7 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2022-04-01 08:06:35 IST>
+#   Time-stamp: <>
 #   Touched: Mon Dec 20 08:14:49 2021 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -10,6 +10,7 @@
 # ;madhu 211220 5.8-r1 - debug crash
 # ;madhu 220228 5.8.1
 # ;madhu 221111 5.9-r1 zsh-5.9-57-g8839e96
+# ;madhu 240918 5.9-r6 zsh-5.9-479-g91c56ed
 
 EAPI=8
 
@@ -20,6 +21,8 @@ USE_GIT=true
 
 inherit autotools flag-o-matic prefix
 
+KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~arm64-macos ~ppc-macos ~x64-macos ~x64-solaris"
+
 if [[ ${PV} == *9999 ]] || ${USE_GIT} ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://git.code.sf.net/p/zsh/code"
@@ -27,35 +30,39 @@ if [[ ${PV} == *9999 ]] || ${USE_GIT} ; then
 
 # EGIT_OVERRIDE_REPO_ZSH_CODE=file:///build/git-mirror/zsh.git
 else
-	SRC_URI="https://www.zsh.org/pub/${P}.tar.xz
-		https://www.zsh.org/pub/old/${P}.tar.xz
-		mirror://sourceforge/${PN}/${P}.tar.xz
-		doc? (
-			https://www.zsh.org/pub/${P}-doc.tar.xz
-			mirror://sourceforge/${PN}/${P}-doc.tar.xz
-		)"
+SRC_URI="https://www.zsh.org/pub/${P}.tar.xz
+	https://www.zsh.org/pub/old/${P}.tar.xz
+	https://downloads.sourceforge.net/${PN}/${P}.tar.xz
+	doc? (
+		https://www.zsh.org/pub/${P}-doc.tar.xz
+		https://downloads.sourceforge.net/${PN}/${P}-doc.tar.xz
+	)"
 fi
-
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
 
 DESCRIPTION="UNIX Shell similar to the Korn shell"
 HOMEPAGE="https://www.zsh.org/"
 
 LICENSE="ZSH gdbm? ( GPL-2 )"
 SLOT="0"
-IUSE="caps debug doc examples gdbm maildir pcre static unicode"
+IUSE="caps debug doc examples gdbm maildir pcre static unicode valgrind"
 
+# Next release should use pcre2: https://github.com/zsh-users/zsh/commit/b62e911341c8ec7446378b477c47da4256053dc0
+# ;madhu 240918
 RDEPEND="
 	>=sys-libs/ncurses-5.1:0=
 	static? ( >=sys-libs/ncurses-5.7-r4:0=[static-libs] )
 	caps? ( sys-libs/libcap )
 	pcre? (
-		>=dev-libs/libpcre-3.9
-		static? ( >=dev-libs/libpcre-3.9[static-libs] )
+		dev-libs/libpcre2:=
+		static? ( dev-libs/libpcre2[static-libs] )
 	)
-	gdbm? ( sys-libs/gdbm:= )
+	gdbm? (
+		sys-libs/gdbm:=
+		static? ( sys-libs/gdbm:=[static-libs] )
+	)
 "
 DEPEND="sys-apps/groff
+	valgrind? ( dev-debug/valgrind )
 	${RDEPEND}"
 PDEPEND="
 	examples? ( app-doc/zsh-lovers )
@@ -110,6 +117,7 @@ src_configure() {
 		$(use_enable caps cap)
 		$(use_enable unicode multibyte)
 		$(use_enable gdbm)
+		$(use_enable valgrind zsh-valgrind)
 	)
 
 #	filter-flags CFLAGS -ggdb -O2
@@ -172,7 +180,7 @@ src_install() {
 
 	insinto /etc/zsh
 	export PREFIX_QUOTE_CHAR='"' PREFIX_EXTRA_REGEX="/EUID/s,0,${EUID},"
-	newins "$(prefixify_ro "${FILESDIR}"/zprofile-4)" zprofile
+	newins "$(prefixify_ro "${FILESDIR}"/zprofile-5)" zprofile
 
 	keepdir /usr/share/zsh/site-functions
 	insinto /usr/share/zsh/${PV%_*}/functions/Prompts
