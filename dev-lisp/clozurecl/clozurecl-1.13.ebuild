@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -15,6 +15,7 @@
 # ;               bootstrap patch
 # ;
 # ;madhu 230928 - 1.12.2 GIT  v1.12.2-10-g7c2ebad
+# ;madhu 240918 - 1.13.0 GIT
 #
 #
 # "eclass" notes
@@ -35,7 +36,7 @@ USE_BOOTSTRAP_INSTALLED=true
 
 MY_GIT_COMMIT="7c2ebad51efd68e8ca2f8f2186ed6f4c71c51079"
 
-inherit flag-o-matic multilib toolchain-funcs vcs-clean
+inherit multilib toolchain-funcs vcs-clean
 
 MY_PN=ccl
 #MY_P=${MY_PN}-${PV} #not used
@@ -117,14 +118,17 @@ fi
 # 	arm? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-linuxarm.tar.gz )
 # 	x86-macos? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-darwinx86.tar.gz )
 # 	x64-macos? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-darwinx86.tar.gz )
+#
 # 	x86-solaris? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-solarisx86.tar.gz )
 # 	x64-solaris? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-solarisx86.tar.gz )
+#	x64-macos? ( https://github.com/Clozure/ccl/releases/download/v${PV}/${MY_P}-darwinx86.tar.gz )
+
 # get doc via dev-lisp/ccldoc package
 # doc? ( https://ccl.clozure.com/docs/ccl.html )
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux"
+KEYWORDS="-* ~amd64 ~x86 ~amd64-linux ~x86-linux ~x64-macos"
 IUSE="doc"
 
 #;madhu 190130 - no asdf
@@ -134,6 +138,7 @@ IUSE="doc"
 if ${USE_BOOTSTRAP_INSTALLED}; then
 	DEPEND+=" dev-lisp/clozurecl "
 	DEPEND+=" net-misc/rsync "	#  TODO use cp -r instead
+# xattr
 fi
 
 # if use doc; then DEPEND+="dev-lisp/ccldoc"; fi
@@ -160,21 +165,23 @@ src_unpack () {
 
 src_prepare() {
 	default
-	if ${USE_BOOTSTRAP_INSTALLED}; then
-		if use x86; then
-			rsync -aHivOJX /usr/$(get_libdir)/${PN}/{x86-headers,lx86cl{,.image}} .
-		fi
-		if use amd64; then
-			rsync -aHivOJX /usr/$(get_libdir)/${PN}/{x86-headers64,lx86cl64{,.image}} .
-		fi
-	fi
 # no asdf
 #	cp "${EPREFIX}/usr/share/common-lisp/source/asdf/build/asdf.lisp" tools/ || die
+	if ${USE_BOOTSTRAP_INSTALLED}; then
+		if use x86; then
+			rsync -aHivOJ ${EROOR}/usr/$(get_libdir)/${PN}/{x86-headers,lx86cl{,.image}} . || die
+		fi
+		if use amd64; then
+			rsync -aHivOJ ${EROOT}/usr/$(get_libdir)/${PN}/{x86-headers64,lx86cl64{,.image}} . || die
+		fi
+	fi
 	cp ${FILESDIR}/${BP1} . -apiv
 }
 
 src_configure() {
-	if use x86; then
+	if use x64-macos; then
+		CCL_RUNTIME=dx86cl64; CCL_HEADERS=darwin-x86-headers64; CCL_KERNEL=darwinx8664
+	elif use x86; then
 		CCL_RUNTIME=lx86cl; CCL_HEADERS=x86-headers; CCL_KERNEL=linuxx8632
 		if use amd64; then
 			die "hey gentoo?- what about multilib with x86 and amd64?"
@@ -215,6 +222,7 @@ src_install() {
 	echo "CCL_DEFAULT_DIRECTORY=${prefix_dir}" > "${ENVD}"
 	doenvd "${ENVD}"
 
+	#;madhu 240918 prefix_dir instead of target_dir ?
 	dosym "${prefix_dir}/${CCL_RUNTIME}" /usr/bin/ccl
 	dodoc doc/release-notes.txt
 
