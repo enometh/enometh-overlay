@@ -74,7 +74,7 @@ RESTRICT="!test? ( test )"
 DEPEND="
 	gnome-online-accounts? (
 		x11-libs/gtk+:3
-		>=net-libs/gnome-online-accounts-3.50.3:=
+		>=net-libs/gnome-online-accounts-3.51.0:=
 	)
 	>=gui-libs/gtk-4.11.2:4[X,wayland=]
 	>=gui-libs/libadwaita-1.4_alpha:1
@@ -250,7 +250,7 @@ src_test() {
 
 src_install() {
 	meson_src_install
-	insinto /usr/share/pixmaps
+#	insinto /usr/share/pixmaps
 #	doins "${DISTDIR}"/gnome-control-center-gentoo-logo.svg
 #	doins "${DISTDIR}"/gnome-control-center-gentoo-logo-dark.svg
 }

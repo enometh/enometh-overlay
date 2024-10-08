@@ -931,28 +931,3 @@ index e136d92..39ca020 100644
 2.46.0.27.gfa3b914457
 
 
-From bc32bcf118d41b8ef9411c0df673b6585132fd81 Mon Sep 17 00:00:00 2001
-From: Madhu <enometh@net.meer>
-Date: Tue, 8 Oct 2024 18:47:05 +0530
-Subject: [PATCH 12/12] meson.build: downgrade goa
-
----
- meson.build | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/meson.build b/meson.build
-index e85c893..0739efb 100644
---- a/meson.build
-+++ b/meson.build
-@@ -127,7 +127,7 @@ libgvc = subproject(
- libgvc_dep = libgvc.get_variable('libgvc_dep')
- 
- libadwaita_version = '>= 1.6.beta'
--goa_req_version = '>= 3.51.0'
-+goa_req_version = '>= 3.50.0'
- pulse_req_version = '>= 2.0'
- 
- gtk_dep = dependency(
--- 
-2.46.0.27.gfa3b914457
-
