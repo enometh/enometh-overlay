@@ -10,7 +10,7 @@
 # ;madhu 190211 no telepathy - 3.31.90
 # ;madhu 200529 3.36.0
 # ;madhu 230115 3.46.0
-# ;madhu 241008 3.50.3 -> 3.52.0 (bump version in gentoo)
+# ;madhu 241008 3.50.3 -> 3.52.0 (bump version in gentoo, fix gi-docgen location)
 
 EAPI=8
 
@@ -87,4 +87,15 @@ src_configure() {
 		$(meson_use vala vapi)
 	)
 	meson_src_configure
+}
+
+src_install() {
+	meson_src_install
+	docpkgs=(Goa-1.0)
+	if use gtk-doc; then
+		mkdir -pv ${ED}/usr/share/gtk-doc/html || die
+		for i in ${docpkgs} ; do
+			mv ${ED}/usr/share/doc/${PN}/$i ${ED}/usr/share/gtk-doc/html/$i || die
+		done
+	fi
 }
