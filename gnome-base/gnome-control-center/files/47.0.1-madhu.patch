@@ -1,0 +1,958 @@
+From ec6e2f0b907fa3069850809500638914d95c1002 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 22 Sep 2020 12:43:09 +0530
+Subject: [PATCH 02/12] shell/cc-window.c: system_bus_available_p: dont show
+ user accounts panel when there is no system bus
+
+---
+ shell/cc-panel-loader.c |  4 +++-
+ shell/cc-window.c       | 52 +++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 55 insertions(+), 1 deletion(-)
+
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 980faec..981a186 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -117,6 +117,8 @@ static CcPanelLoaderVtable default_panels[] =
+ #endif
+ };
+ 
++extern gboolean system_bus_available_p(const char *start_id);
++
+ /* Override for the panel vtable. When NULL, the default_panels will
+  * be used.
+  */
+@@ -290,7 +292,7 @@ cc_panel_loader_fill_model (CcShellModel *model)
+ #ifndef CC_PANEL_LOADER_NO_GTYPES
+   for (i = 0; i < panels_vtable_len; i++)
+     {
+-      if (panels_vtable[i].static_init_func)
++      if (panels_vtable[i].static_init_func && system_bus_available_p(panels_vtable[i].name))
+         panels_vtable[i].static_init_func ();
+     }
+ #endif
+diff --git a/shell/cc-window.c b/shell/cc-window.c
+index 1746c5c..b19da5b 100644
+--- a/shell/cc-window.c
++++ b/shell/cc-window.c
+@@ -272,6 +272,52 @@ setup_model (CcWindow *self)
+   g_signal_connect_object (model, "row-changed", G_CALLBACK (on_row_changed_cb), self, G_CONNECT_SWAPPED);
+ }
+ 
++
++extern gboolean system_bus_available_p(const char *start_id);
++gboolean
++system_bus_available_p(const char *start_id)
++{
++  static gboolean initialized_p = FALSE;
++  static gboolean available_p = FALSE;
++  if (!initialized_p) {
++    GError *e = NULL;
++    GDBusConnection *conn = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &e);
++    if (!conn) {
++      if (e) {
++	fprintf(stderr, "%s: %d: %s\n", g_quark_to_string(e->domain), e->code,
++		e->message);
++      }
++      available_p = FALSE;
++    } else {
++      available_p = TRUE;
++    }
++    initialized_p = TRUE;
++  }
++  static char *blacklisted_panels[] = {
++    "user-accounts",
++    "wifi",
++    "network",
++    "bluetooth",
++    /*
++    "location",
++    "thunderbolt",
++    "sharing",
++    "power",
++    "printer",
++    "removable-media",
++    */
++    0
++  };
++  char **p;
++  if (!available_p)
++    for (p = blacklisted_panels; *p; p++)
++      if (g_strcmp0(*p, start_id) == 0) {
++	g_message("no bus for %s", start_id);
++	return FALSE;
++      }
++  return TRUE;
++}
++
+ static gboolean
+ set_active_panel_from_id (CcWindow     *self,
+                           const gchar  *start_id,
+@@ -294,6 +340,9 @@ set_active_panel_from_id (CcWindow     *self,
+ 
+   view = cc_panel_list_get_view (self->panel_list);
+ 
++  g_info("set_active_panel_from_id(%s): -> %d", start_id, system_bus_available_p(start_id));
++  if (!system_bus_available_p(start_id)) return FALSE;
++
+   /* When loading the same panel again, just set its parameters */
+   if (g_strcmp0 (self->current_panel_id, start_id) == 0)
+     {
+@@ -516,6 +565,9 @@ cc_window_set_active_panel_from_id (CcShell      *shell,
+                                     GVariant     *parameters,
+                                     GError      **error)
+ {
++  g_info("cc_window_set_active_panel_from_id(%s)", start_id);
++  if (!system_bus_available_p(start_id)) return FALSE;
++
+   CcWindow *self = CC_WINDOW (shell);
+ 
+   g_return_val_if_fail (self != NULL, FALSE);
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 18d90dbf75faf44e7feb5aca58c7f361ec5065a6 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 22 Sep 2020 07:28:48 +0530
+Subject: [PATCH 03/12] shell/cc-object-storage.c:
+ (cc_object_storage_add_object): handle no bus
+
+---
+ shell/cc-object-storage.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/shell/cc-object-storage.c b/shell/cc-object-storage.c
+index f9a08f3..0843236 100644
+--- a/shell/cc-object-storage.c
++++ b/shell/cc-object-storage.c
+@@ -164,6 +164,10 @@ cc_object_storage_add_object (const gchar *key,
+    */
+   g_assert (CC_IS_OBJECT_STORAGE (_instance));
+   g_assert (key != NULL);
++  if (! G_IS_OBJECT(object)) {
++    g_debug ("no bus for storage object");
++    return;
++  }
+   g_assert (G_IS_OBJECT (object));
+   g_assert (!g_hash_table_contains (_instance->id_to_object, key));
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 6761e8240a843ed33f56b80a233d05540deb9356 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 22 Sep 2020 09:39:36 +0530
+Subject: [PATCH 04/12] panels/system/users/cc-users-page.c:
+ (cc_users_page_init): handle no bus
+
+---
+ panels/system/users/cc-users-page.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/panels/system/users/cc-users-page.c b/panels/system/users/cc-users-page.c
+index 48e10d3..f6862f8 100644
+--- a/panels/system/users/cc-users-page.c
++++ b/panels/system/users/cc-users-page.c
+@@ -329,6 +329,10 @@ cc_users_page_init (CcUsersPage *self)
+     g_object_bind_property (self->permission, "allowed", self->add_user_button_row, "sensitive", G_BINDING_SYNC_CREATE);
+ 
+     self->user_manager = act_user_manager_get_default ();
++    if (!self->user_manager) {
++      g_debug ("no bus for user");
++      return;
++    }
+     g_signal_connect_object (self->user_manager,
+                              "notify::is-loaded",
+                              G_CALLBACK (users_loaded),
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 492b8b55a31cc3a048e4bc39aff7e9499efda7f6 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 25 Mar 2022 17:27:25 +0530
+Subject: [PATCH 05/12] panels/power/cc-power-panel.c: (cc_power_panel_init):
+ handle no bus
+
+---
+ panels/power/cc-power-panel.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/panels/power/cc-power-panel.c b/panels/power/cc-power-panel.c
+index a17e849..5418436 100644
+--- a/panels/power/cc-power-panel.c
++++ b/panels/power/cc-power-panel.c
+@@ -1205,6 +1205,10 @@ cc_power_panel_init (CcPowerPanel *self)
+   self->chassis_type = cc_hostname_get_chassis_type (cc_hostname_get_default ());
+ 
+   self->up_client = up_client_new ();
++  if (!self->up_client) {
++    g_debug ("no bus for power");
++    return;
++  }
+ 
+   self->gsd_settings = g_settings_new ("org.gnome.settings-daemon.plugins.power");
+   self->session_settings = g_settings_new ("org.gnome.desktop.session");
+-- 
+2.46.0.27.gfa3b914457
+
+
+From ffd8752f8fd8ca050386ef1240dbb7c02498cb95 Mon Sep 17 00:00:00 2001
+From: Mart Raudsepp <leio@gentoo.org>
+Date: Sun, 12 Jul 2020 12:21:07 +0300
+Subject: [PATCH 06/12] build: Restore options for bluetooth, NetworkManager
+ and Wacom
+
+---
+ meson.build                     | 39 +++++++++++++++++++--------------
+ meson_options.txt               |  3 +++
+ panels/default-apps/meson.build | 38 ++++++++++++++++++++++++++++++++
+ panels/meson.build              | 18 +++++++++------
+ shell/meson.build               |  2 +-
+ tests/meson.build               |  2 +-
+ 6 files changed, 76 insertions(+), 26 deletions(-)
+ create mode 100644 panels/default-apps/meson.build
+
+diff --git a/meson.build b/meson.build
+index 9dbeb3b..c2db72e 100644
+--- a/meson.build
++++ b/meson.build
+@@ -281,8 +281,9 @@ location_services = get_option('location-services')
+ config_h.set('HAVE_LOCATION_SERVICES', location_services.enabled(),
+              description: 'Whether location services is enabled')
+ 
+-if host_is_linux
+-  # ModemManager
++enable_network_manager = get_option('network_manager')
++if enable_network_manager
++  # network manager
+   mm_dep =  dependency('mm-glib', version: '>= 0.7')
+   # NetworkManager
+   network_manager_deps = [
+@@ -291,35 +292,39 @@ if host_is_linux
+     mm_dep,
+   ]
+ endif
+-config_h.set('BUILD_NETWORK', host_is_linux,
++config_h.set('BUILD_NETWORK', enable_network_manager,
+              description: 'Define to 1 to build the Network panel')
+-config_h.set('HAVE_NETWORK_MANAGER', host_is_linux,
++config_h.set('HAVE_NETWORK_MANAGER', enable_network_manager,
+              description: 'Define to 1 if NetworkManager is available')
+-config_h.set('BUILD_WWAN', host_is_linux,
++config_h.set('BUILD_WWAN', enable_network_manager,
+              description: 'Define to 1 to build the WWan panel')
+-config_h.set('HAVE_WWAN', host_is_linux,
++config_h.set('HAVE_WWAN', enable_network_manager,
+              description: 'Define to 1 if WWan is available')
+ 
+-if host_is_linux_not_s390
++enable_bluetooth = get_option('bluetooth')
++if enable_bluetooth
+   # gnome-bluetooth
+   gnome_bluetooth_dep = dependency('gnome-bluetooth-ui-3.0')
++endif
++
+ 
++enable_wacom = get_option('wacom')
++if enable_wacom
++  # Wacom
+   libwacom_dep = dependency('libwacom', version: '>= 1.4')
+ 
+   wacom_deps = [
+     libwacom_dep,
+   ]
+-else
+-  message('Bluetooth and Wacom panels will not be built (no USB support on this platform)')
+-  message('Thunderbolt panel will not be built (not supported on this platform)')
+ endif
+-config_h.set('BUILD_BLUETOOTH', host_is_linux_not_s390,
++
++config_h.set('BUILD_BLUETOOTH', enable_bluetooth,
+              description: 'Define to 1 to build the Bluetooth panel')
+-config_h.set('HAVE_BLUETOOTH', host_is_linux_not_s390,
++config_h.set('HAVE_BLUETOOTH', enable_bluetooth,
+              description: 'Define to 1 if bluetooth support is available')
+-config_h.set('BUILD_WACOM', host_is_linux_not_s390,
++config_h.set('BUILD_WACOM', enable_wacom,
+              description: 'Define to 1 to build the Wacom panel')
+-config_h.set('HAVE_WACOM', host_is_linux_not_s390,
++config_h.set('HAVE_WACOM', enable_wacom,
+              description: 'Define to 1 if Wacom is supportted')
+ config_h.set('BUILD_THUNDERBOLT', host_is_linux_not_s390,
+              description: 'Define to 1 to build the Thunderbolt panel')
+@@ -370,9 +375,9 @@ summary({
+ })
+ 
+ summary({
+-  'GNOME Bluetooth': host_is_linux_not_s390,
+-  'NetworkManager': host_is_linux,
+-  'Wacom': host_is_linux_not_s390,
++  'GNOME Bluetooth': enable_bluetooth,
++  'NetworkManager': enable_network_manager,
++  'Wacom': enable_wacom,
+ }, section: 'Dependencies')
+ 
+ summary({
+diff --git a/meson_options.txt b/meson_options.txt
+index b2302bf..ce6add6 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -1,10 +1,13 @@
+ option('deprecated-declarations', type: 'feature', value: 'disabled', description: 'build with deprecated declaration warnings')
++option('bluetooth', type: 'boolean', value: true, description: 'build with Bluetooth support')
+ option('documentation', type: 'boolean', value: false, description: 'build documentation')
+ option('location-services', type: 'feature', value: 'enabled', description: 'build with location services')
+ option('ibus', type: 'boolean', value: true, description: 'build with IBus support')
++option('network_manager', type: 'boolean', value: true, description: 'build with NetworkManager support')
+ option('privileged_group', type: 'string', value: 'wheel', description: 'name of group that has elevated permissions')
+ option('snap', type: 'boolean', value: true, description: 'build with Snap support')
+ option('tests', type: 'boolean', value: true, description: 'build tests')
++option('wacom', type: 'boolean', value: true, description: 'build with Wacom support')
+ option('wayland', type: 'boolean', value: true, description: 'build with Wayland support')
+ option('profile', type: 'combo', choices: ['default','development'], value: 'default')
+ option('malcontent', type: 'boolean', value: false, description: 'build with malcontent support')
+diff --git a/panels/default-apps/meson.build b/panels/default-apps/meson.build
+new file mode 100644
+index 0000000..b28b971
+--- /dev/null
++++ b/panels/default-apps/meson.build
+@@ -0,0 +1,38 @@
++panels_list += cappletname
++desktop = 'gnome-@0@-panel.desktop'.format(cappletname)
++
++deps = common_deps
++if enable_network_manager
++  deps += mm_dep
++endif
++
++i18n.merge_file(
++  type: 'desktop',
++  input: desktop + '.in',
++  output: desktop,
++  po_dir: po_dir,
++  install: true,
++  install_dir: control_center_desktopdir
++)
++
++sources = files(
++  'cc-default-apps-panel.c',
++  'cc-default-apps-row.c'
++)
++
++sources += gnome.compile_resources(
++  'cc-' + cappletname + '-resources',
++  cappletname + '.gresource.xml',
++  c_name: 'cc_' + cappletname.underscorify (),
++  export: true
++)
++
++panels_libs += static_library(
++  cappletname,
++  sources: sources,
++  include_directories: [ top_inc, common_inc ],
++  dependencies: deps,
++  c_args: cflags
++)
++
++subdir('icons')
+diff --git a/panels/meson.build b/panels/meson.build
+index 3067635..789f536 100644
+--- a/panels/meson.build
++++ b/panels/meson.build
+@@ -18,18 +18,22 @@ panels = [
+   'sound',
+   'system',
+   'universal-access',
+- 'wwan',
+ ]
+ 
+-if host_is_linux
+-  panels += ['network']
++if enable_network_manager
++  panels += ['network', 'wwan']
++endif
++
++if enable_bluetooth
++  panels += ['bluetooth']
++endif
++
++if enable_wacom
++  panels += ['wacom']
+ endif
+ 
+ if host_is_linux_not_s390
+-  panels += [
+-    'bluetooth',
+-    'wacom'
+-  ]
++#  panels += ['thunderbolt']
+ endif
+ 
+ panels_list = []
+diff --git a/shell/meson.build b/shell/meson.build
+index c698dea..7a430de 100644
+--- a/shell/meson.build
++++ b/shell/meson.build
+@@ -105,7 +105,7 @@ shell_deps = common_deps + [
+   libshell_dep,
+ ]
+ 
+-if host_is_linux_not_s390
++if enable_wacom
+   shell_deps += wacom_deps
+ endif
+ 
+diff --git a/tests/meson.build b/tests/meson.build
+index a8c37c5..7482217 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -3,7 +3,7 @@ Xvfb = find_program('Xvfb', required: false)
+ 
+ subdir('common')
+ #subdir('datetime')
+-if host_is_linux
++if enable_network_manager
+   subdir('network')
+ endif
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From d553c9765019a4fc4a5f3f8f3fb1ecb82f5dba43 Mon Sep 17 00:00:00 2001
+From: Mart Raudsepp <leio@gentoo.org>
+Date: Sun, 12 Jul 2020 12:27:59 +0300
+Subject: [PATCH 07/12] build: Make kerberos optional
+
+---
+ meson.build                            | 5 +++++
+ meson_options.txt                      | 1 +
+ panels/system/users/cc-realm-manager.c | 9 +++++++++
+ panels/system/users/meson.build        | 4 ----
+ 4 files changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index c2db72e..45a0b01 100644
+--- a/meson.build
++++ b/meson.build
+@@ -329,6 +329,11 @@ config_h.set('HAVE_WACOM', enable_wacom,
+ config_h.set('BUILD_THUNDERBOLT', host_is_linux_not_s390,
+              description: 'Define to 1 to build the Thunderbolt panel')
+ 
++# Kerberos support
++krb_dep = dependency('krb5', required: get_option('kerberos'))
++config_h.set('HAVE_KERBEROS', krb_dep.found(),
++             description: 'Define to 1 if kerberos support is available')
++
+ gnome = import('gnome')
+ i18n = import('i18n')
+ pkg = import('pkgconfig')
+diff --git a/meson_options.txt b/meson_options.txt
+index ce6add6..e0f5491 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -3,6 +3,7 @@ option('bluetooth', type: 'boolean', value: true, description: 'build with Bluet
+ option('documentation', type: 'boolean', value: false, description: 'build documentation')
+ option('location-services', type: 'feature', value: 'enabled', description: 'build with location services')
+ option('ibus', type: 'boolean', value: true, description: 'build with IBus support')
++option('kerberos', type: 'feature', value: 'auto', description: 'build with kerberos support')
+ option('network_manager', type: 'boolean', value: true, description: 'build with NetworkManager support')
+ option('privileged_group', type: 'string', value: 'wheel', description: 'name of group that has elevated permissions')
+ option('snap', type: 'boolean', value: true, description: 'build with Snap support')
+diff --git a/panels/system/users/cc-realm-manager.c b/panels/system/users/cc-realm-manager.c
+index ae05244..78fa0b6 100644
+--- a/panels/system/users/cc-realm-manager.c
++++ b/panels/system/users/cc-realm-manager.c
+@@ -22,7 +22,9 @@
+ 
+ #include "cc-realm-manager.h"
+ 
++#ifdef HAVE_KERBEROS
+ #include <krb5/krb5.h>
++#endif
+ 
+ #include <glib.h>
+ #include <glib/gi18n.h>
+@@ -605,6 +607,7 @@ login_closure_free (gpointer data)
+         g_slice_free (LoginClosure, login);
+ }
+ 
++#ifdef HAVE_KERBEROS
+ static krb5_error_code
+ login_perform_kinit (krb5_context k5,
+                      const gchar *realm,
+@@ -666,6 +669,7 @@ login_perform_kinit (krb5_context k5,
+ 
+         return code;
+ }
++#endif
+ 
+ static void
+ kinit_thread_func (GTask *t,
+@@ -674,6 +678,7 @@ kinit_thread_func (GTask *t,
+                    GCancellable *cancellable)
+ {
+         g_autoptr(GTask) task = t;
++#ifdef HAVE_KERBEROS
+         LoginClosure *login = task_data;
+         krb5_context k5 = NULL;
+         krb5_error_code code;
+@@ -749,6 +754,10 @@ kinit_thread_func (GTask *t,
+ 
+         if (k5)
+                 krb5_free_context (k5);
++#else
++        g_task_return_new_error (task, CC_REALM_ERROR, CC_REALM_ERROR_GENERIC,
++                                 _("gnome-control-center was built without kerberos support"));
++#endif
+ }
+ 
+ void
+diff --git a/panels/system/users/meson.build b/panels/system/users/meson.build
+index 78033ac..26f69ee 100644
+--- a/panels/system/users/meson.build
++++ b/panels/system/users/meson.build
+@@ -109,10 +109,6 @@ sources += gnome.gdbus_codegen(
+   autocleanup: 'all',
+ )
+ 
+-# Kerberos support
+-krb_dep = dependency('krb5', required: false)
+-assert(krb_dep.found(), 'kerberos libraries not found in your path')
+-
+ cflags += [
+   '-DGNOMELOCALEDIR="@0@"'.format(control_center_localedir),
+   '-DHAVE_LIBPWQUALITY',
+-- 
+2.46.0.27.gfa3b914457
+
+
+From c38a29d32581bf89db5a223dc197adf0b1619b07 Mon Sep 17 00:00:00 2001
+From: Mart Raudsepp <leio@gentoo.org>
+Date: Mon, 4 Mar 2019 01:22:13 +0200
+Subject: [PATCH 08/12] build: Make gnome-online-accounts optional
+
+---
+ meson.build             | 6 +++++-
+ meson_options.txt       | 1 +
+ panels/meson.build      | 5 ++++-
+ shell/cc-panel-loader.c | 4 ++++
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 45a0b01..af4c579 100644
+--- a/meson.build
++++ b/meson.build
+@@ -186,7 +186,7 @@ gnome_desktop_dep = dependency('gnome-desktop-4')
+ gnome_bg_dep = dependency('gnome-bg-4')
+ gnome_rr_dep = dependency('gnome-rr-4')
+ gnome_settings_dep = dependency('gnome-settings-daemon', version: '>= 41.0')
+-goa_dep = dependency('goa-1.0', version: goa_req_version, fallback: 'goa')
++goa_dep = dependency('goa-1.0', version: goa_req_version, fallback: 'goa', required: get_option('goa'))
+ gsettings_desktop_dep = dependency('gsettings-desktop-schemas', version: '>= 47.alpha')
+ libxml_dep = dependency('libxml-2.0')
+ pulse_dep = dependency('libpulse', version: pulse_req_version)
+@@ -201,6 +201,10 @@ pwquality_dep = dependency('pwquality', version: '>= 1.2.2')
+ 
+ m_dep = cc.find_library('m')
+ 
++enable_goa = goa_dep.found()
++config_h.set('BUILD_GOA', enable_goa,
++             description: 'Define to 1 to build the Online Accounts panel')
++
+ common_deps = [
+   gio_dep,
+   glib_dep,
+diff --git a/meson_options.txt b/meson_options.txt
+index e0f5491..e024913 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -2,6 +2,7 @@ option('deprecated-declarations', type: 'feature', value: 'disabled', descriptio
+ option('bluetooth', type: 'boolean', value: true, description: 'build with Bluetooth support')
+ option('documentation', type: 'boolean', value: false, description: 'build documentation')
+ option('location-services', type: 'feature', value: 'enabled', description: 'build with location services')
++option('goa', type: 'feature', value: 'auto', description: 'build with gnome-online-accounts support')
+ option('ibus', type: 'boolean', value: true, description: 'build with IBus support')
+ option('kerberos', type: 'feature', value: 'auto', description: 'build with kerberos support')
+ option('network_manager', type: 'boolean', value: true, description: 'build with NetworkManager support')
+diff --git a/panels/meson.build b/panels/meson.build
+index 789f536..283ee49 100644
+--- a/panels/meson.build
++++ b/panels/meson.build
+@@ -9,7 +9,6 @@ panels = [
+   'mouse',
+   'multitasking',
+   'notifications',
+-  'online-accounts',
+   'power',
+   'printers',
+   'privacy',
+@@ -20,6 +19,10 @@ panels = [
+   'universal-access',
+ ]
+ 
++if enable_goa
++  panels += ['online-accounts']
++endif
++
+ if enable_network_manager
+   panels += ['network', 'wwan']
+ endif
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 981a186..40e84c0 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -47,7 +47,9 @@ extern GType cc_network_panel_get_type (void);
+ extern GType cc_wifi_panel_get_type (void);
+ #endif /* BUILD_NETWORK */
+ extern GType cc_notifications_panel_get_type (void);
++#ifdef BUILD_GOA
+ extern GType cc_online_accounts_panel_get_type (void);
++#endif /* BUILD_GOA */
+ extern GType cc_power_panel_get_type (void);
+ extern GType cc_printers_panel_get_type (void);
+ extern GType cc_privacy_panel_get_type (void);
+@@ -100,7 +102,9 @@ static CcPanelLoaderVtable default_panels[] =
+   PANEL_TYPE("wifi",             cc_wifi_panel_get_type,                 cc_wifi_panel_static_init_func),
+ #endif
+   PANEL_TYPE("notifications",    cc_notifications_panel_get_type,        NULL),
++#ifdef BUILD_GOA
+   PANEL_TYPE("online-accounts",  cc_online_accounts_panel_get_type,      NULL),
++#endif
+   PANEL_TYPE("power",            cc_power_panel_get_type,                NULL),
+   PANEL_TYPE("printers",         cc_printers_panel_get_type,             NULL),
+   PANEL_TYPE("privacy",          cc_privacy_panel_get_type,              NULL),
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 86b99e09455fc4672da72607bdddc99839fdd426 Mon Sep 17 00:00:00 2001
+From: Mart Raudsepp <leio@gentoo.org>
+Date: Sun, 12 Jul 2020 12:38:19 +0300
+Subject: [PATCH 09/12] build: Make printers panel (cups) optional
+
+As a side-effect smbclient is also optional, as it's only required
+by the printers panel.
+---
+ meson.build             | 13 ++++++++++---
+ meson_options.txt       |  1 +
+ panels/meson.build      |  5 ++++-
+ shell/cc-panel-loader.c |  4 ++++
+ tests/meson.build       |  4 +++-
+ 5 files changed, 22 insertions(+), 5 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index af4c579..76b013e 100644
+--- a/meson.build
++++ b/meson.build
+@@ -225,9 +225,11 @@ foreach polkit_file: polkit_files
+ endforeach
+ 
+ # Check for CUPS 1.4 or newer
+-cups_dep = dependency('cups', version : '>= 1.4', required: false)
+-assert(cups_dep.found(), 'CUPS 1.4 or newer not found')
++cups_dep = dependency('cups', version : '>= 1.4', required: get_option('cups'))
++enable_cups = cups_dep.found()
++have_cups_httpconnect2 = false
+ 
++if enable_cups
+ # https://bugzilla.gnome.org/show_bug.cgi?id=696766
+ cups_cflags = []
+ if cups_dep.version().version_compare('>= 1.6')
+@@ -244,8 +246,13 @@ foreach header: check_headers
+   assert(cc.has_header(header[1], args: cups_cflags), 'CUPS headers not found: ' + header[1])
+ endforeach
+ 
++have_cups_httpconnect2 = cc.has_function('httpConnect2', dependencies: cups_dep)
++endif
++
++config_h.set('BUILD_PRINTERS', enable_cups,
++             description: 'Define to 1 to build the Printers panel')
+ config_h.set10('HAVE_CUPS_HTTPCONNECT2',
+-               cc.has_function('httpConnect2', dependencies: cups_dep),
++               have_cups_httpconnect2,
+                description: 'Define if httpConnect2() is available in CUPS')
+ 
+ # IBus support
+diff --git a/meson_options.txt b/meson_options.txt
+index e024913..ebbf156 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -1,5 +1,6 @@
+ option('deprecated-declarations', type: 'feature', value: 'disabled', description: 'build with deprecated declaration warnings')
+ option('bluetooth', type: 'boolean', value: true, description: 'build with Bluetooth support')
++option('cups', type: 'feature', value: 'auto', description: 'build with CUPS support (printer panel)')
+ option('documentation', type: 'boolean', value: false, description: 'build documentation')
+ option('location-services', type: 'feature', value: 'enabled', description: 'build with location services')
+ option('goa', type: 'feature', value: 'auto', description: 'build with gnome-online-accounts support')
+diff --git a/panels/meson.build b/panels/meson.build
+index 283ee49..d7fab59 100644
+--- a/panels/meson.build
++++ b/panels/meson.build
+@@ -10,7 +10,6 @@ panels = [
+   'multitasking',
+   'notifications',
+   'power',
+-  'printers',
+   'privacy',
+   'search',
+   'sharing',
+@@ -19,6 +18,10 @@ panels = [
+   'universal-access',
+ ]
+ 
++if enable_cups
++  panels += ['printers']
++endif
++
+ if enable_goa
+   panels += ['online-accounts']
+ endif
+diff --git a/shell/cc-panel-loader.c b/shell/cc-panel-loader.c
+index 40e84c0..a3b5e3d 100644
+--- a/shell/cc-panel-loader.c
++++ b/shell/cc-panel-loader.c
+@@ -51,7 +51,9 @@ extern GType cc_notifications_panel_get_type (void);
+ extern GType cc_online_accounts_panel_get_type (void);
+ #endif /* BUILD_GOA */
+ extern GType cc_power_panel_get_type (void);
++#ifdef BUILD_PRINTERS
+ extern GType cc_printers_panel_get_type (void);
++#endif /* BUILD_PRINTERS */
+ extern GType cc_privacy_panel_get_type (void);
+ extern GType cc_search_panel_get_type (void);
+ extern GType cc_sharing_panel_get_type (void);
+@@ -106,7 +108,9 @@ static CcPanelLoaderVtable default_panels[] =
+   PANEL_TYPE("online-accounts",  cc_online_accounts_panel_get_type,      NULL),
+ #endif
+   PANEL_TYPE("power",            cc_power_panel_get_type,                NULL),
++#ifdef BUILD_PRINTERS
+   PANEL_TYPE("printers",         cc_printers_panel_get_type,             NULL),
++#endif
+   PANEL_TYPE("privacy",          cc_privacy_panel_get_type,              NULL),
+   PANEL_TYPE("search",           cc_search_panel_get_type,               NULL),
+   PANEL_TYPE("sharing",          cc_sharing_panel_get_type,              cc_sharing_panel_static_init_func),
+diff --git a/tests/meson.build b/tests/meson.build
+index 7482217..5885bb6 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -12,5 +12,7 @@ if not libadwaita_is_subproject
+   subdir('interactive-panels')
+ endif
+ 
+-subdir('printers')
++if enable_cups
++  subdir('printers')
++endif
+ subdir('keyboard')
+-- 
+2.46.0.27.gfa3b914457
+
+
+From a41d799df7e8432db6051547bb2666ff7b2aa9b9 Mon Sep 17 00:00:00 2001
+From: Mart Raudsepp <leio@gentoo.org>
+Date: Sun, 12 Jul 2020 13:02:08 +0300
+Subject: [PATCH 10/12] Fix absolute paths to be dependent on build
+ configuration
+
+Most of this should be upstreamable, except for maybe LIBEXECDIR bits,
+as the old value may not match for `--prefix /` builds with new value.
+---
+ panels/printers/meson.build         | 5 +++++
+ panels/printers/pp-host.c           | 2 +-
+ panels/printers/pp-options-dialog.c | 2 +-
+ panels/system/datetime/tz.h         | 4 ++--
+ panels/system/users/meson.build     | 1 +
+ panels/system/users/run-passwd.c    | 2 +-
+ tests/datetime/meson.build          | 1 +
+ tests/datetime/test-endianess.c     | 4 ++--
+ 8 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/panels/printers/meson.build b/panels/printers/meson.build
+index 3e521c2..488f85b 100644
+--- a/panels/printers/meson.build
++++ b/panels/printers/meson.build
+@@ -46,6 +46,11 @@ deps = common_deps + [
+   dependency('smbclient')
+ ]
+ 
++cflags += [
++  '-DDATADIR="@0@"'.format(control_center_datadir),
++  '-DLIBEXECDIR="@0@"'.format(control_center_libexecdir)
++]
++
+ printers_panel_lib = static_library(
+   cappletname,
+   sources: sources,
+diff --git a/panels/printers/pp-host.c b/panels/printers/pp-host.c
+index a31a606..049fb92 100644
+--- a/panels/printers/pp-host.c
++++ b/panels/printers/pp-host.c
+@@ -256,7 +256,7 @@ _pp_host_get_snmp_devices_thread (GTask        *task,
+   devices = g_ptr_array_new_with_free_func (g_object_unref);
+ 
+   argv = g_new0 (gchar *, 3);
+-  argv[0] = g_strdup ("/usr/lib/cups/backend/snmp");
++  argv[0] = g_strdup (LIBEXECDIR "/cups/backend/snmp");
+   argv[1] = g_strdup (priv->hostname);
+ 
+   /* Use SNMP to get printer's informations */
+diff --git a/panels/printers/pp-options-dialog.c b/panels/printers/pp-options-dialog.c
+index 1772c46..ea1f591 100644
+--- a/panels/printers/pp-options-dialog.c
++++ b/panels/printers/pp-options-dialog.c
+@@ -805,7 +805,7 @@ test_page_cb (PpOptionsDialog *self)
+ 
+   if (self->printer_name)
+     {
+-      const gchar      *const dirs[] = { "/usr/share/cups",
++      const gchar      *const dirs[] = { DATADIR "/cups",
+                                          "/usr/local/share/cups",
+                                          NULL };
+       const gchar      *datadir = NULL;
+diff --git a/panels/system/datetime/tz.h b/panels/system/datetime/tz.h
+index feef165..f9ed6ea 100644
+--- a/panels/system/datetime/tz.h
++++ b/panels/system/datetime/tz.h
+@@ -28,9 +28,9 @@
+ G_BEGIN_DECLS
+ 
+ #ifndef __sun
+-#  define TZ_DATA_FILE "/usr/share/zoneinfo/zone.tab"
++#  define TZ_DATA_FILE DATADIR "/zoneinfo/zone.tab"
+ #else
+-#  define TZ_DATA_FILE "/usr/share/lib/zoneinfo/tab/zone_sun.tab"
++#  define TZ_DATA_FILE DATADIR "/lib/zoneinfo/tab/zone_sun.tab"
+ #endif
+ 
+ typedef struct _TzDB TzDB;
+diff --git a/panels/system/users/meson.build b/panels/system/users/meson.build
+index 26f69ee..d36dd95 100644
+--- a/panels/system/users/meson.build
++++ b/panels/system/users/meson.build
+@@ -111,6 +111,7 @@ sources += gnome.gdbus_codegen(
+ 
+ cflags += [
+   '-DGNOMELOCALEDIR="@0@"'.format(control_center_localedir),
++  '-DBINDIR="@0@"'.format(control_center_bindir),
+   '-DHAVE_LIBPWQUALITY',
+   '-DUM_PIXMAP_DIR="@0@"'.format(join_paths(control_center_pkgdatadir, 'pixmaps'))
+ ]
+diff --git a/panels/system/users/run-passwd.c b/panels/system/users/run-passwd.c
+index 742e68e..f79dd72 100644
+--- a/panels/system/users/run-passwd.c
++++ b/panels/system/users/run-passwd.c
+@@ -152,7 +152,7 @@ spawn_passwd (PasswdHandler *passwd_handler, GError **error)
+         gchar  **envp;
+         gint    my_stdin, my_stdout;
+ 
+-        argv[0] = "/usr/bin/passwd";    /* Is it safe to rely on a hard-coded path? */
++        argv[0] = BINDIR "/passwd";    /* Is it safe to rely on a hard-coded path? */
+         argv[1] = NULL;
+ 
+         envp = g_get_environ ();
+diff --git a/tests/datetime/meson.build b/tests/datetime/meson.build
+index 0210368..c4563d9 100644
+--- a/tests/datetime/meson.build
++++ b/tests/datetime/meson.build
+@@ -14,6 +14,7 @@ env = [
+ ]
+ cflags = [
+   '-DTEST_SRCDIR="@0@"'.format(meson.current_source_dir()),
++  '-DDATADIR="@0@"'.format(control_center_datadir),
+   '-DSRCDIR="@0@"'.format(meson.project_source_root() + '/panels/datetime')
+ ]
+ 
+diff --git a/tests/datetime/test-endianess.c b/tests/datetime/test-endianess.c
+index 9cb9200..864681e 100644
+--- a/tests/datetime/test-endianess.c
++++ b/tests/datetime/test-endianess.c
+@@ -26,11 +26,11 @@ test_endianess (void)
+ 	g_autoptr(GDir) dir = NULL;
+ 	const char *name;
+ 
+-	dir = g_dir_open ("/usr/share/i18n/locales/", 0, NULL);
++	dir = g_dir_open (DATADIR "/i18n/locales/", 0, NULL);
+ 	if (dir == NULL) {
+ 		/* Try with /usr/share/locale/
+ 		 * https://bugzilla.gnome.org/show_bug.cgi?id=646780 */
+-		dir = g_dir_open ("/usr/share/locale/", 0, NULL);
++		dir = g_dir_open (DATADIR "/locale/", 0, NULL);
+ 		if (dir == NULL) {
+ 			g_assert_not_reached ();
+ 		}
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 51355ec3a1d1ab917131454aa9ca09ba234f22ac Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 8 Oct 2024 17:52:04 +0530
+Subject: [PATCH 11/12] downgrade glib to 2.75
+
+---
+ meson.build      | 2 +-
+ shell/cc-panel.c | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 76b013e..e85c893 100644
+--- a/meson.build
++++ b/meson.build
+@@ -181,7 +181,7 @@ accounts_dep = dependency('accountsservice', version: '>= 0.6.39')
+ colord_dep = dependency('colord', version: '>= 0.1.34')
+ gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0', version: '>= 2.23.0')
+ gio_dep = dependency('gio-2.0')
+-glib_dep = dependency('glib-2.0', version: '>= 2.76.6')
++glib_dep = dependency('glib-2.0', version: '>= 2.75.0')
+ gnome_desktop_dep = dependency('gnome-desktop-4')
+ gnome_bg_dep = dependency('gnome-bg-4')
+ gnome_rr_dep = dependency('gnome-rr-4')
+diff --git a/shell/cc-panel.c b/shell/cc-panel.c
+index e136d92..39ca020 100644
+--- a/shell/cc-panel.c
++++ b/shell/cc-panel.c
+@@ -40,6 +40,11 @@
+ #include <gtk/gtk.h>
+ #include <gio/gio.h>
+ 
++#ifndef GPOINTER_TO_TYPE
++#define GPOINTER_TO_TYPE(p) ((GType) (guintptr) (p))
++#define GTYPE_TO_POINTER(t) ((gpointer) (guintptr) (t))
++#endif
++
+ typedef struct
+ {
+   CcShell      *shell;
+-- 
+2.46.0.27.gfa3b914457
+
+
+From bc32bcf118d41b8ef9411c0df673b6585132fd81 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 8 Oct 2024 18:47:05 +0530
+Subject: [PATCH 12/12] meson.build: downgrade goa
+
+---
+ meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index e85c893..0739efb 100644
+--- a/meson.build
++++ b/meson.build
+@@ -127,7 +127,7 @@ libgvc = subproject(
+ libgvc_dep = libgvc.get_variable('libgvc_dep')
+ 
+ libadwaita_version = '>= 1.6.beta'
+-goa_req_version = '>= 3.51.0'
++goa_req_version = '>= 3.50.0'
+ pulse_req_version = '>= 2.0'
+ 
+ gtk_dep = dependency(
+-- 
+2.46.0.27.gfa3b914457
+
