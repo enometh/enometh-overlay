@@ -129,3 +129,34 @@ https://github.com/open-quantum-safe/liboqs.git")
 					  "file:///14/build/SoftEtherVPN/"
 					  path))
 "\n"))
+
+(cl-defun write-overrides
+    (cpn
+     git-uri
+     &key (port-dir "/dev/shm/portage")
+     (pn (cl-subseq cpn (1+ (cl-position ?/ cpn))))
+     (env-file-name (concat pn "-egit-override"))
+     (pkgenv-file-name pn)
+     (env-file-path  (file-name-concat port-dir "env" env-file-name))
+     (pkgenv-file-path
+      (file-name-concat port-dir "package.env" pkgenv-file-name)))
+  (cl-flet ((ensure-directories-exist (path &key (verbose t))
+	      (let ((dir (file-name-directory path)))
+		(unless (file-exists-p dir)
+		  (when verbose
+		    (message "creating directory %S" dir))
+		  (make-directory dir t))))
+	    (string->file (string file)
+	      (with-temp-buffer
+		(insert string)
+		(write-region (point-min) (point-max) file))))
+    (let* ((pkgenv-file-contents (format "%s %s" cpn env-file-name))
+	   (env-file-contents (env-file-contents git-uri)))
+      (ensure-directories-exist env-file-path)
+      (ensure-directories-exist pkgenv-file-path)
+      (string->file pkgenv-file-contents pkgenv-file-path)
+      (string->file env-file-contents env-file-path))))
+
+(when nil
+  (write-overrides "sys-apps/xdg-desktop-portal-gtk"
+				   "https://github.com/flatpak/xdg-desktop-portal-gtk.git"))
