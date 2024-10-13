@@ -1,0 +1,26 @@
+From cd2dd62ba5978ba7360ba49c0d466cac72193fdf Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sat, 14 Mar 2020 22:39:46 +0530
+Subject: [PATCH 2/2] libq/Makefile.am:  install libq.a and libq.so, but link q
+ statically
+
+---
+ libq/Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libq/Makefile.am b/libq/Makefile.am
+index 3384b0c..64b4f6d 100644
+--- a/libq/Makefile.am
++++ b/libq/Makefile.am
+@@ -28,7 +28,7 @@ QFILES = \
+ 	xsystem.c xsystem.h \
+ 	$(NULL)
+ 
+-noinst_LTLIBRARIES = libq.la
++lib_LTLIBRARIES  = libq.la
+ libq_la_SOURCES = $(QFILES)
+ libq_la_CPPFLAGS = \
+ 	$(OPENMP_CFLAGS) \
+-- 
+2.46.0.27.gfa3b914457
+
