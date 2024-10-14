@@ -14,19 +14,22 @@
 # ;madhu 220403 0.93.3 v0.93.3-48-gb65e7f0
 # ;madhu 220817 0.94.1 v0.94-1-g62503bb
 # ;madhu 231012 0.96.1 v0.96.1
-# ;madhu 241013 0.97 v0.97-9-g3a525dc (patches to ship a libq.so to facilitate use from lisp via ffi)
+# ;madhu 241013 0.97 v0.97-9-g3a525dc (patches to ship a libq.so to facilitate use from lisp via ffi), ISSUES 1. FEATURES=installsources doesn't copy gnulib sources 2. does main.c conflict with libq-extra in libq.a?
 
 EAPI=8
 USE_GIT=true
 
-inherit flag-o-matic toolchain-funcs
+inherit autotools flag-o-matic toolchain-funcs multilib
 
 DESCRIPTION="Small and fast Portage helper tools written in C"
 HOMEPAGE="https://wiki.gentoo.org/wiki/Portage-utils"
 
 if [[ ${PV} == *9999 ]] || ${USE_GIT} ; then
-	inherit git-r3 autotools
+	inherit git-r3
 	EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/portage-utils.git"
+	EGIT_BRANCH=master
+	EGIT_CLONE_TYPE=shallow
+
 else
 	SRC_URI="https://dev.gentoo.org/~grobian/distfiles/${P}.tar.xz"
 fi
@@ -35,7 +38,7 @@ fi
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="openmp +qmanifest +qtegrity static"
+IUSE="openmp +qmanifest static"
 
 RDEPEND="
 	openmp? ( || (
@@ -49,11 +52,6 @@ RDEPEND="
 			dev-libs/openssl:=
 			sys-libs/zlib:=
 		)
-	)
-	qtegrity? (
-		!static? (
-			dev-libs/openssl:=
-		)
 	)"
 DEPEND="${RDEPEND}
 	qmanifest? (
@@ -62,11 +60,6 @@ DEPEND="${RDEPEND}
 			app-crypt/libb2[static-libs]
 			dev-libs/openssl[static-libs]
 			sys-libs/zlib[static-libs]
-		)
-	)
-	qtegrity? (
-		static? (
-			dev-libs/openssl[static-libs]
 		)
 	)"
 BDEPEND="virtual/pkgconfig"
@@ -77,6 +70,7 @@ QA_CONFIG_IMPL_DECL_SKIP="MIN"
 PATCHES=(
 	${FILESDIR}/portage-utils-47.0-configure.ac-reintroduce-libtool.patch
 	${FILESDIR}/portage-utils-47.0-libq-Makefile.am-install-libq.a-and-libq.so-but-link.patch
+	${FILESDIR}/portage-utils-47.0-fix-dynamic-libq.so-to-include-gnulib-and-undefined-.patch
 )
 
 pkg_setup() {
@@ -85,16 +79,18 @@ pkg_setup() {
 
 src_prepare() {
 	default
-	[[ ${PV} == *9999 ]] && eautoreconf
+	eautoreconf
+#	[[ ${PV} == *9999 || ${USE_GIT} ]] && eautoreconf
 }
 
 src_configure() {
+	#;madhu 241013  patch does this anyway
 	use static && append-ldflags -static
 
 	econf \
+		--enable-static \
 		--disable-maintainer-mode \
 		--with-eprefix="${EPREFIX}" \
 		$(use_enable qmanifest) \
-		$(use_enable qtegrity) \
 		$(use_enable openmp)
 }
