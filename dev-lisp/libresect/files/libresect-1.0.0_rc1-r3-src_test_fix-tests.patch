@@ -1,0 +1,77 @@
+From c62ac9d4696a874d603e86207cbee6b6fd417cf3 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 30 Sep 2024 22:28:55 +0530
+Subject: [PATCH 1/2] src/test.c: fix include paths for my localhost
+
+Include the contents of
+
+echo | clang -xc -E -v  -
+echo | clang -xc++ -E -v  -
+
+in resect_options_add_include_path
+---
+ test/test.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/test/test.c b/test/test.c
+index ea4fbf9..1bc4a13 100644
+--- a/test/test.c
++++ b/test/test.c
+@@ -87,9 +87,26 @@ int main(int argc, char **argv) {
+     resect_parse_options options = resect_options_create();
+     resect_options_add_language(options, "c++");
+ 
++#if 0
+     resect_options_add_include_path(options, "/usr/local/include/");
+     resect_options_add_include_path(options, "/usr/include/");
+     resect_options_add_include_path(options, "/usr/include/linux/");
++#else
++    char *paths[] = {
++      "/usr/lib/gcc/x86_64-pc-linux-gnu/13/include/g++-v13",
++      "/usr/lib/gcc/x86_64-pc-linux-gnu/13/include/g++-v13/x86_64-pc-linux-gnu",
++      "/usr/lib/gcc/x86_64-pc-linux-gnu/13/include/g++-v13/backward",
++      "/usr/lib/llvm/14/bin/../../../../lib/clang/14.0.6/include",
++      "/usr/local/include",
++      "/usr/include",
++      NULL,
++    };
++
++    int i;
++    for (i = 0; paths[i]; i++) {
++      resect_options_add_include_path(options, paths[i]);
++    }
++#endif
+ 
+     resect_options_add_target(options, "x86_64-pc-linux-gnu");
+     resect_options_print_diagnostics(options);
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 2651248c327f69c4f28550d971293efc5592139f Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 17 Oct 2024 10:27:43 +0530
+Subject: [PATCH 2/2] test/test.c: set options to include ".*" to produce any
+ output.
+
+have to set resect_options_include_definition(options, ".*")
+or nothing gets printed
+---
+ test/test.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/test/test.c b/test/test.c
+index 1bc4a13..180084e 100644
+--- a/test/test.c
++++ b/test/test.c
+@@ -110,6 +110,7 @@ int main(int argc, char **argv) {
+ 
+     resect_options_add_target(options, "x86_64-pc-linux-gnu");
+     resect_options_print_diagnostics(options);
++   resect_options_include_definition(options, ".*");
+ 
+     resect_translation_unit context = resect_parse(filename, options);
+ 
+-- 
+2.46.0.27.gfa3b914457
+

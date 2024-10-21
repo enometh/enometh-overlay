@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Gentoo Authors
+# Copyright 2021-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -52,6 +52,7 @@ DOCS=( README.md LICENSE )
 PATCHES=(
 	$FILESDIR/libresect-1.0.0_rc1-LLVM-13-beta.patch
 	$FILESDIR/libresect-1.0.0_rc1-r3-CMakeLists-non-static-lib64.patch
+	$FILESDIR/libresect-1.0.0_rc1-r3-src_test_fix-tests.patch
 )
 
 pkg_setup() {
