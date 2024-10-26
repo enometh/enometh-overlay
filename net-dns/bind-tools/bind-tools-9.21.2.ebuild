@@ -9,6 +9,7 @@
 #
 # ;madhu 240325 9.16.48 -> 9.19.22 drop patches, no caps,python (configure pulls it in, and dtrace),json-c, set python_single_target for sphinx, no html docs. builds static binaries.
 #
+# ;madhu 241026 9.21.2 --with-openssl gone,
 
 EAPI=8
 PYTHON_COMPAT=( python3_9 )
@@ -78,7 +79,7 @@ src_configure() {
 		--without-lmdb
 		--without-maxminddb
 		--disable-geoip
-		--with-openssl="${ESYSROOT}"/usr
+#		--with-openssl="${ESYSROOT}"/usr
 		--disable-dnstap
 		$(use_with idn libidn2 "${ESYSROOT}"/usr)
 		$(use_with xml libxml2)
