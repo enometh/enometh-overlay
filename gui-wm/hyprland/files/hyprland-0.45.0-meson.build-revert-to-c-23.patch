@@ -1,0 +1,33 @@
+From 93f2b2315f266cb674fe6970d956c1791315c9d7 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 15 Nov 2024 17:28:44 +0530
+Subject: [PATCH 2/2] meson.build: revert to c++-23
+
+---
+ meson.build | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 7676564..4aa771f 100644
+--- a/meson.build
++++ b/meson.build
+@@ -9,7 +9,7 @@ project(
+     'optimization=3',
+     'buildtype=release',
+     'debug=false',
+-    'cpp_std=c++26',
++    'cpp_std=c++23',
+   ],
+ )
+ 
+@@ -34,6 +34,7 @@ endif
+ aquamarine = dependency('aquamarine', version: '>=0.4.2')
+ add_project_arguments(['-DAQUAMARINE_VERSION="@0@"'.format(aquamarine.version())], language: 'cpp')
+ 
++fmt_dep = dependency('fmt', required: true, version: '>=11.0.2')
+ xcb_dep = dependency('xcb', required: get_option('xwayland'))
+ xcb_composite_dep = dependency('xcb-composite', required: get_option('xwayland'))
+ xcb_errors_dep = dependency('xcb-errors', required: get_option('xwayland'))
+-- 
+2.46.0.27.gfa3b914457
+
