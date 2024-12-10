@@ -65,7 +65,7 @@ src_configure() {
 		cmake_src_configure
 	}
 	CMAKE_PREFIX_PATH=${QT6ROOT}/lib/cmake \
-					 PKG_CONFIG_PATH=${QT6ROOT}/lib/pkgconfig \
+					 PKG_CONFIG_PATH=${QT6ROOT}/lib/pkgconfig:$PKG_CONFIG_PATH \
 					 myconfigure
 #	multibuild_foreach_variant myconfigure
 }
