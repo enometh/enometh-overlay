@@ -14,7 +14,7 @@
 # ;madhu 230630 29.1.3 ENABLE_SERVICE_UPDATES=OFF
 # ;madhu 231010 29.1.3-r1 -- fudge use flags for qt5gui[wayland]
 # -- requires rebuild of qtgui, mesa, libva,
-# ;madhu 241205 31.0.0_rc1 NON STANDARD QT6_ROOT FFMPEG_ROOT, SWIG4_ROOT, specialcase pipewire, handle EGIT_SUBMODULES which don't work when the git repo doesnt have submodule commits.
+# ;madhu 241205 31.0.0_rc1 NON STANDARD QT6_ROOT FFMPEG_ROOT, SWIG4_ROOT, specialcase pipewire, handle EGIT_SUBMODULES which don't work when the git repo doesnt have submodule commits. pkgconfig files get the libdir wrong
 # ln -sv /16/tmp.d/mirrors.d/github.com/obsproject/obs-studio/archive/refs/tags/31.0.0-rc1.tar.gz /gentoo/distfiles/obs-studio-31.0.0_rc1.tar.gz
 
 EAPI=8
