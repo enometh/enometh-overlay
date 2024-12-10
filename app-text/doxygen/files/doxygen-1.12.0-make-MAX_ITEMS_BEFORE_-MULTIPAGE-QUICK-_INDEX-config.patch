@@ -1,0 +1,91 @@
+From b5c10ebd2c9f7732a7068a871c2440af8cebee59 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 10 Dec 2024 11:12:22 +0530
+Subject: [PATCH] make  MAX_ITEMS_BEFORE_(MULTIPAGE|QUICK)_INDEX configurable
+
+* src/config.xml: new config items MAX_MULTIPAGE_ITEMS and
+MAX_QUICK_ITEMS. to control the number of items beyond which
+pagination occurs.
+* src/index.c: used here to initialize
+MAX_ITEMS_BEFORE_MULTIPAGE_INDEX and MAX_ITEMS_BEFORE_QUICK_INDEX
+respectively. The def have been bumped from 200 to 3000 and from 30 to
+300 respectively
+
+This is and  squashed from 4 commits posted on
+
+	https://github.com/doxygen/doxygen/pull/9194
+
+as of March 8 20222, authored by
+
+Gernot Kranz <gernot@pep.foundation> and
+Wurzelkoch <lasta.ugo@web.de>
+
+It is modified to make the config names fit within 23 characters.
+
+It answers the unanswered questions on
+https://stackoverflow.com/questions/49135096/howto-generate-function-index-with-doxygen
+
+https://github.com/doxygen/doxygen/issues/9107
+and
+https://github.com/doxygen/doxygen/issues/4111
+https://github.com/doxygen/doxygen/issues/5812
+
+all of which avoid answering why the function index is not available on
+a single page but is split alphabetically.
+---
+ src/config.xml | 20 ++++++++++++++++++++
+ src/index.cpp  |  7 +++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/src/config.xml b/src/config.xml
+index a556378..61d0226 100644
+--- a/src/config.xml
++++ b/src/config.xml
+@@ -1965,6 +1965,26 @@ to disable this feature.
+ ]]>
+       </docs>
+     </option>
++    <option type='int' id='MAX_QUICK_ITEMS' minval='0' maxval='3000' defval='300'>
++      <docs>
++<![CDATA[
++ If the number of items on a list of functions, variables, typdefs, enums or macros
++ exceeds \c MAX__QUICK_ITEMS, it will be divided into multiple sections
++ to form a quick index. If the number of items exceeds \ref cfg_max_multipage_items "MAX__MULTIPAGE_ITEMS",
++ those sections will be put on a single output page.
++]]>
++      </docs>
++    </option>
++    <option type='int' id='MAX_MULTIPAGE_ITEMS' minval='0' maxval='30000' defval='3000'>
++      <docs>
++<![CDATA[
++ If the number of items on a list of functions, variables, enums, typedefs or macros
++ exceeds \c MAX_MULTIPAGE_ITEMS, it will be
++ divided into multiple pages, each sub-page containing a part of the list.
++ (see also \ref cfg_max_quick_items "MAX_QUICK_ITEMS")
++]]>
++       </docs>
++     </option>
+   </group>
+   <group name='HTML' docs='Configuration options related to the HTML output'>
+     <option type='bool' id='GENERATE_HTML' defval='1'>
+diff --git a/src/index.cpp b/src/index.cpp
+index a35f3d3..202a839 100644
+--- a/src/index.cpp
++++ b/src/index.cpp
+@@ -52,8 +52,11 @@
+ #include "moduledef.h"
+ #include "sitemap.h"
+ 
+-#define MAX_ITEMS_BEFORE_MULTIPAGE_INDEX 200
+-#define MAX_ITEMS_BEFORE_QUICK_INDEX 30
++//#define MAX_ITEMS_BEFORE_MULTIPAGE_INDEX 200
++//#define MAX_ITEMS_BEFORE_QUICK_INDEX 30
++
++#define MAX_ITEMS_BEFORE_MULTIPAGE_INDEX Config_getInt(MAX_MULTIPAGE_ITEMS) //3000
++#define MAX_ITEMS_BEFORE_QUICK_INDEX Config_getInt(MAX_QUICK_ITEMS) //300
+ 
+ // helpers
+ static int  countClassHierarchy(ClassDef::CompoundType ct);
+-- 
+2.46.0.27.gfa3b914457
+
