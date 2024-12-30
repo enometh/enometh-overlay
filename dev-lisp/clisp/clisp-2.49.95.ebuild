@@ -1,7 +1,7 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2021-12-03 02:52:08 IST>
+#   Time-stamp: <>
 #   Touched: Sun Sep 01 04:14:35 2019 -0600 <madhu@cs.unm.edu>
 #   Bugs-To: madhu@cs.unm.edu
 #   Status: Experimental.  Do not redistribute
@@ -10,12 +10,13 @@
 # ;madhu 190901 2.49.93-r1 clisp from gitlab.com/gnu-clisp/clisp.git - no asdf
 # ;madhu 211124 2.39.93-r2 USE_GIT
 # ;madhu 211203 EAPI 8
+# ;madhu 241230 2.49.95+
 
 EAPI=8
 
 inherit flag-o-matic multilib toolchain-funcs xdg-utils
 
-MY_COMMIT="de01f0f47bb44d3a0f9e842464cf2520b238f356"
+MY_COMMIT="c3ec11bab87cfdbeba01523ed88ac2a16b22304d"
 USE_GIT=true
 
 DESCRIPTION="A portable, bytecode-compiled implementation of Common Lisp"
@@ -25,6 +26,7 @@ if ${USE_GIT}; then
 	inherit git-r3
 	EGIT_REPO_URI="https://gitlab.com/gnu-clisp/clisp.git/"
 	EGIT_BRANCH="master"
+	EGIT_COMMIT_TYPE=shallow
 	EGIT_COMMIT="${MY_COMMIT}"
 else
 	SRC_URI="mirror://gentoo/${P}.tar.bz2"
@@ -37,26 +39,30 @@ fi
 
 LICENSE="GPL-2"
 SLOT="2/8"
-KEYWORDS="~alpha amd64 ~ia64 ppc ~sparc x86"
-IUSE="hyperspec X berkdb dbus fastcgi gdbm gtk +pcre postgres +readline svm -threads +unicode +zlib"
+KEYWORDS="~alpha amd64 ~mips ppc ppc64 ~riscv sparc x86"
+IUSE="hyperspec X berkdb dbus fastcgi gdbm gtk +pcre postgres +readline svm threads +unicode +zlib"
 # "jit" disabled ATM
 
+#;madhu 241230 -- exlpicitly removed from RDEPEND:
+# 	berkdb? ( sys-libs/db:4.8 )
+#	>=dev-lisp/asdf-2.33-r3
+
 RDEPEND="virtual/libcrypt:=
-		 virtual/libiconv
-		 >=dev-libs/libsigsegv-2.10
-		 >=dev-libs/ffcall-1.10
-		 dbus? ( sys-apps/dbus )
-		 fastcgi? ( dev-libs/fcgi )
-		 gdbm? ( sys-libs/gdbm:0= )
-		 gtk? ( >=x11-libs/gtk+-2.10:2 >=gnome-base/libglade-2.6 )
-		 postgres? ( >=dev-db/postgresql-8.0:* )
-		 readline? ( >=sys-libs/readline-7.0:0= )
-		 pcre? ( dev-libs/libpcre:3 )
-		 svm? ( sci-libs/libsvm )
-		 zlib? ( sys-libs/zlib )
-		 X? ( x11-libs/libXpm )
-		 hyperspec? ( dev-lisp/hyperspec )
-		 berkdb? ( sys-libs/db:4.8 )"
+	virtual/libiconv
+	>=dev-libs/libsigsegv-2.10
+	>=dev-libs/ffcall-1.10
+	dbus? ( sys-apps/dbus )
+	fastcgi? ( dev-libs/fcgi )
+	gdbm? ( sys-libs/gdbm:0= )
+	gtk? ( >=x11-libs/gtk+-2.10:2 >=gnome-base/libglade-2.6 )
+	postgres? ( >=dev-db/postgresql-8.0:* )
+	readline? ( >=sys-libs/readline-7.0:0= )
+	pcre? ( dev-libs/libpcre:3 )
+	svm? ( sci-libs/libsvm )
+	zlib? ( sys-libs/zlib )
+	X? ( x11-libs/libXpm )
+	hyperspec? ( dev-lisp/hyperspec )
+"
 
 DEPEND="${RDEPEND}
 	X? ( x11-base/xorg-proto x11-misc/imake )"
@@ -78,24 +84,31 @@ BUILDDIR="builddir"
 #  * matlab, netica: not in portage
 #  * oracle: can't install oracle-instantclient
 
-
 PATCHES=(
 	$FILESDIR/clisp-2.49.93-r2-charstrg.d-name_string-allow-u-000c-syntax-with-.patch
 	$FILESDIR/clisp-2.49.93-r2-record-source-locations.patch.patch
 )
 
 src_prepare() {
-	# More than -O1 breaks alpha/ia64
-	if use alpha || use ia64; then
+	# More than -O1 breaks alpha
+	if use alpha; then
 		sed -i -e 's/-O2//g' src/makemake.in || die
 	fi
+#	eapply "${FILESDIR}"/"${P}"-after_glibc_cfree_bdb.patch
+#	eapply_user
+
 	default
 	xdg_environment_reset
 }
 
 src_configure() {
-	# We need this to build on alpha/ia64
-	if use alpha || use ia64; then
+	# -Werror=lto-type-mismatch
+	# https://bugs.gentoo.org/856103
+	# https://gitlab.com/gnu-clisp/clisp/-/issues/49
+	filter-lto
+
+	# We need this to build on alpha
+	if use alpha; then
 		replace-flags -O? -O1
 	fi
 
@@ -147,7 +160,7 @@ src_configure() {
 	einfo "${configure}"
 	${configure} || die "./configure failed"
 
-	IMPNOTES="file://${ROOT%/}/usr/share/doc/${PN}-${PVR}/html/impnotes.html"
+	IMPNOTES="file://${EPREFIX}/usr/share/doc/${PN}-${PVR}/html/impnotes.html"
 	sed -i "s,http://clisp.cons.org/impnotes/,${IMPNOTES},g" \
 		"${BUILDDIR}"/config.lisp || die "Cannot fix link to implementation notes"
 }
