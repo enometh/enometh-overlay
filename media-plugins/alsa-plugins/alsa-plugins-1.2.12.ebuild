@@ -1,7 +1,7 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2022-09-15 20:37:39 IST>
+#   Time-stamp: <>
 #   Touched: Thu Sep 15 20:02:34 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -10,7 +10,9 @@
 # ;madhu 220915 1.2.7.1-r1 - USE=pipewire patches the plugin to quit if
 # pipewire is found. USE=pulseaudio depends on pulseaudio instead of
 # libpulse.
-
+#
+# ;madhu 241231 1.2.12
+# ;madhu 250105 1.2.12 updated patch to fix EMFILE, debugging optional with env var ALSAPLUGIN_PWDEBUG=1
 EAPI=8
 
 inherit autotools flag-o-matic multilib-minimal
@@ -21,7 +23,7 @@ SRC_URI="https://www.alsa-project.org/files/pub/plugins/${P}.tar.bz2"
 
 LICENSE="GPL-2 LGPL-2.1"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ppc ppc64 ~riscv sparc x86 ~amd64-linux"
 IUSE="arcam_av debug ffmpeg jack libsamplerate +mix oss pipewire pulseaudio speex +usb_stream"
 
 # ;madhu 220915 replace libpulse with pulseaudio
@@ -43,14 +45,14 @@ DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
 PATCHES=(
-	"${FILESDIR}"/${PN}-1.2.7.1-missing-include.patch
+#	"${FILESDIR}"/${PN}-1.2.7.1-missing-include.patch
 )
 
 src_prepare() {
 	default
 
 	if use pipewire; then
-		eapply ${FILESDIR}/${PN}-1.2.7.1-handle-pipewire-quit.patch
+		eapply ${FILESDIR}/${PN}-1.2.12-handle-pipewire-quit.patch
 	fi
 
 	# For some reasons the polyp/pulse plugin does fail with alsaplayer with a
