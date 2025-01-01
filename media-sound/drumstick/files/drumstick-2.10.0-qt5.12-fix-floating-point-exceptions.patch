@@ -1,0 +1,101 @@
+From e38d0ef0801d38aba2b6439f26a208b31fd2e2ee Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 30 Aug 2021 18:13:00 +0530
+Subject: [PATCH] qt5.12: fix floating point exceptions
+
+---
+ library/widgets/sonivoxsettingsdialog.ui | 2 ++
+ utils/drumgrid/drumgrid.ui               | 2 ++
+ utils/guiplayer/guiplayer.ui             | 2 ++
+ utils/guiplayer/playerabout.ui           | 2 ++
+ utils/vpiano/vpiano.ui                   | 2 ++
+ 5 files changed, 10 insertions(+)
+
+diff --git a/library/widgets/sonivoxsettingsdialog.ui b/library/widgets/sonivoxsettingsdialog.ui
+index 2f70135..38eef7c 100644
+--- a/library/widgets/sonivoxsettingsdialog.ui
++++ b/library/widgets/sonivoxsettingsdialog.ui
+@@ -19,10 +19,12 @@
+   <property name="windowTitle">
+    <string>Sonivox EAS Synth</string>
+   </property>
++<!--
+   <property name="windowIcon">
+    <iconset>
+     <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+   </property>
++-->
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0" colspan="3">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+diff --git a/utils/drumgrid/drumgrid.ui b/utils/drumgrid/drumgrid.ui
+index 641afe0..1551342 100644
+--- a/utils/drumgrid/drumgrid.ui
++++ b/utils/drumgrid/drumgrid.ui
+@@ -13,10 +13,12 @@
+   <property name="windowTitle">
+    <string>Drumstick Drum Grid</string>
+   </property>
++<!--
+   <property name="windowIcon">
+    <iconset>
+     <normaloff>:/drumstick.png</normaloff>:/drumstick.png</iconset>
+   </property>
++-->
+   <widget class="QWidget" name="centralWidget">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="1">
+diff --git a/utils/guiplayer/guiplayer.ui b/utils/guiplayer/guiplayer.ui
+index 674daa8..2de6178 100644
+--- a/utils/guiplayer/guiplayer.ui
++++ b/utils/guiplayer/guiplayer.ui
+@@ -13,10 +13,12 @@
+   <property name="windowTitle">
+    <string>Drumstick ALSA MIDI Player</string>
+   </property>
++<!--
+   <property name="windowIcon">
+    <iconset resource="guiplayer.qrc">
+     <normaloff>:/drumstick.png</normaloff>:/drumstick.png</iconset>
+   </property>
++-->
+   <widget class="QWidget" name="MainWidget">
+    <property name="acceptDrops">
+     <bool>true</bool>
+diff --git a/utils/guiplayer/playerabout.ui b/utils/guiplayer/playerabout.ui
+index a4280b1..9c0b57e 100644
+--- a/utils/guiplayer/playerabout.ui
++++ b/utils/guiplayer/playerabout.ui
+@@ -13,10 +13,12 @@
+   <property name="windowTitle">
+    <string>About</string>
+   </property>
++<!--
+   <property name="windowIcon">
+    <iconset resource="guiplayer.qrc">
+     <normaloff>:/drumstick.png</normaloff>:/drumstick.png</iconset>
+   </property>
++-->
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTextBrowser" name="AboutTextView">
+diff --git a/utils/vpiano/vpiano.ui b/utils/vpiano/vpiano.ui
+index 8e1dfad..b515381 100644
+--- a/utils/vpiano/vpiano.ui
++++ b/utils/vpiano/vpiano.ui
+@@ -13,10 +13,12 @@
+   <property name="windowTitle">
+    <string>Drumstick Virtual Piano</string>
+   </property>
++<!--
+   <property name="windowIcon">
+    <iconset resource="../drumgrid/drumgrid.qrc">
+     <normaloff>:/drumstick.png</normaloff>:/drumstick.png</iconset>
+   </property>
++-->
+   <widget class="QWidget" name="centralwidget">
+    <layout class="QVBoxLayout">
+     <item>
+-- 
+2.46.0.27.gfa3b914457
+
