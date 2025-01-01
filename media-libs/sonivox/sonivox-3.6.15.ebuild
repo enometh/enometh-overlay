@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,13 +8,13 @@
 #   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 230324 3.6.11 (WIP)
-
+# ;madhu 250101 3.6.15
 EAPI=8
 inherit cmake-multilib
 
 HOMEPAGE="https://github.com/pedrolcl/sonivox"
 DESCRIPTION="Fork of the AOSP 'platform_external_sonivox' project to use it outside of Android"
-SRC_URI="https://github.com/pedrolcl/sonivox/archive/refs/tags/v${PN}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/pedrolcl/sonivox/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="Apache-2.0"
 SLOT="0"
