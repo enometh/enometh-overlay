@@ -1,0 +1,46 @@
+From 4ebe02173ea1e4c1d0fa2479a45a75bf782f0222 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 1 Jan 2025 23:07:30 +0530
+Subject: [PATCH] build with qt-5.12.3
+
+---
+ library/rt-backends/fluidsynth/fluidsynthengine.cpp | 3 ++-
+ utils/vpiano/vpiano.cpp                             | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/library/rt-backends/fluidsynth/fluidsynthengine.cpp b/library/rt-backends/fluidsynth/fluidsynthengine.cpp
+index 8cd2a72..1741334 100644
+--- a/library/rt-backends/fluidsynth/fluidsynthengine.cpp
++++ b/library/rt-backends/fluidsynth/fluidsynthengine.cpp
+@@ -21,6 +21,7 @@
+ #include <QFileInfo>
+ #include <QSettings>
+ #include <QStandardPaths>
++#include <QString>
+ #include <QVersionNumber>
+ #include <drumstick/rtmidioutput.h>
+ #include "fluidsynthengine.h"
+@@ -180,7 +181,7 @@ void FluidSynthEngine::loadSoundFont()
+         }
+         m_sfids.clear();
+     }
+-    const QStringList soundfonts = m_soundFont.split(';', Qt::SkipEmptyParts);
++    const QStringList soundfonts = m_soundFont.split(';', QString::SkipEmptyParts);
+     foreach (const QString &sf, soundfonts) {
+         int id = ::fluid_synth_sfload(m_synth, qPrintable(sf), 1);
+         if (id > -1) {
+diff --git a/utils/vpiano/vpiano.cpp b/utils/vpiano/vpiano.cpp
+index 98d2f15..3d87134 100644
+--- a/utils/vpiano/vpiano.cpp
++++ b/utils/vpiano/vpiano.cpp
+@@ -16,6 +16,7 @@
+     along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
++#include <QDebug>
+ #include <QDir>
+ #include <QFileInfo>
+ #include <QFontDialog>
+-- 
+2.46.0.27.gfa3b914457
+
