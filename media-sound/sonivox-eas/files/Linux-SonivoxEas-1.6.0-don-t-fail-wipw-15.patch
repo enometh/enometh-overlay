@@ -1,0 +1,27 @@
+From 34a4e824bcce9775c42ef6e3f475fe81d47a5f0a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 1 Jan 2025 23:59:29 +0530
+Subject: [PATCH] libsvoxeas/synthrenderer.cpp: (initPulse): don't fail with
+ pa-15.0
+
+---
+ libsvoxeas/synthrenderer.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libsvoxeas/synthrenderer.cpp b/libsvoxeas/synthrenderer.cpp
+index 995cfc7..5f24bd7 100644
+--- a/libsvoxeas/synthrenderer.cpp
++++ b/libsvoxeas/synthrenderer.cpp
+@@ -162,7 +162,8 @@ SynthRenderer::initPulse()
+                     device, "Synthesizer output", &samplespec,
+                     NULL, /* pa_channel_map */
+                     &bufattr, &err);
+-    if (err != PA_OK || !m_pulseHandle)
++    if (//err != PA_OK ||
++    	!m_pulseHandle)
+     {
+       qFatal("Failed to create PulseAudio connection. err:%d - %s", err, pa_strerror(err));
+     }
+-- 
+2.46.0.27.gfa3b914457
+
