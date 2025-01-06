@@ -1,0 +1,49 @@
+From 3cce1634604176c3c7e19a9ce4d2fd1a95c6fd45 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 6 Jan 2025 14:33:10 +0530
+Subject: [PATCH] use fmt instead of c++-26
+
+---
+ CMakeLists.txt  | 1 +
+ tests/image.cpp | 6 +++---
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 80944d7..9c94414 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -44,6 +44,7 @@ pkg_check_modules(
+   IMPORTED_TARGET
+   pixman-1
+   cairo
++  fmt>=11.0.2
+   hyprutils
+   libjpeg
+   libwebp
+diff --git a/tests/image.cpp b/tests/image.cpp
+index 4cd1287..d6a7a6b 100644
+--- a/tests/image.cpp
++++ b/tests/image.cpp
+@@ -1,4 +1,4 @@
+-#include <print>
++#include <fmt/core.h>
+ #include <format>
+ #include <filesystem>
+ #include <hyprgraphics/image/Image.hpp>
+@@ -10,11 +10,11 @@ bool tryLoadImage(const std::string& path) {
+     auto image = CImage(path);
+ 
+     if (!image.success()) {
+-        std::println("Failed to load {}: {}", path, image.getError());
++        fmt::println("Failed to load {}: {}", path, image.getError());
+         return false;
+     }
+ 
+-    std::println("Loaded {} successfully: Image is {}x{} of type {}", path, image.cairoSurface()->size().x, image.cairoSurface()->size().y, image.getMime());
++    fmt::println("Loaded {} successfully: Image is {}x{} of type {}", path, image.cairoSurface()->size().x, image.cairoSurface()->size().y, image.getMime());
+ 
+     return true;
+ }
+-- 
+2.46.0.27.gfa3b914457
+
