@@ -1,0 +1,295 @@
+From c85c8386f66431a5150b1d876c0081e2c0795639 Mon Sep 17 00:00:00 2001
+From: Joe Esposito <joe@joeyespo.com>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 1/7] Add the --render-offline CLI option back.
+
+[250107] adpapted from
+https://github.com/joeyespo/grip/commit/7891e90a4ba6dd026d9f190acd3af69550d57f70.patch
+---
+ README.md       | 6 +++---
+ grip/command.py | 5 +++--
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index 27d4cf0..63b5ac1 100644
+--- a/README.md
++++ b/README.md
+@@ -327,7 +327,7 @@ serve(path=None, host=None, port=None, user_content=False, context=None, usernam
+              takes the form of `username/project`
+ - `username`: The user to authenticate with GitHub to extend the API limit
+ - `password`: The password to authenticate with GitHub to extend the API limit
+-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
++- `render_offline`: Whether to render locally using [Python-Markdown][]
+ - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
+ - `render_inline`: Whether to inline the styles within the HTML file
+ - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. The default is the public API https://api.github.com.
+@@ -351,7 +351,7 @@ export(path=None, user_content=False, context=None, username=None, password=None
+              takes the form of `username/project`
+ - `username`: The user to authenticate with GitHub to extend the API limit
+ - `password`: The password to authenticate with GitHub to extend the API limit
+-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
++- `render_offline`: Whether to render locally using [Python-Markdown][]
+ - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
+ - `render_inline`: Whether to inline the styles within the HTML file (Note: unlike the other API functions, this defaults to `True`)
+ - `out_filename`: The filename to write to, `<in_filename>.html` by default
+@@ -413,7 +413,7 @@ render_content(text, user_content=False, context=None, username=None, password=N
+              takes the form of `username/project`
+ - `username`: The user to authenticate with GitHub to extend the API limit
+ - `password`: The password to authenticate with GitHub to extend the API limit
+-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
++- `render_offline`: Whether to render locally using [Python-Markdown][]
+ - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. This is required when not using the offline renderer.
+ - `title`: The page title, derived from `path` by default
+ 
+diff --git a/grip/command.py b/grip/command.py
+index 59f28de..9a3ae95 100644
+--- a/grip/command.py
++++ b/grip/command.py
+@@ -22,6 +22,7 @@ Options:
+                     without the --pass option, an upcoming password
+                     input will be necessary.
+   --pass=<password> A GitHub password or auth token for API auth.
++  --render-offline  Render offline instead of via GitHub markdown API
+   --wide            Renders wide, i.e. when the side nav is collapsed.
+                     This only takes effect when --user-content is used.
+   --clear           Clears the cached styles and assets and exits.
+@@ -105,7 +106,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
+     if args['--export']:
+         try:
+             export(args['<path>'], args['--user-content'], args['--context'],
+-                   args['--user'], password, False, args['--wide'],
++                   args['--user'], password, args['--render-offline'], args['--wide'],
+                    not args['--no-inline'], args['<address>'],
+                    args['--api-url'], args['--title'], args['--quiet'])
+             return 0
+@@ -124,7 +125,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
+     # Run server
+     try:
+         serve(path, host, port, args['--user-content'], args['--context'],
+-              args['--user'], password, False, args['--wide'], False,
++              args['--user'], password, args['--render-offline'], args['--wide'], False,
+               args['--api-url'], args['--title'], not args['--norefresh'],
+               args['--browser'], args['--quiet'], None)
+         return 0
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 9bba0ae6e9cf6a729ff645ae0a274f83ef98363c Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 2/7] grip/vendor/mdx_urlize.py: replace deprecated
+ markdown.util.etree with xml.etree.EleemntTree
+
+---
+ grip/vendor/mdx_urlize.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/grip/vendor/mdx_urlize.py b/grip/vendor/mdx_urlize.py
+index 3cbc1db..7c67d99 100644
+--- a/grip/vendor/mdx_urlize.py
++++ b/grip/vendor/mdx_urlize.py
+@@ -36,7 +36,7 @@ u'<p>del.icio.us</p>'
+ """
+ 
+ import markdown
+-
++import xml.etree.ElementTree as etree
+ 
+ URLIZE_RE = '(%s)' % '|'.join([
+     r'<(?:f|ht)tps?://[^>]*>',
+@@ -64,7 +64,7 @@ class UrlizePattern(markdown.inlinepatterns.Pattern):
+             else:
+                 url = 'http://' + url
+ 
+-        el = markdown.util.etree.Element('a')
++        el = etree.Element('a')
+         el.set('href', url)
+         el.text = markdown.util.AtomicString(text)
+         return el
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 1f0ccc6b6d1cfd703e6a629538a17879060af736 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 3/7] grip/vendor/mdx_urlize.py: use newer
+ md.inlinepatterns.register protocol for our inhouse autolink
+
+---
+ grip/vendor/mdx_urlize.py | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/grip/vendor/mdx_urlize.py b/grip/vendor/mdx_urlize.py
+index 7c67d99..b03c061 100644
+--- a/grip/vendor/mdx_urlize.py
++++ b/grip/vendor/mdx_urlize.py
+@@ -74,11 +74,12 @@ class UrlizeExtension(markdown.Extension):
+     """
+     Urlize Extension for Python-Markdown.
+     """
+-    def extendMarkdown(self, md, md_globals):
++    def extendMarkdown(self, md):
+         """
+         Replace autolink with UrlizePattern
+         """
+-        md.inlinePatterns['autolink'] = UrlizePattern(URLIZE_RE, md)
++        myautolinkPattern = UrlizePattern(URLIZE_RE, md)
++        md.inlinePatterns.register(myautolinkPattern, 'myautolink', 75)
+ 
+ 
+ def makeExtension(configs=None):
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 3cb4c52cf17f508f9ed0c2e61220c73356044ca9 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 4/7] grip/renderers.py: use newer syntax to include the
+ CodeHiliteExtension
+
+---
+ grip/renderers.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/grip/renderers.py b/grip/renderers.py
+index e4d1ef1..055e169 100644
+--- a/grip/renderers.py
++++ b/grip/renderers.py
+@@ -101,9 +101,10 @@ class OfflineRenderer(ReadmeRenderer):
+             import markdown
+         if UrlizeExtension is None:
+             from .mdx_urlize import UrlizeExtension
++        from markdown.extensions.codehilite import CodeHiliteExtension
+         return markdown.markdown(text, extensions=[
+             'fenced_code',
+-            'codehilite(css_class=highlight)',
++            CodeHiliteExtension(css_class='highlight'),
+             'toc',
+             'tables',
+             'sane_lists',
+-- 
+2.46.0.27.gfa3b914457
+
+
+From e5cbbb8bb590a1eef3b4076751b2af18daa6bddd Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 5/7] grip/renderers.py: import markdown, .vendor.mdx_urlize at
+ runtime
+
+import these where they are used. for some readon importing these at
+the top of the file does not make them available.
+---
+ grip/renderers.py | 13 ++-----------
+ 1 file changed, 2 insertions(+), 11 deletions(-)
+
+diff --git a/grip/renderers.py b/grip/renderers.py
+index 055e169..ec13230 100644
+--- a/grip/renderers.py
++++ b/grip/renderers.py
+@@ -6,13 +6,6 @@ from abc import ABCMeta, abstractmethod
+ 
+ import requests
+ 
+-try:
+-    import markdown
+-    from .vendor.mdx_urlize import UrlizeExtension
+-except ImportError:
+-    markdown = None
+-    UrlizeExtension = None
+-
+ from .constants import DEFAULT_API_URL
+ from .patcher import patch
+ from .vendor.six import add_metaclass
+@@ -97,10 +90,8 @@ class OfflineRenderer(ReadmeRenderer):
+         """
+         Renders the specified markdown content and embedded styles.
+         """
+-        if markdown is None:
+-            import markdown
+-        if UrlizeExtension is None:
+-            from .mdx_urlize import UrlizeExtension
++        import markdown
++        from .vendor.mdx_urlize import UrlizeExtension
+         from markdown.extensions.codehilite import CodeHiliteExtension
+         return markdown.markdown(text, extensions=[
+             'fenced_code',
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 3336e6770055588f6ad8034c8b6eb1e4c0c301db Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:22:36 +0530
+Subject: [PATCH 6/7] grip.py: standalone script, invoke from toplevel.
+
+---
+ grip.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+ create mode 100755 grip.py
+
+diff --git a/grip.py b/grip.py
+new file mode 100755
+index 0000000..e5e2506
+--- /dev/null
++++ b/grip.py
+@@ -0,0 +1,7 @@
++#!/usr/bin/env python
++import sys,os
++sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
++print("sys.path: %s" % sys.path)
++import grip
++if __name__ == '__main__':
++	grip.main()
+\ No newline at end of file
+-- 
+2.46.0.27.gfa3b914457
+
+
+From ef6591fdbd29e2daea439e21b589c43505794479 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 7 Jan 2025 08:30:30 +0530
+Subject: [PATCH 7/7] grip.command.py: rename --render--offline as
+ --render-online. default to offline operation
+
+---
+ grip/command.py | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/grip/command.py b/grip/command.py
+index 9a3ae95..71e027e 100644
+--- a/grip/command.py
++++ b/grip/command.py
+@@ -22,7 +22,7 @@ Options:
+                     without the --pass option, an upcoming password
+                     input will be necessary.
+   --pass=<password> A GitHub password or auth token for API auth.
+-  --render-offline  Render offline instead of via GitHub markdown API
++  --render-online   Render online instead of via GitHub markdown API
+   --wide            Renders wide, i.e. when the side nav is collapsed.
+                     This only takes effect when --user-content is used.
+   --clear           Clears the cached styles and assets and exits.
+@@ -106,7 +106,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
+     if args['--export']:
+         try:
+             export(args['<path>'], args['--user-content'], args['--context'],
+-                   args['--user'], password, args['--render-offline'], args['--wide'],
++                   args['--user'], password, not args['--render-online'], args['--wide'],
+                    not args['--no-inline'], args['<address>'],
+                    args['--api-url'], args['--title'], args['--quiet'])
+             return 0
+@@ -125,7 +125,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
+     # Run server
+     try:
+         serve(path, host, port, args['--user-content'], args['--context'],
+-              args['--user'], password, args['--render-offline'], args['--wide'], False,
++              args['--user'], password, not args['--render-online'], args['--wide'], False,
+               args['--api-url'], args['--title'], not args['--norefresh'],
+               args['--browser'], args['--quiet'], None)
+         return 0
+-- 
+2.46.0.27.gfa3b914457
+
