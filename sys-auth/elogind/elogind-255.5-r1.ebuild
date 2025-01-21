@@ -1,7 +1,7 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <>
+#   Time-stamp: <2025-01-21 18:03:49 IST>
 #   Touched: Fri Apr 26 13:26:46 2019 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -30,6 +30,7 @@
 # ;madhu 230115 252.0_pre
 # ;madhu 240116 254.0_pre
 # ;madhu 240507 255.0_pre loses merged-usr, git patches installation of emptydirs, udev_reload
+# ;madhu 250121 255.5-r1 v255-pre-70-g1da78237, fix jinja2 in deps
 
 EAPI=8
 USE_GIT=true
@@ -43,7 +44,7 @@ if ${USE_GIT}; then
 	SRC_URI=
 else
 	SRC_URI="https://github.com/${PN}/${PN}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
 fi
 
 inherit linux-info meson pam python-any-r1 udev xdg-utils
@@ -54,7 +55,7 @@ HOMEPAGE="https://github.com/elogind/elogind"
 LICENSE="CC0-1.0 LGPL-2.1+ public-domain"
 SLOT="0"
 IUSE="+acl audit +cgroup-hybrid debug doc +pam +policykit selinux efi test"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
 RESTRICT="!test? ( test )"
 
 BDEPEND="
@@ -62,9 +63,8 @@ BDEPEND="
 	app-text/docbook-xml-dtd:4.5
 	app-text/docbook-xsl-stylesheets
 	dev-util/gperf
-	dev-util/intltool
 	virtual/pkgconfig
-	$(python_gen_any_dep 'dev-python/jinja[${PYTHON_USEDEP}]')
+	$(python_gen_any_dep 'dev-python/jinja2[${PYTHON_USEDEP}]')
 	$(python_gen_any_dep 'dev-python/lxml[${PYTHON_USEDEP}]')
 "
 DEPEND="
@@ -92,7 +92,7 @@ PATCHES=(
 )
 
 python_check_deps() {
-	python_has_version "dev-python/jinja[${PYTHON_USEDEP}]" &&
+	python_has_version "dev-python/jinja2[${PYTHON_USEDEP}]" &&
 	python_has_version "dev-python/lxml[${PYTHON_USEDEP}]"
 }
 
@@ -135,9 +135,10 @@ src_configure() {
 #bogus
 		-Defi=$(usex efi true false)
 		$debugmode
-		-Dpamlibdir=$(getpam_mod_dir)
 		-Dudevrulesdir="${EPREFIX}$(get_udevdir)"/rules.d
 		--libdir="${EPREFIX}"/usr/$(get_libdir)
+		--localstatedir="${EPREFIX}"/var
+#;madhu 250121 - gentoo says --libexecdir=/lib/elogind
 #;madhu 240507 - merged-usr shennanigans
 #		-Drootlibdir="${EPREFIX}"/$(get_libdir)
 #		-Drootlibexecdir="${EPREFIX}"/$(get_libdir)/elogind
@@ -149,12 +150,13 @@ src_configure() {
 		-Ddefault-hierarchy=${cgroupmode}
 		-Ddefault-kill-user-processes=false
 		-Dacl=$(usex acl enabled disabled)
+		-Daudit=$(usex audit enabled disabled)
 # html docs are a mess of broken symlinks
 #		-Dhtml=$(usex doc auto false)
-		-Daudit=$(usex audit enabled disabled)
 ##;madhu 240507 - portage forces the use of the EMESON_BUILDTYPE envvar
 # 		--buildtype $(usex debug debug release)
 		$(meson_feature pam)
+		-Dpamlibdir=$(getpam_mod_dir)
 		-Dselinux=$(usex selinux enabled disabled)
 		-Dtests=$(usex test true false)
 		-Dutmp=$(usex elibc_musl false true)
@@ -172,14 +174,17 @@ src_configure() {
 
 src_install() {
 	meson_src_install
+	keepdir /var/lib/elogind
 
 	newinitd "${FILESDIR}"/${PN}.init-r1 ${PN}
 
-	sed -e "s|@libexecdir@|$(get_libdir)|" "${FILESDIR}"/${PN}.conf.in-r1 > ${PN}.conf || die
+	#;madhu 250121
+	sed -e "s|@libexecdir@|usr/libexec|" "${FILESDIR}"/${PN}.conf.in-r1 > ${PN}.conf || die
 	newconfd ${PN}.conf ${PN}
 }
 
 pkg_postinst() {
+	udev_reload
 	if ! use pam; then
 		ewarn "${PN} will not be managing user logins/seats without USE=\"pam\"!"
 		ewarn "In other words, it will be useless for most applications."
