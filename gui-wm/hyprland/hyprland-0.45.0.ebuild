@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Gentoo Authors
+# Copyright 2023-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,6 +10,8 @@
 # ;madhu 241117 0.45.0 - patch for gcc-13, by replacing <print> with libfmt, need to unmask libfmt. bundle hyprland-protocols, bump down cmake, generate version.h,
 # set ALTSRC=false, set SRC_URI and update manifest to build with gh sources
 # ln -sv /16/tmp.d/spoilers.d/Hyprland-0.45.0.7z /gentoo/distfiles
+#
+# ;madhu 250205 0.47.2
 
 EAPI=8
 ALTSRC=false
@@ -38,7 +40,7 @@ fi
 
 LICENSE="BSD"
 SLOT="0"
-IUSE="X legacy-renderer systemd"
+IUSE="X legacy-renderer +qtutils systemd"
 
 # hyprpm (hyprland plugin manager) requires the dependencies at runtime
 # so that it can clone, compile and install plugins.
@@ -53,19 +55,26 @@ RDEPEND="
 	${HYPRPM_RDEPEND}
 	dev-cpp/tomlplusplus
 	dev-libs/glib:2
+	dev-libs/hyprlang
 	>=dev-libs/libfmt-11.0.2
-	dev-libs/libinput
+	dev-libs/libinput:=
+	dev-libs/hyprgraphics:=
+	dev-libs/re2:=
 	>=dev-libs/udis86-1.7.2
 	>=dev-libs/wayland-1.22.90
-	>=gui-libs/aquamarine-0.4.3
+	>=gui-libs/aquamarine-0.5.1
 	>=gui-libs/hyprcursor-0.1.9
+	>=gui-libs/hyprutils-0.5.0
 	media-libs/libglvnd
+	media-libs/mesa
+	sys-apps/util-linux
 	x11-libs/cairo
 	x11-libs/libdrm
 	x11-libs/libxkbcommon
 	x11-libs/pango
 	x11-libs/pixman
 	x11-libs/libXcursor
+	qtutils? ( gui-libs/hyprland-qtutils )
 	X? (
 		x11-libs/libxcb:0=
 		x11-base/xwayland
@@ -73,13 +82,10 @@ RDEPEND="
 		x11-libs/xcb-util-wm
 	)
 "
-# 	>=dev-libs/hyprlang-0.3.2
 # 	>=dev-libs/hyprland-protocols-0.4
 DEPEND="
 	${RDEPEND}
 	>=dev-libs/wayland-protocols-1.36
-	>=gui-libs/hyprutils-0.2.5
-	>=gui-libs/hyprcursor-0.1.9
 "
 BDEPEND="
 	|| ( >=sys-devel/gcc-13:* >=sys-devel/clang-18:* )
@@ -105,8 +111,8 @@ pkg_setup() {
 }
 
 PATCHES=(
-$FILESDIR/hyprland-0.45.0-meson.build-revert-to-c-23.patch
-$FILESDIR//hyprland-0.45.0-replace-c-26-print-with-fmt-11.0.2.patch
+#$FILESDIR/hyprland-0.45.0-meson.build-revert-to-c-23.patch
+#$FILESDIR//hyprland-0.45.0-replace-c-26-print-with-fmt-11.0.2.patch
 )
 
 src_prepare() {
