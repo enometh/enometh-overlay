@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -12,7 +12,8 @@
 # md5p8.diff omit-dir-changes.diff direct-io.diff downdate.diff clone-dest.diff  backup-deleted.diff copy-devices.diff
 #
 # ;madhu 230818 3.3.0-pre1 (based on 3.7.2-r2) -undo retarding on ipv6 rrsync (todo). git-r3.eclass cannot handle twouri's (to fetch patches from say git://git.samba.org/rsync-patches.git), ship patches in filesdir.
-
+# ;madhu 250117 3.4.1
+#
 EAPI=8
 
 USE_GIT=true
