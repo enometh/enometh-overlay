@@ -1,0 +1,278 @@
+From bef9af3fe742d23bd232355e331ea53ab379042d Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 22 Jan 2019 11:16:47 +0530
+Subject: [PATCH 1/7] conf.d/hwclock: defaults for madhu: set to UTC
+
+---
+ conf.d/hwclock | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/conf.d/hwclock b/conf.d/hwclock
+index ce9b40a..ced5f61 100644
+--- a/conf.d/hwclock
++++ b/conf.d/hwclock
+@@ -2,7 +2,9 @@
+ # Greenwich Mean Time).  If that clock is set to the local time, then
+ # set CLOCK to "local".  Note that if you dual boot with Windows, then
+ # you should set it to "local".
+-clock="UTC"
++#clock="UTC"
++#madhu
++clock="local"
+ 
+ # If you want the hwclock script to set the system time (software clock)
+ # to match the current hardware clock during bootup, leave this
+-- 
+2.46.0.27.gfa3b914457
+
+
+From ea93164b42204268fe816d80c2184786e15fb21a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 29 Dec 2019 19:46:20 +0530
+Subject: [PATCH 2/7] conf.d/keymaps: defaults for madhu:
+
+[Tue 22 Jan 2019 16:25:39 IST]
+/usr/share/keymaps/i386/qwerty/madhu.map.gz
+```
+ #  --- /usr/share/keymaps/i386/qwerty/us.map      2020-08-04 15:04:07.598781950 +0530
+ #  +++ /usr/share/keymaps/i386/qwerty/madhu.map  2019-01-22 16:25:39.942087059 +0530
+ #  @@ -52,3 +52,6 @@
+ #  keycode  58 = Caps_Lock
+ #  keycode  86 = less             greater          bar
+ #  keycode  97 = Control
+ # +
+ # +#madhu 10 may 2000 09:23:18 PM GMT
+ # +keycode 58 = Control
+```
+---
+ conf.d/keymaps | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/conf.d/keymaps b/conf.d/keymaps
+index 1ba568a..bf40967 100644
+--- a/conf.d/keymaps
++++ b/conf.d/keymaps
+@@ -1,12 +1,14 @@
+ # Use keymap to specify the default console keymap.  There is a complete tree
+ # of keymaps in /usr/share/keymaps to choose from.
+-keymap="us"
++#keymap="us"
++#madhu 2019-12-25 kbd-2.0.4  -> 2.2.0-r2 - doesn't accept madhu.map.gz anymore
++keymap="madhu.map"
+ 
+ # Should we first load the 'windowkeys' console keymap?  Most x86 users will
+ # say "yes" here.  Note that non-x86 users should leave it as "no".
+ # Loading this keymap will enable VT switching (like ALT+Left/Right)
+ # using the special windows keys on the linux console.
+-windowkeys="NO"
++windowkeys="YES"
+ 
+ # The maps to load for extended keyboards.  Most users will leave this as is.
+ extended_keymaps=""
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 0ff903ec5597521c01bd7dcb57656867ff5be920 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 3 Feb 2019 01:14:21 +0530
+Subject: [PATCH 3/7] conf.d/netmount: defaults for madhu. don't rc_need=net
+
+---
+ conf.d/netmount | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/conf.d/netmount b/conf.d/netmount
+index e759adf..50077fa 100644
+--- a/conf.d/netmount
++++ b/conf.d/netmount
+@@ -37,7 +37,8 @@
+ # current setup, but you are highly discouraged from using this. In
+ # other words, please change it to be more suited to your system.
+ #
+-rc_need="net"
++#madhu
++#rc_need="net"
+ #
+ # Mark certain mount points as critical.
+ # This contains aspace separated list of mount points which should be
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 8455ef5cb2c2f4004267dbd314f2b8a575be0759 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 26 Apr 2020 17:24:59 +0530
+Subject: [PATCH 4/7] init.d/swap.in: defaults for madhu. comment on the
+ pitfall with a swapfile
+
+---
+ init.d/swap.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/init.d/swap.in b/init.d/swap.in
+index 9bff399..10b35f3 100644
+--- a/init.d/swap.in
++++ b/init.d/swap.in
+@@ -12,6 +12,7 @@
+ depend()
+ {
+ 	after clock root
++	#madhu 200426 if localmount runs before swap you cant use a swapfile
+ 	before localmount
+ 	keyword -docker -podman -jail -lxc -openvz -prefix -systemd-nspawn -vserver
+ }
+-- 
+2.46.0.27.gfa3b914457
+
+
+From a0b05d8125911c35deaa087778ab8a2f625b2695 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 9 Sep 2021 15:36:49 +0530
+Subject: [PATCH 5/7] sh/rc-cgroup.sh: cgroup_get_pids: quote a "$$" variable
+
+---
+ sh/rc-cgroup.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/sh/rc-cgroup.sh b/sh/rc-cgroup.sh
+index f10e328..cd8bff2 100644
+--- a/sh/rc-cgroup.sh
++++ b/sh/rc-cgroup.sh
+@@ -41,7 +41,8 @@ cgroup_get_pids()
+ 	fi
+ 	[ -f "${cgroup_procs}" ] || return 0
+ 	while read -r p; do
+-		[ "$p" -eq $$ ] && continue
++		#;madhu 200424  quote "$$"
++		[ "$p" -eq "$$" ] && continue
+ 		cgroup_pids="${cgroup_pids} ${p}"
+ 	done < "${cgroup_procs}"
+ 	return 0
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 91384d7ac1650849c2493e043119ff77dd7c1306 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 9 Sep 2021 15:36:49 +0530
+Subject: [PATCH 6/7] sh/openrc-run.sh: debug log statements
+
+show a problem with genkernel initramfs:
+-- 5.7 kernel udev wipes out /dev/mapper/swap
+workaround in /etc/local.d/local.start
+```
+if [ ! -e /dev/mapper/swap  -a -e /dev/dm-0 ]; then
+if swaplabel /dev/dm-0 ; then
+    echo working around missing swap
+    ln -sv ../dm-0 /dev/mapper/swap;
+    swapon -s | grep /dev/dm-0 || swapon -a
+fi
+```
+---
+ sh/openrc-run.sh.in | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/sh/openrc-run.sh.in b/sh/openrc-run.sh.in
+index caf78f1..7a7712c 100644
+--- a/sh/openrc-run.sh.in
++++ b/sh/openrc-run.sh.in
+@@ -265,6 +265,16 @@ if yesno "${rc_verbose:-$RC_VERBOSE}"; then
+ 	export EINFO_VERBOSE
+ fi
+ 
++#;madhu 201012 - debug genkernel initramfs udev 
++logmadhu() {
++       return
++       eindent
++       einfo "$HILITE==>$1 $(basename $RC_SERVICE)$NORMAL firewallpipe and mappe: $(ls -l /dev/mapper/swap /dev/shm/firewallpipe 2>&1|tr '\n' ' ')$HILITE OK <==NORMAL"
++       eoutdent
++}
++logmadhu BEFORE
++
++
+ for _cmd; do
+ 	if [ "$_cmd" != status -a "$_cmd" != describe ]; then
+ 		# Apply any ulimit(s) defined
+@@ -290,6 +300,7 @@ for _cmd; do
+ 		break
+ 	fi
+ done
++logmadhu AFTER
+ 
+ eval "printf '%s\n' $required_dirs" | while read _d; do
+ 	if [ -n "$_d" ] && [ ! -d "$_d" ]; then
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 11367b067e6198eb6c27afadbee9a22b24df2bab Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 13 Mar 2022 00:35:39 +0530
+Subject: [PATCH 7/7] etc/rc.conf: defaults for madhu
+
+---
+ etc/rc.conf | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/etc/rc.conf b/etc/rc.conf
+index ca0f920..d078bb9 100644
+--- a/etc/rc.conf
++++ b/etc/rc.conf
+@@ -8,18 +8,20 @@
+ # the boot process. Don't file bugs about this unless you can supply
+ # patches that fix it without breaking other things!
+ #rc_parallel="NO"
++rc_parallel="YES"
+ 
+ # Set rc_interactive to "YES" and you'll be able to press the I key during
+ # boot so you can choose to start specific services. Set to "NO" to disable
+ # this feature. This feature is automatically disabled if rc_parallel is
+ # set to YES.
+ #rc_interactive="YES"
++rc_interactive="NO"
+ 
+ # If we need to drop to a shell, you can specify it here.
+ # If not specified we use $SHELL, otherwise the one specified in /etc/passwd,
+ # otherwise /bin/sh
+ # Linux users could specify /sbin/sulogin
+-#rc_shell=/bin/sh
++rc_shell=/sbin/sulogin
+ 
+ # Do we allow any started service in the runlevel to satisfy the dependency
+ # or do we want all of them regardless of state? For example, if net.eth0
+@@ -28,6 +30,7 @@
+ # one comes up. With rc_depend_strict="YES" we would require them both to
+ # come up.
+ #rc_depend_strict="YES"
++rc_depend_strict="NO"
+ 
+ # rc_hotplug controls which services we allow to be hotplugged.
+ # A hotplugged service is one started by a dynamic dev manager when a matching
+@@ -49,6 +52,7 @@
+ # NOTE: Linux systems require the devfs service to be started before
+ # logging can take place and as such cannot log the sysinit runlevel.
+ #rc_logger="NO"
++rc_logger="YES"
+ 
+ # Through rc_log_path you can specify a custom log file.
+ # The default value is: /var/log/rc.log
+@@ -57,6 +61,7 @@
+ # If you want verbose output for OpenRC, set this to yes. If you want
+ # verbose output for service foo only, set it to yes in /etc/conf.d/foo.
+ #rc_verbose=no
++rc_verbose=yes
+ 
+ # By default we filter the environment for our running scripts. To allow other
+ # variables through, add them here. Use a * to allow all variables through.
+@@ -313,6 +318,7 @@ rc_tty_number=12
+ # processes in the # cgroup.
+ # The default is 90 seconds.
+ #rc_timeout_stopsec="90"
++rc_timeout_stopsec="30"
+ 
+ # If this is set to no, we do not send sigkill to all processes in the
+ # cgroup.
+-- 
+2.46.0.27.gfa3b914457
+
