@@ -1,0 +1,2147 @@
+From 8b7f3a13da1dd4344a3b673732042236d30135e3 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 16 Oct 2020 11:54:09 +0530
+Subject: [PATCH 01/24] meson.build: kill po
+
+---
+ meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 0cb4cfe1..b416c9d3 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2082,7 +2082,7 @@ libsystemd_includes = [basic_includes, include_directories(
+ 
+ includes = [libsystemd_includes, include_directories('src/shared')]
+ 
+-subdir('po')
++#subdir('po')
+ subdir('catalog')
+ subdir('src/fundamental')
+ subdir('src/basic')
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 2cc7e3797bf051ea360b9d9fe021c075ec4a2ba4 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 16 Oct 2020 12:57:20 +0530
+Subject: [PATCH 02/24] pick up hwdb.d correctly on gentoo
+
+---
+ src/shared/hwdb-util.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/shared/hwdb-util.c b/src/shared/hwdb-util.c
+index d96902c7..7bea8883 100644
+--- a/src/shared/hwdb-util.c
++++ b/src/shared/hwdb-util.c
+@@ -23,8 +23,8 @@
+ #include "tmpfile-util.h"
+ 
+ static const char* const conf_file_dirs[] = {
+-        "/etc/udev/hwdb.d",
+         UDEVLIBEXECDIR "/hwdb.d",
++        "/etc/udev/hwdb.d",
+         NULL
+ };
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From a27b9959d3adf633c45cb63687dd1614c7bb6294 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 16 Oct 2020 12:58:10 +0530
+Subject: [PATCH 03/24] src/core/main.c: debug - make safety_checks go further
+ before bailing
+
+---
+ src/core/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/main.c b/src/core/main.c
+index 6b9ca742..c2994c31 100644
+--- a/src/core/main.c
++++ b/src/core/main.c
+@@ -2795,12 +2795,12 @@ static int safety_checks(void) {
+                                        "Don't run test mode as root.");
+ 
+         switch (arg_runtime_scope) {
+-
+         case RUNTIME_SCOPE_USER:
+ 
+                 if (arg_action == ACTION_RUN &&
+                     sd_booted() <= 0)
+-                        return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
++                        //return
++                        log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
+                                                "Trying to run as user instance, but the system has not been booted with systemd.");
+ 
+                 if (arg_action == ACTION_RUN &&
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 8c0083d67e18cf27b6575174a8adfb06e48b7019 Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Sun, 28 Dec 2014 12:49:35 +0100
+Subject: [PATCH 04/24] Don't enable audit by default
+
+It causes flooding of dmesg and syslog, suppressing actually important
+messages.
+
+Don't enable it for now, until a better solution is found:
+http://lists.freedesktop.org/archives/systemd-devel/2014-December/026591.html
+
+Bug-Debian: https://bugs.debian.org/773528
+---
+ man/journald.conf.xml         | 2 +-
+ src/journal/journald-server.c | 2 +-
+ src/journal/journald.conf     | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/man/journald.conf.xml b/man/journald.conf.xml
+index 1aa74926..547216a5 100644
+--- a/man/journald.conf.xml
++++ b/man/journald.conf.xml
+@@ -482,7 +482,7 @@
+         kernel auditing on start-up. If disabled it will turn it off. If unset it will neither enable nor
+         disable it, leaving the previous state unchanged.  This means if another tool turns on auditing even
+         if <command>systemd-journald</command> left it off, it will still collect the generated
+-        messages. Defaults to on.</para>
++        messages. Defaults to off.</para>
+ 
+         <para>Note that this option does not control whether <command>systemd-journald</command> collects
+         generated audit records, it just controls whether it tells the kernel to generate them. If you need
+diff --git a/src/journal/journald-server.c b/src/journal/journald-server.c
+index 07748f00..3a265392 100644
+--- a/src/journal/journald-server.c
++++ b/src/journal/journald-server.c
+@@ -2597,7 +2597,7 @@ int server_new(Server **ret) {
+                 .compress.threshold_bytes = UINT64_MAX,
+                 .seal = true,
+ 
+-                .set_audit = true,
++                .set_audit = false,
+ 
+                 .watchdog_usec = USEC_INFINITY,
+ 
+diff --git a/src/journal/journald.conf b/src/journal/journald.conf
+index 9a12ca76..88c5340d 100644
+--- a/src/journal/journald.conf
++++ b/src/journal/journald.conf
+@@ -47,4 +47,4 @@
+ #MaxLevelSocket=debug
+ #LineMax=48K
+ #ReadKMsg=yes
+-#Audit=yes
++#Audit=no
+-- 
+2.46.0.27.gfa3b914457
+
+
+From ebd20ac7c5fd413e3b4552b9817d12d8a2cf63f8 Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Fri, 5 Sep 2014 01:15:16 +0200
+Subject: [PATCH 05/24] Make /run/lock tmpfs an API fs
+
+The /run/lock directory is world-writable in Debian due to historic
+reasons. To avoid user processes filling up /run, we mount a separate
+tmpfs for /run/lock. As this directory needs to be available during
+early boot, we make it an API fs.
+
+Drop it from tmpfiles.d/legacy.conf to not clobber the permissions.
+
+Closes: #751392
+---
+ src/shared/mount-setup.c  | 2 ++
+ tmpfiles.d/legacy.conf.in | 1 -
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/shared/mount-setup.c b/src/shared/mount-setup.c
+index d5009fb5..d02bf315 100644
+--- a/src/shared/mount-setup.c
++++ b/src/shared/mount-setup.c
+@@ -101,6 +101,8 @@ static const MountPoint mount_table[] = {
+ #endif
+         { "tmpfs",       "/run",                      "tmpfs",      "mode=0755" TMPFS_LIMITS_RUN,               MS_NOSUID|MS_NODEV|MS_STRICTATIME,
+           NULL,          MNT_FATAL|MNT_IN_CONTAINER },
++        { "tmpfs",       "/run/lock",                 "tmpfs",      "mode=1777,size=5242880",                  MS_NOSUID|MS_NOEXEC|MS_NODEV,
++          NULL,          MNT_FATAL|MNT_IN_CONTAINER },
+         { "cgroup2",     "/sys/fs/cgroup",            "cgroup2",    "nsdelegate,memory_recursiveprot",          MS_NOSUID|MS_NOEXEC|MS_NODEV,
+           check_recursiveprot_supported, MNT_IN_CONTAINER|MNT_CHECK_WRITABLE },
+         { "cgroup2",     "/sys/fs/cgroup",            "cgroup2",    "nsdelegate",                               MS_NOSUID|MS_NOEXEC|MS_NODEV,
+diff --git a/tmpfiles.d/legacy.conf.in b/tmpfiles.d/legacy.conf.in
+index 4f2c0d7c..fb1d6bf6 100644
+--- a/tmpfiles.d/legacy.conf.in
++++ b/tmpfiles.d/legacy.conf.in
+@@ -10,7 +10,6 @@
+ # These files are considered legacy and are unnecessary on legacy-free
+ # systems.
+ 
+-d /run/lock 0755 root root -
+ L /var/lock - - - - ../run/lock
+ {% if CREATE_LOG_DIRS %}
+ L /var/log/README - - - - ../..{{DOC_DIR}}/README.logs
+-- 
+2.46.0.27.gfa3b914457
+
+
+From c0aa66cbc568875b5a23cc730b59c0a2b3614b34 Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Fri, 28 Nov 2014 14:43:25 +0100
+Subject: [PATCH 06/24] Re-enable journal forwarding to syslog
+
+Revert upstream commit 46b131574fdd7d77 for now, until Debian's sysloggers
+can/do all read from the journal directly. See
+
+  http://lists.freedesktop.org/archives/systemd-devel/2014-November/025550.html
+
+for details. Once we grow a journal.conf.d/ directory, sysloggers can be moved
+to pulling from the journal one by one and disable forwarding again in such a
+conf.d snippet.
+---
+ man/journald.conf.xml         | 2 +-
+ src/journal/journald-server.c | 1 +
+ src/journal/journald.conf     | 2 +-
+ 3 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/man/journald.conf.xml b/man/journald.conf.xml
+index 547216a5..051b0e08 100644
+--- a/man/journald.conf.xml
++++ b/man/journald.conf.xml
+@@ -384,7 +384,7 @@
+         messages to all logged-in users or sent over a socket. These options take boolean arguments except
+         for <literal>ForwardToSocket=</literal> which takes an address instead. If forwarding
+         to syslog is enabled but nothing reads messages from the socket, forwarding to syslog has no effect. By default,
+-        only forwarding to wall is enabled. These settings may be overridden at boot time with the kernel
++        only forwarding to syslog and wall is enabled. These settings may be overridden at boot time with the kernel
+         command line options <literal>systemd.journald.forward_to_syslog</literal>,
+         <literal>systemd.journald.forward_to_kmsg</literal>,
+         <literal>systemd.journald.forward_to_console</literal>, and
+diff --git a/src/journal/journald-server.c b/src/journal/journald-server.c
+index 3a265392..e80e0bf9 100644
+--- a/src/journal/journald-server.c
++++ b/src/journal/journald-server.c
+@@ -2607,6 +2607,7 @@ int server_new(Server **ret) {
+                 .ratelimit_interval = DEFAULT_RATE_LIMIT_INTERVAL,
+                 .ratelimit_burst = DEFAULT_RATE_LIMIT_BURST,
+ 
++                .forward_to_syslog = true,
+                 .forward_to_wall = true,
+                 .forward_to_socket = { .sockaddr.sa.sa_family = AF_UNSPEC },
+ 
+diff --git a/src/journal/journald.conf b/src/journal/journald.conf
+index 88c5340d..7844efb9 100644
+--- a/src/journal/journald.conf
++++ b/src/journal/journald.conf
+@@ -34,7 +34,7 @@
+ #RuntimeMaxFiles=100
+ #MaxRetentionSec=0
+ #MaxFileSec=1month
+-#ForwardToSyslog=no
++#ForwardToSyslog=yes
+ #ForwardToKMsg=no
+ #ForwardToConsole=no
+ #ForwardToWall=yes
+-- 
+2.46.0.27.gfa3b914457
+
+
+From f2bcc634f70bef629a9eb5d74daf56d3d0f5eb1d Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Mon, 9 Feb 2015 10:53:43 +0100
+Subject: [PATCH 07/24] Only start logind if dbus is installed
+
+logind fails to start in environments without dbus, such as LXC containers or
+servers. Add a startup condition to avoid the very noisy startup failure.
+
+Consider both dbus-daemon (the reference implementation) and
+dbus-broker.
+
+Part of #772700
+---
+ units/systemd-logind.service.in | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/units/systemd-logind.service.in b/units/systemd-logind.service.in
+index e04aa821..6b1ded77 100644
+--- a/units/systemd-logind.service.in
++++ b/units/systemd-logind.service.in
+@@ -16,6 +16,8 @@ Documentation=man:org.freedesktop.login1(5)
+ 
+ Wants=user.slice modprobe@drm.service
+ After=nss-user-lookup.target user.slice modprobe@drm.service
++ConditionPathExists=|/lib/systemd/system/dbus.service
++ConditionPathExists=|/lib/systemd/system/dbus-broker.service
+ 
+ # Ask for the dbus socket.
+ Wants=dbus.socket
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 802bd7d9ed37de6bba9627751682896a13be6b67 Mon Sep 17 00:00:00 2001
+From: Didier Roche <didrocks@ubuntu.com>
+Date: Fri, 22 May 2015 13:04:38 +0200
+Subject: [PATCH 08/24] fsckd daemon for inter-fsckd communication
+
+Global logic:
+Add systemd-fsckd multiplexer which accepts multiple (via systemd-fsck's
+/run/systemd/fsck.progress socket) fsck instances to connect to it and sends
+progress report. systemd-fsckd then computes and writes to /dev/console the
+number of devices currently being checked and the minimum fsck progress.
+
+Plymouth and user interaction:
+Forward the progress to plymouth and support canellation of in progress fsck.
+Try to connect and send to plymouth (if running) some checked report progress,
+using direct plymouth protocole.
+
+Update message is the following:
+fsckd:<num_devices>:<progress>:<string>
+* num_devices corresponds to the current number of devices being checked (int)
+* progress corresponds to the current minimum percentage of all devices being
+  checked (float, from 0 to 100)
+* string is a translated message ready to be displayed by the plymouth theme
+  displaying the information above. It can be overridden by plymouth themes
+  supporting i18n.
+
+Grab in fsckd plymouth watch key Control+C, and propagate this cancel request
+to systemd-fsck which will terminate fsck.
+
+Send a message to signal to user what key we are grabbing for fsck cancel.
+
+Message is: fsckd-cancel-msg:<string>
+Where string is a translated string ready to be displayed by the plymouth theme
+indicating that Control+C can be used to cancel current checks. It can be
+overridden (matching only fsckd-cancel-msg prefix) for themes supporting i18n.
+
+Misc:
+systemd-fsckd stops on idle when no fsck is connected.
+Add man page explaining the plymouth theme protocol, usage of the daemon
+as well as the socket activation part. Adapt existing fsck man page.
+
+Note that fsckd had lived in the upstream tree for a while, but was removed.
+More information at
+http://lists.freedesktop.org/archives/systemd-devel/2015-April/030175.html
+-
+---
+ man/rules/meson.build              |   1 +
+ man/systemd-fsckd.service.xml      | 162 +++++++
+ meson.build                        |   1 +
+ po/POTFILES.in                     |   1 +
+ src/fsckd/fsckd.c                  | 702 +++++++++++++++++++++++++++++
+ src/fsckd/meson.build              |   8 +
+ units/meson.build                  |   2 +
+ units/systemd-fsck-root.service.in |   2 +
+ units/systemd-fsck@.service.in     |   3 +-
+ units/systemd-fsckd.service.in     |  17 +
+ units/systemd-fsckd.socket         |  15 +
+ 11 files changed, 913 insertions(+), 1 deletion(-)
+ create mode 100644 man/systemd-fsckd.service.xml
+ create mode 100644 src/fsckd/fsckd.c
+ create mode 100644 src/fsckd/meson.build
+ create mode 100644 units/systemd-fsckd.service.in
+ create mode 100644 units/systemd-fsckd.socket
+
+diff --git a/man/rules/meson.build b/man/rules/meson.build
+index a9a2a25c..eb55d6b2 100644
+--- a/man/rules/meson.build
++++ b/man/rules/meson.build
+@@ -939,6 +939,7 @@ manpages = [
+   '8',
+   ['systemd-fsck', 'systemd-fsck-root.service', 'systemd-fsck-usr.service'],
+   ''],
++ ['systemd-fsckd.service', '8', ['systemd-fsckd.socket', 'systemd-fsckd'], ''],
+  ['systemd-fstab-generator', '8', [], ''],
+  ['systemd-getty-generator', '8', [], ''],
+  ['systemd-gpt-auto-generator', '8', [], 'HAVE_BLKID'],
+diff --git a/man/systemd-fsckd.service.xml b/man/systemd-fsckd.service.xml
+new file mode 100644
+index 00000000..b7ad58d2
+--- /dev/null
++++ b/man/systemd-fsckd.service.xml
+@@ -0,0 +1,162 @@
++<?xml version="1.0"?>
++<!--*-nxml-*-->
++<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++<!--
++  This file is part of systemd.
++
++  Copyright 2015 Canonical
++
++  systemd is free software; you can redistribute it and/or modify it
++  under the terms of the GNU Lesser General Public License as published by
++  the Free Software Foundation; either version 2.1 of the License, or
++  (at your option) any later version.
++
++  systemd is distributed in the hope that it will be useful, but
++  WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public License
++  along with systemd; If not, see <http://www.gnu.org/licenses/>.
++-->
++<refentry id="systemd-fsckd.service" xmlns:xi="http://www.w3.org/2001/XInclude">
++
++  <refentryinfo>
++    <title>systemd-fsckd.service</title>
++    <productname>systemd</productname>
++
++    <authorgroup>
++      <author>
++        <contrib>Developer</contrib>
++        <firstname>Didier</firstname>
++        <surname>Roche</surname>
++        <email>didrocks@ubuntu.com</email>
++      </author>
++    </authorgroup>
++  </refentryinfo>
++
++  <refmeta>
++    <refentrytitle>systemd-fsckd.service</refentrytitle>
++    <manvolnum>8</manvolnum>
++  </refmeta>
++
++  <refnamediv>
++    <refname>systemd-fsckd.service</refname>
++    <refname>systemd-fsckd.socket</refname>
++    <refname>systemd-fsckd</refname>
++    <refpurpose>File system check progress reporting</refpurpose>
++  </refnamediv>
++
++  <refsynopsisdiv>
++    <para><filename>systemd-fsckd.service</filename></para>
++    <para><filename>systemd-fsckd.socket</filename></para>
++    <para><filename>/usr/lib/systemd/systemd-fsckd</filename></para>
++  </refsynopsisdiv>
++
++  <refsect1>
++    <title>Description</title>
++
++    <para><filename>systemd-fsckd.service</filename> is a service responsible
++    for receiving file system check progress, and communicating some
++    consolidated data to console and plymouth (if running). It also handles
++    possible check cancellations.</para>
++
++    <para><command>systemd-fsckd</command> receives messages about file
++    system check progress from <command>fsck</command> through an
++    UNIX domain socket. It can display the progress of the least advanced
++    fsck as well as the total number of devices being checked in parallel
++    to the console. It will also send progress messages to plymouth.
++    Both the raw data and translated messages are sent, so compiled
++    plymouth themes can use the raw data to display custom messages, and
++    scripted themes, not supporting i18n, can display the translated
++    versions.</para>
++
++    <para><command>systemd-fsckd</command> will instruct plymouth to grab
++    Control+C keypresses. When the key is pressed, running checks will be
++    terminated. It will also cancel any newly connected fsck instances for
++    the lifetime of <filename>systemd-fsckd</filename>.</para>
++  </refsect1>
++
++  <refsect1>
++    <title>Protocol for communication with plymouth</title>
++
++    <para><filename>systemd-fsckd</filename> passes the
++    following messages to the theme:</para>
++
++    <para>Progress update, sent as a plymouth update message:
++      <literal>fsckd:&lt;num_devices&gt;:&lt;progress&gt;:&lt;string&gt;</literal>
++      <variablelist>
++        <varlistentry>
++          <term><literal>&lt;num_devices&gt;</literal></term>
++          <listitem><para>the current number of devices
++          being checked (int)</para></listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><literal>&lt;progress&gt;</literal></term>
++          <listitem><para>the current minimum percentage of
++          all devices being checking (float, from 0 to 100)</para></listitem>
++        </varlistentry>
++        <varlistentry>
++          <term><literal>&lt;string&gt;</literal></term>
++          <listitem><para>a translated message ready to be displayed
++          by the plymouth theme displaying the data above. It can be overridden
++          by themes supporting i18n.</para></listitem>
++        </varlistentry>
++      </variablelist>
++    </para>
++
++    <para>Cancel message, sent as a traditional plymouth message:
++      <literal>fsckd-cancel-msg:&lt;string&gt;</literal>
++      <variablelist>
++        <varlistentry>
++          <term><literal>&lt;strings&gt;</literal></term>
++          <listitem><para>a translated string ready to be displayed
++          by the plymouth theme indicating that Control+C can be used to cancel
++          current checks. It can be overridden (matching only
++          <literal>fsckd-cancel-msg</literal> prefix)
++          by themes supporting i18n.</para></listitem>
++        </varlistentry>
++      </variablelist>
++    </para>
++  </refsect1>
++
++  <refsect1>
++    <title>Options</title>
++
++    <para>The following options are understood:</para>
++
++    <variablelist>
++      <xi:include href="standard-options.xml" xpointer="help" />
++      <xi:include href="standard-options.xml" xpointer="version" />
++    </variablelist>
++
++  </refsect1>
++
++  <refsect1>
++    <title>Exit status</title>
++
++    <para>On success, 0 is returned, a non-zero failure
++    code otherwise. Note that the daemon stays idle for
++    a while to accept new <filename>fsck</filename>
++    connections before exiting.</para>
++  </refsect1>
++
++  <refsect1>
++    <title>See Also</title>
++    <para>
++      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
++      <citerefentry><refentrytitle>systemd-fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry><refentrytitle>systemd-quotacheck.service</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.btrfs</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.cramfs</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.ext4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.fat</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.hfsplus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.minix</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.ntfs</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
++      <citerefentry project='man-pages'><refentrytitle>fsck.xfs</refentrytitle><manvolnum>8</manvolnum></citerefentry>
++    </para>
++  </refsect1>
++
++</refentry>
+diff --git a/meson.build b/meson.build
+index b416c9d3..7b99b85b 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2329,6 +2329,7 @@ subdir('src/environment-d-generator')
+ subdir('src/escape')
+ subdir('src/firstboot')
+ subdir('src/fsck')
++subdir('src/fsckd')
+ subdir('src/fstab-generator')
+ subdir('src/getty-generator')
+ subdir('src/gpt-auto-generator')
+diff --git a/po/POTFILES.in b/po/POTFILES.in
+index 16899fd5..6bba341c 100644
+--- a/po/POTFILES.in
++++ b/po/POTFILES.in
+@@ -13,3 +13,4 @@ src/portable/org.freedesktop.portable1.policy
+ src/resolve/org.freedesktop.resolve1.policy
+ src/timedate/org.freedesktop.timedate1.policy
+ src/core/dbus-unit.c
++src/fsckd/fsckd.c
+diff --git a/src/fsckd/fsckd.c b/src/fsckd/fsckd.c
+new file mode 100644
+index 00000000..28cdda6b
+--- /dev/null
++++ b/src/fsckd/fsckd.c
+@@ -0,0 +1,702 @@
++/*-*- Mode: C; c-basic-offset: 8; indent-tabs-mode: nil -*-*/
++
++/***
++  This file is part of systemd.
++
++  Copyright 2015 Canonical
++
++  Author:
++    Didier Roche <didrocks@ubuntu.com>
++
++  systemd is free software; you can redistribute it and/or modify it
++  under the terms of the GNU Lesser General Public License as published by
++  the Free Software Foundation; either version 2.1 of the License, or
++  (at your option) any later version.
++
++  systemd is distributed in the hope that it will be useful, but
++  WITHOUT ANY WARRANTY; without even the implied warranty of
++  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++  Lesser General Public License for more details.
++
++  You should have received a copy of the GNU Lesser General Public License
++  along with systemd; If not, see <http://www.gnu.org/licenses/>.
++***/
++
++#include <getopt.h>
++#include <errno.h>
++#include <libintl.h>
++#include <math.h>
++#include <stdbool.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <sys/socket.h>
++#include <sys/types.h>
++#include <sys/un.h>
++#include <unistd.h>
++
++#include "sd-daemon.h"
++#include "build.h"
++//#include "def.h"
++#include "sd-event.h"
++#include "log.h"
++#include "list.h"
++#include "macro.h"
++#include "socket-netlink.h"
++#include "socket-util.h"
++#include "fd-util.h"
++#include "string-util.h"
++#include "io-util.h"
++//#include "util.h"
++#include "alloc-util.h"
++#include "locale-util.h"
++
++#define PLYMOUTH_SOCKET {                                       \
++                .un.sun_family = AF_UNIX,                       \
++               .un.sun_path = "\0/org/freedesktop/plymouthd",  \
++        }
++
++
++#define FSCKD_SOCKET_PATH "/run/systemd/fsck.progress"
++#define IDLE_TIME_SECONDS 30
++#define PLYMOUTH_REQUEST_KEY "K\2\2\3"
++#define CLIENTS_MAX 128
++
++struct Manager;
++
++typedef struct Client {
++        struct Manager *manager;
++        char *device_name;
++        /* device id refers to "fd <fd>" until it gets a name as "device_name" */
++        char *device_id;
++
++        pid_t fsck_pid;
++        FILE *fsck_f;
++
++        size_t cur;
++        size_t max;
++        int pass;
++
++        double percent;
++
++        bool cancelled;
++        bool bad_input;
++
++        sd_event_source *event_source;
++
++        LIST_FIELDS(struct Client, clients);
++} Client;
++
++typedef struct Manager {
++        sd_event *event;
++
++        LIST_HEAD(Client, clients);
++        unsigned n_clients;
++
++        size_t clear;
++
++        int connection_fd;
++        sd_event_source *connection_event_source;
++
++        bool show_status_console;
++
++        double percent;
++        int numdevices;
++
++        int plymouth_fd;
++        sd_event_source *plymouth_event_source;
++        bool plymouth_cancel_sent;
++
++        bool cancel_requested;
++} Manager;
++
++static Client* client_free(Client *c);
++static Manager* manager_free(Manager *m);
++
++DEFINE_TRIVIAL_CLEANUP_FUNC(Client*, client_free);
++DEFINE_TRIVIAL_CLEANUP_FUNC(Manager*, manager_free);
++
++static bool plymouth_running(void) {
++        return access("/run/plymouth/pid", F_OK) >= 0;
++}
++
++static int manager_write_console(Manager *m, const char *message) {
++        _cleanup_fclose_ FILE *console = NULL;
++        int l;
++        size_t j;
++
++        assert(m);
++
++        if (!m->show_status_console)
++                return 0;
++
++        /* Nothing to display, and nothing to clear: return now. */
++        if (message == NULL && m->clear == 0) {
++                return 0;
++        }
++
++        /* Reduce the SAK window by opening and closing console on every request */
++        console = fopen("/dev/console", "we");
++        if (!console)
++                return -errno;
++
++        if (message) {
++                fprintf(console, "\r%s\r%n", message, &l);
++                if (m->clear  < (size_t)l)
++                        m->clear = (size_t)l;
++        } else {
++                fputc('\r', console);
++                for (j = 0; j < m->clear; j++)
++                        fputc(' ', console);
++                fputc('\r', console);
++        }
++        fflush(console);
++
++        return 0;
++}
++
++static double compute_percent(int pass, size_t cur, size_t max) {
++        /* Values stolen from e2fsck */
++
++        static const double pass_table[] = {
++                0, 70, 90, 92, 95, 100
++        };
++
++        if (pass <= 0)
++                return 0.0;
++
++        if ((unsigned) pass >= ELEMENTSOF(pass_table) || max == 0)
++                return 100.0;
++
++        return pass_table[pass-1] +
++                (pass_table[pass] - pass_table[pass-1]) *
++                (double) cur / max;
++}
++
++static int client_request_cancel(Client *c) {
++        assert(c);
++
++        if (c->cancelled)
++                return 0;
++
++        log_info("Request to cancel fsck for %s from fsckd", c->device_id);
++        if (kill(c->fsck_pid, SIGTERM) < 0) {
++                /* ignore the error and consider that cancel was sent if fsck just exited */
++                if (errno != ESRCH)
++                        return log_error_errno(errno, "Cannot send cancel to fsck for %s: %m", c->device_id);
++        }
++
++        c->cancelled = true;
++        return 1;
++}
++
++static Client* client_free(Client *c) {
++        assert(c);
++
++        if (c->manager) {
++                LIST_REMOVE(clients, c->manager->clients, c);
++                c->manager->n_clients--;
++        }
++
++        sd_event_source_unref(c->event_source);
++        fclose(c->fsck_f);
++        if (c->device_name)
++                free(c->device_name);
++        if (c->device_id)
++                free(c->device_id);
++        return mfree(c);
++}
++
++static void manager_disconnect_plymouth(Manager *m) {
++        assert(m);
++
++        m->plymouth_event_source = sd_event_source_unref(m->plymouth_event_source);
++        m->plymouth_fd = safe_close(m->plymouth_fd);
++        m->plymouth_cancel_sent = false;
++}
++
++static int manager_plymouth_feedback_handler(sd_event_source *s, int fd, uint32_t revents, void *userdata) {
++        Manager *m = userdata;
++        char buffer[6];
++        ssize_t l;
++
++        assert(m);
++
++        l = read(m->plymouth_fd, buffer, sizeof(buffer));
++        if (l < 0) {
++                log_warning_errno(errno, "Got error while reading from plymouth: %m");
++                manager_disconnect_plymouth(m);
++                return -errno;
++        }
++        if (l == 0) {
++                manager_disconnect_plymouth(m);
++                return 0;
++        }
++
++        if (l > 1 && buffer[0] == '\15')
++                log_error("Message update to plymouth wasn't delivered successfully");
++
++        /* the only answer support type we requested is a key interruption */
++        if (l > 2 && buffer[0] == '\2' && buffer[5] == '\3') {
++                m->cancel_requested = true;
++
++                /* cancel all connected clients */
++                LIST_FOREACH(clients, current, m->clients)
++                        client_request_cancel(current);
++        }
++
++        return 0;
++}
++
++static int manager_connect_plymouth(Manager *m) {
++        union sockaddr_union sa = PLYMOUTH_SOCKET;
++        int r;
++
++        if (!plymouth_running())
++                return 0;
++
++        /* try to connect or reconnect if sending a message */
++        if (m->plymouth_fd >= 0)
++                return 1;
++
++        m->plymouth_fd = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
++        if (m->plymouth_fd < 0)
++                return log_warning_errno(errno, "Connection to plymouth socket failed: %m");
++
++        if (connect(m->plymouth_fd, &sa.sa, offsetof(struct sockaddr_un, sun_path) + 1 + strlen(sa.un.sun_path+1)) < 0) {
++                r = log_warning_errno(errno, "Couldn't connect to plymouth: %m");
++                goto fail;
++        }
++
++        r = sd_event_add_io(m->event, &m->plymouth_event_source, m->plymouth_fd, EPOLLIN, manager_plymouth_feedback_handler, m);
++        if (r < 0) {
++                log_warning_errno(r, "Can't listen to plymouth socket: %m");
++                goto fail;
++        }
++
++        return 1;
++
++fail:
++        manager_disconnect_plymouth(m);
++        return r;
++}
++
++static int plymouth_send_message(int plymouth_fd, const char *message, bool update) {
++        _cleanup_free_ char *packet = NULL;
++        int n;
++        char mode = 'M';
++
++        if (update)
++                mode = 'U';
++
++        if (asprintf(&packet, "%c\002%c%s%n", mode, (int) (strlen(message) + 1), message, &n) < 0)
++                return log_oom();
++
++        return loop_write(plymouth_fd, packet, n + 1);
++}
++
++static int manager_send_plymouth_message(Manager *m, const char *message) {
++        const char *plymouth_cancel_message = NULL, *l10n_cancel_message = NULL;
++        int r;
++
++        r = manager_connect_plymouth(m);
++        if (r < 0)
++                return r;
++        /* 0 means that plymouth isn't running, do not send any message yet */
++        else if (r == 0)
++                return 0;
++
++        if (!m->plymouth_cancel_sent) {
++
++                /* Indicate to plymouth that we listen to Ctrl+C */
++                r = loop_write(m->plymouth_fd, PLYMOUTH_REQUEST_KEY, sizeof(PLYMOUTH_REQUEST_KEY));
++                if (r < 0)
++                        return log_warning_errno(r, "Can't send to plymouth cancel key: %m");
++
++                m->plymouth_cancel_sent = true;
++
++                l10n_cancel_message = _("Press Ctrl+C to cancel all filesystem checks in progress");
++                plymouth_cancel_message = strjoina("fsckd-cancel-msg:", l10n_cancel_message);
++
++                r = plymouth_send_message(m->plymouth_fd, plymouth_cancel_message, false);
++                if (r < 0)
++                        log_warning_errno(r, "Can't send filesystem cancel message to plymouth: %m");
++
++        } else if (m->numdevices == 0) {
++
++                m->plymouth_cancel_sent = false;
++
++                r = plymouth_send_message(m->plymouth_fd, "", false);
++                if (r < 0)
++                        log_warning_errno(r, "Can't clear plymouth filesystem cancel message: %m");
++        }
++
++        r = plymouth_send_message(m->plymouth_fd,  message, true);
++        if (r < 0)
++                return log_warning_errno(r, "Couldn't send \"%s\" to plymouth: %m", message);
++
++        return 0;
++}
++
++static int manager_update_global_progress(Manager *m) {
++        _cleanup_free_ char *console_message = NULL;
++        _cleanup_free_ char *fsck_message = NULL;
++        int current_numdevices = 0, r;
++        double current_percent = 100;
++
++        /* get the overall percentage */
++        LIST_FOREACH(clients, current, m->clients) {
++                current_numdevices++;
++
++                /* right now, we only keep the minimum % of all fsckd processes. We could in the future trying to be
++                   linear, but max changes and corresponds to the pass. We have all the informations into fsckd
++                   already if we can treat that in a smarter way. */
++                current_percent = MIN(current_percent, current->percent);
++        }
++
++        /* update if there is anything user-visible to update */
++        if (fabs(current_percent - m->percent) > 0.001 || current_numdevices != m->numdevices) {
++                m->numdevices = current_numdevices;
++                m->percent = current_percent;
++
++                if (asprintf(&console_message,
++                             "Checking in progress on %d disk(s) (%3.1f%% complete)", m->numdevices, m->percent) < 0)
++                        return -ENOMEM;
++
++                if (asprintf(&fsck_message, "fsckd:%d:%3.1f:%s", m->numdevices, m->percent, console_message) < 0)
++                        return -ENOMEM;
++
++                r = manager_write_console(m, console_message);
++                if (r < 0)
++                        return r;
++
++                /* try to connect to plymouth and send message */
++                r = manager_send_plymouth_message(m, fsck_message);
++                if (r < 0)
++                        return r;
++        }
++        return 0;
++}
++
++static int client_progress_handler(sd_event_source *s, int fd, uint32_t revents, void *userdata) {
++        Client *client = userdata;
++        char line[LINE_MAX];
++        Manager *m;
++
++        assert(client);
++        m = client->manager;
++
++        /* check first if we need to cancel this client */
++        if (m->cancel_requested)
++                client_request_cancel(client);
++
++        while (fgets(line, sizeof(line), client->fsck_f) != NULL) {
++                int pass;
++                size_t cur, max;
++                _cleanup_free_ char *device = NULL, *old_device_id = NULL;
++
++                if (sscanf(line, "%i %zu %zu %ms", &pass, &cur, &max, &device) == 4) {
++                        if (!client->device_name) {
++                                client->device_name = strdup(device);
++                                if (!client->device_name) {
++                                        log_oom();
++                                        continue;
++                                }
++                                old_device_id = client->device_id;
++                                client->device_id = strdup(device);
++                                if (!client->device_id) {
++                                        log_oom();
++                                        client->device_id = old_device_id;
++                                        old_device_id = NULL;
++                                        continue;
++                                }
++                        }
++                        client->pass = pass;
++                        client->cur = cur;
++                        client->max = max;
++                        client->bad_input = false;
++                        client->percent = compute_percent(client->pass, client->cur, client->max);
++                        log_debug("Getting progress for %s (%zu, %zu, %d) : %3.1f%%", client->device_id,
++                                  client->cur, client->max, client->pass, client->percent);
++                } else {
++                        if (errno == ENOMEM) {
++                                log_oom();
++                                continue;
++                        }
++
++                        /* if previous input was already garbage, kick it off from progress report */
++                        if (client->bad_input) {
++                                log_warning("Closing connection on incorrect input of fsck connection for %s", client->device_id);
++                                client_free(client);
++                                manager_update_global_progress(m);
++                                return 0;
++                        }
++                        client->bad_input = true;
++                }
++
++        }
++
++        if (feof(client->fsck_f)) {
++                log_debug("Fsck client %s disconnected", client->device_id);
++                client_free(client);
++        }
++
++        manager_update_global_progress(m);
++        return 0;
++}
++
++static int manager_new_connection_handler(sd_event_source *s, int fd, uint32_t revents, void *userdata) {
++        _cleanup_(client_freep) Client *c = NULL;
++        _cleanup_close_ int new_fsck_fd = -1;
++        _cleanup_fclose_ FILE *new_fsck_f = NULL;
++        struct ucred ucred = {};
++        Manager *m = userdata;
++        int r;
++
++        assert(m);
++
++        /* Initialize and list new clients */
++        new_fsck_fd = accept4(m->connection_fd, NULL, NULL, SOCK_CLOEXEC|SOCK_NONBLOCK);
++        if (new_fsck_fd < 0) {
++                log_error_errno(errno, "Couldn't accept a new connection: %m");
++                return 0;
++        }
++
++        if (m->n_clients >= CLIENTS_MAX) {
++                log_error("Too many clients, refusing connection.");
++                return 0;
++        }
++
++
++        new_fsck_f = fdopen(new_fsck_fd, "r");
++        if (!new_fsck_f) {
++                log_error_errno(errno, "Couldn't fdopen new connection for fd %d: %m", new_fsck_fd);
++                return 0;
++        }
++        new_fsck_fd = -1;
++
++        r = getpeercred(fileno(new_fsck_f), &ucred);
++        if (r < 0) {
++                log_error_errno(r, "Couldn't get credentials for fsck: %m");
++                return 0;
++        }
++
++        c = new0(Client, 1);
++        if (!c) {
++                log_oom();
++                return 0;
++        }
++
++        c->fsck_pid = ucred.pid;
++        c->fsck_f = new_fsck_f;
++        new_fsck_f = NULL;
++
++        if (asprintf(&(c->device_id), "fd %d", fileno(c->fsck_f)) < 0) {
++                log_oom();
++                return 0;
++        }
++
++        r = sd_event_add_io(m->event, &c->event_source, fileno(c->fsck_f), EPOLLIN, client_progress_handler, c);
++        if (r < 0) {
++                log_oom();
++                return 0;
++        }
++
++        LIST_PREPEND(clients, m->clients, c);
++        m->n_clients++;
++        c->manager = m;
++
++        log_debug("New fsck client connected: %s", c->device_id);
++
++        /* only request the client to cancel now in case the request is dropped by the client (chance to recancel) */
++        if (m->cancel_requested)
++                client_request_cancel(c);
++
++        c = NULL;
++        return 0;
++}
++
++static Manager* manager_free(Manager *m) {
++        if (!m)
++                return NULL;
++
++        /* clear last line */
++        manager_write_console(m, NULL);
++
++        sd_event_source_unref(m->connection_event_source);
++        safe_close(m->connection_fd);
++
++        while (m->clients)
++                client_free(m->clients);
++
++        manager_disconnect_plymouth(m);
++
++        sd_event_unref(m->event);
++
++        return mfree(m);
++}
++
++static int manager_new(Manager **ret, int fd) {
++        _cleanup_(manager_freep) Manager *m = NULL;
++        int r;
++
++        assert(ret);
++
++        m = new0(Manager, 1);
++        if (!m)
++                return -ENOMEM;
++
++        m->plymouth_fd = -1;
++        m->connection_fd = fd;
++        m->percent = 100;
++
++        r = sd_event_default(&m->event);
++        if (r < 0)
++                return r;
++
++        if (access("/run/systemd/show-status", F_OK) >= 0)
++                m->show_status_console = true;
++
++        r = sd_event_add_io(m->event, &m->connection_event_source, fd, EPOLLIN, manager_new_connection_handler, m);
++        if (r < 0)
++                return r;
++
++        *ret = m;
++        m = NULL;
++
++        return 0;
++}
++
++static int run_event_loop_with_timeout(Manager *m, usec_t timeout) {
++        int r, code;
++        sd_event *e = m->event;
++
++        assert(e);
++
++        for (;;) {
++                r = sd_event_get_state(e);
++                if (r < 0)
++                        return r;
++                if (r == SD_EVENT_FINISHED)
++                        break;
++
++                r = sd_event_run(e, timeout);
++                if (r < 0)
++                        return r;
++
++                /* Exit if we reached the idle timeout and no more clients are
++                   connected. If there is still an fsck process running but
++                   simply slow to send us progress updates, exiting would mean
++                   that this fsck process receives SIGPIPE resulting in an
++                   aborted file system check. */
++                if (r == 0 && m->n_clients == 0) {
++                        sd_event_exit(e, 0);
++                        break;
++                }
++        }
++
++        r = sd_event_get_exit_code(e, &code);
++        if (r < 0)
++                return r;
++
++        return code;
++}
++
++static void help(void) {
++        printf("%s [OPTIONS...]\n\n"
++               "Capture fsck progress and forward one stream to plymouth\n\n"
++               "  -h --help             Show this help\n"
++               "     --version          Show package version\n",
++               program_invocation_short_name);
++}
++
++static int parse_argv(int argc, char *argv[]) {
++
++        enum {
++                ARG_VERSION = 0x100,
++                ARG_ROOT,
++        };
++
++        static const struct option options[] = {
++                { "help",      no_argument,       NULL, 'h'           },
++                { "version",   no_argument,       NULL, ARG_VERSION   },
++                {}
++        };
++
++        int c;
++
++        assert(argc >= 0);
++        assert(argv);
++
++        while ((c = getopt_long(argc, argv, "h", options, NULL)) >= 0)
++                switch (c) {
++
++                case 'h':
++                        help();
++                        return 0;
++
++                case ARG_VERSION:
++                        version();
++                        return 0;
++
++                case '?':
++                        return -EINVAL;
++
++                default:
++                        assert_not_reached();
++                }
++
++        if (optind < argc) {
++                log_error("Extraneous arguments");
++                return -EINVAL;
++        }
++
++        return 1;
++}
++
++int main(int argc, char *argv[]) {
++        _cleanup_(manager_freep) Manager *m = NULL;
++        int fd = -1;
++        int r, n;
++
++        log_set_target(LOG_TARGET_AUTO);
++        log_parse_environment();
++        log_open();
++#if 0
++        init_gettext();
++#endif
++        r = parse_argv(argc, argv);
++        if (r <= 0)
++                goto finish;
++
++        n = sd_listen_fds(0);
++        if (n > 1) {
++                log_error("Too many file descriptors received.");
++                r = -EINVAL;
++                goto finish;
++        } else if (n == 1)
++                fd = SD_LISTEN_FDS_START + 0;
++        else {
++                fd = make_socket_fd(LOG_DEBUG, FSCKD_SOCKET_PATH, SOCK_STREAM, SOCK_CLOEXEC);
++                if (fd < 0) {
++                        r = log_error_errno(fd, "Couldn't create listening socket fd on %s: %m", FSCKD_SOCKET_PATH);
++                        goto finish;
++                }
++        }
++
++        r = manager_new(&m, fd);
++        if (r < 0) {
++                log_error_errno(r, "Failed to allocate manager: %m");
++                goto finish;
++        }
++
++        r = run_event_loop_with_timeout(m, IDLE_TIME_SECONDS * USEC_PER_SEC);
++        if (r < 0) {
++                log_error_errno(r, "Failed to run event loop: %m");
++                goto finish;
++        }
++
++        sd_event_get_exit_code(m->event, &r);
++
++finish:
++        return r < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
++}
+diff --git a/src/fsckd/meson.build b/src/fsckd/meson.build
+new file mode 100644
+index 00000000..6d3c125b
+--- /dev/null
++++ b/src/fsckd/meson.build
+@@ -0,0 +1,8 @@
++# SPDX-License-Identifier: LGPL-2.1-or-later
++
++executables += [
++        libexec_template + {
++                'name' : 'systemd-fsckd',
++                'sources' : files('fsckd.c'),
++        },
++]
+diff --git a/units/meson.build b/units/meson.build
+index b231341a..4dde37a1 100644
+--- a/units/meson.build
++++ b/units/meson.build
+@@ -309,8 +309,10 @@ units = [
+         },
+         { 'file' : 'systemd-fsck-root.service.in' },
+         { 'file' : 'systemd-fsck@.service.in' },
++        { 'file' : 'systemd-fsckd.service.in' },
+         { 'file' : 'systemd-growfs-root.service.in' },
+         { 'file' : 'systemd-growfs@.service.in' },
++        { 'file' : 'systemd-fsckd.socket' },
+         { 'file' : 'systemd-halt.service' },
+         {
+           'file' : 'systemd-hibernate-clear.service.in',
+diff --git a/units/systemd-fsck-root.service.in b/units/systemd-fsck-root.service.in
+index ebe8262a..ca9c7cef 100644
+--- a/units/systemd-fsck-root.service.in
++++ b/units/systemd-fsck-root.service.in
+@@ -13,6 +13,8 @@ Documentation=man:systemd-fsck-root.service(8)
+ DefaultDependencies=no
+ Conflicts=shutdown.target
+ Before=local-fs.target shutdown.target
++Wants=systemd-fsckd.socket
++After=systemd-fsckd.socket
+ ConditionPathIsReadWrite=!/
+ OnFailure=emergency.target
+ OnFailureJobMode=replace-irreversibly
+diff --git a/units/systemd-fsck@.service.in b/units/systemd-fsck@.service.in
+index 8eb4821d..1e0fb752 100644
+--- a/units/systemd-fsck@.service.in
++++ b/units/systemd-fsck@.service.in
+@@ -14,7 +14,8 @@ DefaultDependencies=no
+ BindsTo=%i.device
+ IgnoreOnIsolate=yes
+ Conflicts=reboot.target kexec.target poweroff.target halt.target
+-After=%i.device systemd-fsck-root.service local-fs-pre.target
++Wants=systemd-fsckd.socket
++After=%i.device systemd-fsck-root.service local-fs-pre.target systemd-fsckd.socket
+ Before=systemd-quotacheck.service shutdown.target
+ 
+ [Service]
+diff --git a/units/systemd-fsckd.service.in b/units/systemd-fsckd.service.in
+new file mode 100644
+index 00000000..845788c4
+--- /dev/null
++++ b/units/systemd-fsckd.service.in
+@@ -0,0 +1,17 @@
++#  This file is part of systemd.
++#
++#  systemd is free software; you can redistribute it and/or modify it
++#  under the terms of the GNU Lesser General Public License as published by
++#  the Free Software Foundation; either version 2.1 of the License, or
++#  (at your option) any later version.
++
++[Unit]
++Description=File System Check Daemon to report status
++Documentation=man:systemd-fsckd.service(8)
++DefaultDependencies=no
++Requires=systemd-fsckd.socket
++Before=shutdown.target
++
++[Service]
++ExecStart={{LIBEXECDIR}}/systemd-fsckd
++StandardOutput=journal+console
+diff --git a/units/systemd-fsckd.socket b/units/systemd-fsckd.socket
+new file mode 100644
+index 00000000..61fec978
+--- /dev/null
++++ b/units/systemd-fsckd.socket
+@@ -0,0 +1,15 @@
++#  This file is part of systemd.
++#
++#  systemd is free software; you can redistribute it and/or modify it
++#  under the terms of the GNU Lesser General Public License as published by
++#  the Free Software Foundation; either version 2.1 of the License, or
++#  (at your option) any later version.
++
++[Unit]
++Description=fsck to fsckd communication Socket
++Documentation=man:systemd-fsckd.service(8) man:systemd-fsck@.service(8) man:systemd-fsck-root.service(8)
++DefaultDependencies=no
++
++[Socket]
++ListenStream=/run/systemd/fsck.progress
++SocketMode=0600
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 4016d4434a7a84647c97a5b5dc0070218567b813 Mon Sep 17 00:00:00 2001
+From: Nis Martensen <nis.martensen@web.de>
+Date: Tue, 19 Jan 2016 22:01:43 +0100
+Subject: [PATCH 09/24] Skip filesystem check if already done by the initramfs
+
+Newer versions of initramfs-tools already fsck and mount / and /usr in
+the initramfs. Skip the filesystem check in this case.
+
+Based on a previous patch by Michael Biebl <biebl@debian.org>.
+
+Closes: #782522
+Closes: #810748
+---
+ src/fstab-generator/fstab-generator.c | 11 ++++++++---
+ units/systemd-fsck-root.service.in    |  1 +
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/src/fstab-generator/fstab-generator.c b/src/fstab-generator/fstab-generator.c
+index b4df9d23..78630bba 100644
+--- a/src/fstab-generator/fstab-generator.c
++++ b/src/fstab-generator/fstab-generator.c
+@@ -530,6 +530,7 @@ static int add_mount(
+         _cleanup_strv_free_ char **wanted_by = NULL, **required_by = NULL;
+         _cleanup_fclose_ FILE *f = NULL;
+         int r;
++        struct stat sb;
+ 
+         assert(what);
+         assert(where);
+@@ -626,9 +627,13 @@ static int add_mount(
+                 fprintf(f, "Before=%s\n", target_unit);
+ 
+         if (passno != 0) {
+-                r = generator_write_fsck_deps(f, dest, what, where, fstype);
+-                if (r < 0)
+-                        return r;
++                if (streq(where, "/usr") && stat("/run/initramfs/fsck-usr", &sb) == 0)
++                        ; /* skip /usr fsck if it has already been checked in the initramfs */
++                else {
++                        r = generator_write_fsck_deps(f, dest, what, where, fstype);
++                        if (r < 0)
++                                return r;
++                }
+         }
+ 
+         r = generator_write_blockdev_dependency(f, what);
+diff --git a/units/systemd-fsck-root.service.in b/units/systemd-fsck-root.service.in
+index ca9c7cef..27783a9c 100644
+--- a/units/systemd-fsck-root.service.in
++++ b/units/systemd-fsck-root.service.in
+@@ -16,6 +16,7 @@ Before=local-fs.target shutdown.target
+ Wants=systemd-fsckd.socket
+ After=systemd-fsckd.socket
+ ConditionPathIsReadWrite=!/
++ConditionPathExists=!/run/initramfs/fsck-root
+ OnFailure=emergency.target
+ OnFailureJobMode=replace-irreversibly
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From e9bd529f598df7ca2a47dc0fe5a00aab0ac7336f Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Mon, 27 Apr 2015 15:29:13 +0200
+Subject: [PATCH 10/24] Revert "core: one step back again, for nspawn we
+ actually can't wait for cgroups running empty since systemd will get exactly
+ zero notifications about it"
+
+This reverts commit 743970d2ea6d08aa7c7bff8220f6b7702f2b1db7.
+
+Bug-Debian: https://bugs.debian.org/784720
+Bug-Ubuntu: https://launchpad.net/bugs/1448259
+Bug-Fedora: https://bugzilla.redhat.com/show_bug.cgi?id=1141137
+---
+ src/core/unit.c | 11 +----------
+ 1 file changed, 1 insertion(+), 10 deletions(-)
+
+diff --git a/src/core/unit.c b/src/core/unit.c
+index 136b7aac..67d060d8 100644
+--- a/src/core/unit.c
++++ b/src/core/unit.c
+@@ -4851,16 +4851,7 @@ int unit_kill_context(Unit *u, KillOperation k) {
+ 
+                 } else if (r > 0) {
+ 
+-                        /* FIXME: For now, on the legacy hierarchy, we will not wait for the cgroup members to die if
+-                         * we are running in a container or if this is a delegation unit, simply because cgroup
+-                         * notification is unreliable in these cases. It doesn't work at all in containers, and outside
+-                         * of containers it can be confused easily by left-over directories in the cgroup — which
+-                         * however should not exist in non-delegated units. On the unified hierarchy that's different,
+-                         * there we get proper events. Hence rely on them. */
+-
+-                        if (cg_unified_controller(SYSTEMD_CGROUP_CONTROLLER) > 0 ||
+-                            (detect_container() == 0 && !unit_cgroup_delegate(u)))
+-                                wait_for_exit = true;
++                        wait_for_exit = true;
+ 
+                         if (send_sighup) {
+                                 r = unit_pid_set(u, &pid_set);
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 3bc08f82e148a9e074f64bd7186c3da7b5135705 Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Sat, 27 Feb 2016 12:27:06 +0100
+Subject: [PATCH 11/24] Revert "core: set RLIMIT_CORE to unlimited by default"
+
+Partially revert commit 15a900327ab as this completely breaks core dumps
+without systemd-coredump. It's also contradicting core(8), and it's not
+systemd's place to redefine the kernel definitions of core files.
+
+Commit bdfd7b2c now honours the process' RLIMIT_CORE for systemd-coredump. This
+isn't what RLIMIT_CORE is supposed to do (it limits the size of the core
+*file*, but the kernel deliberately ignores it for piping), so set a static
+2^63 core size limit for systemd-coredump to go back to the previous behaviour
+(otherwise the change above would break systemd-coredump).
+
+Bug-Debian: https://bugs.debian.org/815020
+---
+ src/core/main.c              | 5 ++++-
+ sysctl.d/50-coredump.conf.in | 2 +-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/main.c b/src/core/main.c
+index c2994c31..e338f8fd 100644
+--- a/src/core/main.c
++++ b/src/core/main.c
+@@ -1769,6 +1769,7 @@ static void cmdline_take_random_seed(void) {
+                    "This functionality should not be used outside of testing environments.");
+ }
+ 
++#if 0
+ static void initialize_coredump(bool skip_setup) {
+         if (getpid_cached() != 1)
+                 return;
+@@ -1784,6 +1785,7 @@ static void initialize_coredump(bool skip_setup) {
+         if (!skip_setup)
+                 disable_coredumps();
+ }
++#endif
+ 
+ static void initialize_core_pattern(bool skip_setup) {
+         int r;
+@@ -3072,8 +3074,9 @@ int main(int argc, char *argv[]) {
+                         kernel_timestamp = DUAL_TIMESTAMP_NULL;
+                 }
+ 
++#if 0
+                 initialize_coredump(skip_setup);
+-
++#endif
+                 r = fixup_environment();
+                 if (r < 0) {
+                         log_struct_errno(LOG_EMERG, r,
+diff --git a/sysctl.d/50-coredump.conf.in b/sysctl.d/50-coredump.conf.in
+index 90c080bd..845ff164 100644
+--- a/sysctl.d/50-coredump.conf.in
++++ b/sysctl.d/50-coredump.conf.in
+@@ -13,7 +13,7 @@
+ # the core dump.
+ #
+ # See systemd-coredump(8) and core(5).
+-kernel.core_pattern=|{{LIBEXECDIR}}/systemd-coredump %P %u %g %s %t %c %h
++kernel.core_pattern=|{{LIBEXECDIR}}/systemd-coredump %P %u %g %s %t %c 9223372036854775808 %h
+ 
+ # Allow 16 coredumps to be dispatched in parallel by the kernel.
+ # We collect metadata from /proc/%P/, and thus need to make sure the crashed
+-- 
+2.46.0.27.gfa3b914457
+
+
+From b1c85a0b76ed29f542f33b43d1a060c1063e81e9 Mon Sep 17 00:00:00 2001
+From: Iain Lane <iain@orangesquash.org.uk>
+Date: Mon, 22 Aug 2016 07:03:27 +0200
+Subject: [PATCH 12/24] Let graphical-session-pre.target be manually started
+
+This is needed until https://github.com/systemd/systemd/issues/3750 is fixed.
+
+Forwarded: not-needed
+Bug-Ubuntu: https://launchpad.net/bugs/1615341
+---
+ units/user/graphical-session-pre.target | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/units/user/graphical-session-pre.target b/units/user/graphical-session-pre.target
+index 4b9e3dc6..dffaf857 100644
+--- a/units/user/graphical-session-pre.target
++++ b/units/user/graphical-session-pre.target
+@@ -12,5 +12,4 @@ Description=Session services which should run early before the graphical session
+ Documentation=man:systemd.special(7)
+ Requires=basic.target
+ Before=graphical-session.target
+-RefuseManualStart=yes
+ StopWhenUnneeded=yes
+-- 
+2.46.0.27.gfa3b914457
+
+
+From d21474ed79beac4860c1bc10f18ea23e27a6b9ef Mon Sep 17 00:00:00 2001
+From: Dan Streetman <ddstreet@canonical.com>
+Date: Wed, 6 Nov 2019 09:14:50 -0500
+Subject: [PATCH 13/24] deny-list-upstream-test-25
+
+Bug: https://github.com/systemd/systemd/issues/13973
+---
+ test/TEST-25-IMPORT/deny-list-upstream-ci | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 test/TEST-25-IMPORT/deny-list-upstream-ci
+
+diff --git a/test/TEST-25-IMPORT/deny-list-upstream-ci b/test/TEST-25-IMPORT/deny-list-upstream-ci
+new file mode 100644
+index 00000000..47a5f158
+--- /dev/null
++++ b/test/TEST-25-IMPORT/deny-list-upstream-ci
+@@ -0,0 +1 @@
++# unknown failure; tracked in https://github.com/systemd/systemd/issues/13973
+-- 
+2.46.0.27.gfa3b914457
+
+
+From ca1cca45fbc87d0f57ecad5ba7e76f688a8b4c3e Mon Sep 17 00:00:00 2001
+From: Dan Streetman <ddstreet@canonical.com>
+Date: Wed, 6 Nov 2019 09:14:54 -0500
+Subject: [PATCH 14/24] deny-list-upstream-test-02-ppc64el
+
+Bug: https://github.com/systemd/systemd/issues/11612
+---
+ test/TEST-02-UNITTESTS/deny-list-upstream-ci-ppc64el | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 test/TEST-02-UNITTESTS/deny-list-upstream-ci-ppc64el
+
+diff --git a/test/TEST-02-UNITTESTS/deny-list-upstream-ci-ppc64el b/test/TEST-02-UNITTESTS/deny-list-upstream-ci-ppc64el
+new file mode 100644
+index 00000000..52877fc7
+--- /dev/null
++++ b/test/TEST-02-UNITTESTS/deny-list-upstream-ci-ppc64el
+@@ -0,0 +1 @@
++# unknown reason for failing, tracked in https://github.com/systemd/systemd/issues/11612
+-- 
+2.46.0.27.gfa3b914457
+
+
+From f74eee43de8b492034ed4301ad6f7b8c8b8955eb Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Tue, 19 Nov 2019 09:10:23 +0100
+Subject: [PATCH 15/24] udev: drop SystemCallArchitectures=native from
+ systemd-udevd.service
+
+We can't really control what helper programs are run from other udev
+rules. E.g. running i386 binaries under amd64 is a valid use case and
+should not trigger a SIGSYS failure.
+
+Closes: #869719
+---
+ units/systemd-udevd.service.in | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/units/systemd-udevd.service.in b/units/systemd-udevd.service.in
+index f4a44820..267470ff 100644
+--- a/units/systemd-udevd.service.in
++++ b/units/systemd-udevd.service.in
+@@ -38,7 +38,6 @@ RestrictSUIDSGID=yes
+ SystemCallFilter=@system-service @module @raw-io bpf
+ SystemCallFilter=~@clock
+ SystemCallErrorNumber=EPERM
+-SystemCallArchitectures=native
+ LockPersonality=yes
+ IPAddressDeny=any
+ {{SERVICE_WATCHDOG}}
+-- 
+2.46.0.27.gfa3b914457
+
+
+From d434246faff935141302a81d88fb132b30f2bdf7 Mon Sep 17 00:00:00 2001
+From: Ioanna Alifieraki <ioanna-maria.alifieraki@canonical.com>
+Date: Thu, 17 Dec 2020 14:52:07 +0000
+Subject: [PATCH 16/24] systemctl: do not shutdown immediately on scheduled
+ shutdown
+
+When, for whatever reason, a scheduled shutdown fails to be set, systemd
+will proceed with immediate shutdown without allowing the user to react.
+This is counterintuitive because when a scheduled shutdown is issued,
+it means the user wants to shutdown at a specified time in the future,
+not immediately. This patch prevents the immediate shutdown and informs
+the user that no action will be taken.
+
+Fixes: #17575
+---
+ src/systemctl/systemctl-compat-halt.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/systemctl/systemctl-compat-halt.c b/src/systemctl/systemctl-compat-halt.c
+index 4f6e3048..520e794a 100644
+--- a/src/systemctl/systemctl-compat-halt.c
++++ b/src/systemctl/systemctl-compat-halt.c
+@@ -155,9 +155,11 @@ int halt_main(void) {
+ 
+         if (arg_force == 0) {
+                 /* always try logind first */
+-                if (arg_when > 0)
++                if (arg_when > 0) {
+                         r = logind_schedule_shutdown(arg_action);
+-                else {
++                        if (r < 0)
++                                return r;
++                } else {
+                         r = logind_check_inhibitors(arg_action);
+                         if (r < 0)
+                                 return r;
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 616bdefc7c2301862c5b67f46878bd019b247b01 Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Tue, 16 Feb 2021 00:18:50 +0100
+Subject: [PATCH 17/24] Downgrade a couple of warnings to debug
+
+If a package still ships only a SysV init script or if a service file or
+tmpfile uses /var/run, downgrade those messages to debug. We can use
+lintian to detect those issues.
+For service files and tmpfiles in /etc, keep the warning, as those files
+are typically added locally and aren't checked by lintian.
+
+Closes: #981407
+---
+ src/core/load-fragment.c            | 4 +++-
+ src/sysv-generator/sysv-generator.c | 2 +-
+ src/tmpfiles/tmpfiles.c             | 4 +++-
+ 3 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/src/core/load-fragment.c b/src/core/load-fragment.c
+index 2e066315..80f450cd 100644
+--- a/src/core/load-fragment.c
++++ b/src/core/load-fragment.c
+@@ -581,6 +581,7 @@ static int patch_var_run(
+ 
+         const char *e;
+         char *z;
++        int log_level;
+ 
+         e = path_startswith(*path, "/var/run/");
+         if (!e)
+@@ -590,7 +591,8 @@ static int patch_var_run(
+         if (!z)
+                 return log_oom();
+ 
+-        log_syntax(unit, LOG_NOTICE, filename, line, 0,
++        log_level = path_startswith(filename, "/etc") ? LOG_NOTICE : LOG_DEBUG;
++        log_syntax(unit, log_level, filename, line, 0,
+                    "%s= references a path below legacy directory /var/run/, updating %s → %s; "
+                    "please update the unit file accordingly.", lvalue, *path, z);
+ 
+diff --git a/src/sysv-generator/sysv-generator.c b/src/sysv-generator/sysv-generator.c
+index fde8c057..cf414d01 100644
+--- a/src/sysv-generator/sysv-generator.c
++++ b/src/sysv-generator/sysv-generator.c
+@@ -762,7 +762,7 @@ static int enumerate_sysv(const LookupPaths *lp, Hashmap *all_services) {
+                         if (!fpath)
+                                 return log_oom();
+ 
+-                        log_struct(LOG_WARNING,
++                        log_struct(LOG_DEBUG,
+                                    LOG_MESSAGE("SysV service '%s' lacks a native systemd unit file, "
+                                                "automatically generating a unit file for compatibility.\n"
+                                                "Please update package to include a native systemd unit file.\n"
+diff --git a/src/tmpfiles/tmpfiles.c b/src/tmpfiles/tmpfiles.c
+index c9ed7b8c..89dcf4b8 100644
+--- a/src/tmpfiles/tmpfiles.c
++++ b/src/tmpfiles/tmpfiles.c
+@@ -3431,6 +3431,7 @@ static int specifier_expansion_from_arg(const Specifier *specifier_table, Item *
+ static int patch_var_run(const char *fname, unsigned line, char **path) {
+         const char *k;
+         char *n;
++        int log_level;
+ 
+         assert(path);
+         assert(*path);
+@@ -3459,7 +3460,8 @@ static int patch_var_run(const char *fname, unsigned line, char **path) {
+          * automatically, hence there's no immediate need for action by the user. However, in the interest of
+          * making things less confusing to the user, let's still inform the user that these snippets should
+          * really be updated. */
+-        log_syntax(NULL, LOG_NOTICE, fname, line, 0,
++        log_level = path_startswith(fname, "/etc") ? LOG_NOTICE : LOG_DEBUG;
++        log_syntax(NULL, log_level, fname, line, 0,
+                    "Line references path below legacy directory /var/run/, updating %s → %s; please update the tmpfiles.d/ drop-in file accordingly.",
+                    *path, n);
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 1f507816374146913b74e64ef9fb624bb748a51f Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Tue, 13 Dec 2022 00:32:17 +0100
+Subject: [PATCH 18/24] Skip flaky test_resolved_domain_restricted_dns in
+ networkd-test.py
+
+This test is part of DnsmasqClientTest and does not work reliably under
+LXC/debci, so skip it for the time being.
+
+Closes: #1025908
+---
+ test/networkd-test.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/test/networkd-test.py b/test/networkd-test.py
+index 47a3ad79..f5196ebe 100755
+--- a/test/networkd-test.py
++++ b/test/networkd-test.py
+@@ -639,6 +639,7 @@ class DnsmasqClientTest(ClientTestBase, unittest.TestCase):
+         with open(path) as f:
+             sys.stdout.write('\n\n---- {} ----\n{}\n------\n\n'.format(os.path.basename(path), f.read()))
+ 
++    @unittest.skip("test is flaky:  https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1025908")
+     def test_resolved_domain_restricted_dns(self):
+         '''resolved: domain-restricted DNS servers'''
+ 
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 2440d4b77d78cb1249c17111eef066e588e07874 Mon Sep 17 00:00:00 2001
+From: Michael Stapelberg <stapelberg@debian.org>
+Date: Sat, 21 Dec 2013 18:49:10 +0100
+Subject: [PATCH 19/24] =?UTF-8?q?don=E2=80=99t=20try=20to=20start=20autovt?=
+ =?UTF-8?q?=20units=20when=20not=20running=20with=20systemd=20as=20pid=201?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Closes: #726466
+---
+ src/login/logind-core.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/login/logind-core.c b/src/login/logind-core.c
+index b12f43af..7735d677 100644
+--- a/src/login/logind-core.c
++++ b/src/login/logind-core.c
+@@ -30,6 +30,7 @@
+ #include "user-util.h"
+ #include "userdb.h"
+ #include "utmp-wtmp.h"
++#include "sd-daemon.h"
+ 
+ void manager_reset_config(Manager *m) {
+         assert(m);
+@@ -539,6 +540,11 @@ int manager_spawn_autovt(Manager *m, unsigned vtnr) {
+             vtnr != m->reserve_vt)
+                 return 0;
+ 
++        /* It only makes sense to send a StartUnit call to systemd if this
++         * machine is actually booted with systemd. */
++        if (!sd_booted())
++                return 0;
++
+         if (vtnr != m->reserve_vt) {
+                 /* If this is the reserved TTY, we'll start the getty
+                  * on it in any case, but otherwise only if it is not
+-- 
+2.46.0.27.gfa3b914457
+
+
+From 80d5e67272a59aa2061568e536549ff8c8437e1d Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Thu, 18 Jul 2013 20:31:49 +0200
+Subject: [PATCH 20/24] Make logind/hostnamed/localed/timedated D-Bus
+ activatable
+
+We want to use those services outside of systemd, so we make them
+activatable via D-Bus.
+---
+ src/hostname/org.freedesktop.hostname1.service | 2 +-
+ src/locale/org.freedesktop.locale1.service     | 2 +-
+ src/login/org.freedesktop.login1.service       | 2 +-
+ src/timedate/org.freedesktop.timedate1.service | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/hostname/org.freedesktop.hostname1.service b/src/hostname/org.freedesktop.hostname1.service
+index 1d6b9c8f..77f2363b 100644
+--- a/src/hostname/org.freedesktop.hostname1.service
++++ b/src/hostname/org.freedesktop.hostname1.service
+@@ -7,6 +7,6 @@
+ 
+ [D-BUS Service]
+ Name=org.freedesktop.hostname1
+-Exec=/bin/false
++Exec=/lib/systemd/systemd-hostnamed
+ User=root
+ SystemdService=dbus-org.freedesktop.hostname1.service
+diff --git a/src/locale/org.freedesktop.locale1.service b/src/locale/org.freedesktop.locale1.service
+index 2d812cbe..3b257b06 100644
+--- a/src/locale/org.freedesktop.locale1.service
++++ b/src/locale/org.freedesktop.locale1.service
+@@ -9,6 +9,6 @@
+ 
+ [D-BUS Service]
+ Name=org.freedesktop.locale1
+-Exec=/bin/false
++Exec=/lib/systemd/systemd-localed
+ User=root
+ SystemdService=dbus-org.freedesktop.locale1.service
+diff --git a/src/login/org.freedesktop.login1.service b/src/login/org.freedesktop.login1.service
+index 6d443cf6..096e10f6 100644
+--- a/src/login/org.freedesktop.login1.service
++++ b/src/login/org.freedesktop.login1.service
+@@ -9,6 +9,6 @@
+ 
+ [D-BUS Service]
+ Name=org.freedesktop.login1
+-Exec=/bin/false
++Exec=/bin/sh -c 'mkdir -p /run/systemd; exec /lib/systemd/systemd-logind'
+ User=root
+ SystemdService=dbus-org.freedesktop.login1.service
+diff --git a/src/timedate/org.freedesktop.timedate1.service b/src/timedate/org.freedesktop.timedate1.service
+index 6b82d700..0d7d8623 100644
+--- a/src/timedate/org.freedesktop.timedate1.service
++++ b/src/timedate/org.freedesktop.timedate1.service
+@@ -9,6 +9,6 @@
+ 
+ [D-BUS Service]
+ Name=org.freedesktop.timedate1
+-Exec=/bin/false
++Exec=/lib/systemd/systemd-timedated
+ User=root
+ SystemdService=dbus-org.freedesktop.timedate1.service
+-- 
+2.46.0.27.gfa3b914457
+
+
+From b706aac052a05e237ad5c5b0ae5e16e442b16b36 Mon Sep 17 00:00:00 2001
+From: Michael Biebl <biebl@debian.org>
+Date: Thu, 18 Jul 2013 20:36:39 +0200
+Subject: [PATCH 21/24] Start logind on demand via libpam-systemd
+
+Don't make pam_sm_open_session() a NOP if logind is not running. Trying
+to access logind via D-Bus will start it on demand.
+---
+ src/login/pam_systemd.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/login/pam_systemd.c b/src/login/pam_systemd.c
+index ad15c57a..25d6a584 100644
+--- a/src/login/pam_systemd.c
++++ b/src/login/pam_systemd.c
+@@ -950,9 +950,11 @@ _public_ PAM_EXTERN int pam_sm_open_session(
+         if (r != PAM_SUCCESS)
+                 return r;
+ 
++#if 0
+         /* Make most of this a NOP on non-logind systems */
+         if (!logind_running())
+                 goto success;
++#endif
+ 
+         r = pam_get_item_many(
+                         handle,
+-- 
+2.46.0.27.gfa3b914457
+
+
+From a24a0383dd80e7c60bd96e779ac7ca300a40829c Mon Sep 17 00:00:00 2001
+From: Martin Pitt <martin.pitt@ubuntu.com>
+Date: Wed, 17 Dec 2014 09:32:01 +0100
+Subject: [PATCH 22/24] Make sd_login_monitor_new() work for logind without
+ systemd
+
+Fix sd_login_monitor_new() to not fail if there is no
+/sys/fs/cgroup/systemd/machine; that only exists when running with systemd as
+PID 1.
+
+Bug-Ubuntu: https://launchpad.net/bugs/1400203
+---
+ src/libsystemd/sd-login/sd-login.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/libsystemd/sd-login/sd-login.c b/src/libsystemd/sd-login/sd-login.c
+index 4d91ba96..c9531fa1 100644
+--- a/src/libsystemd/sd-login/sd-login.c
++++ b/src/libsystemd/sd-login/sd-login.c
+@@ -1257,8 +1257,12 @@ _public_ int sd_login_monitor_new(const char *category, sd_login_monitor **m) {
+ 
+         if (!category || streq(category, "machine")) {
+                 k = inotify_add_watch(fd, "/run/systemd/machines/", IN_MOVED_TO|IN_DELETE);
+-                if (k < 0)
++                /* when running logind without pid 1, this will fail */
++                /*
++                if (k < 0) {
+                         return -errno;
++                }
++                */
+ 
+                 good = true;
+         }
+-- 
+2.46.0.27.gfa3b914457
+
+
+From b5669ad6b2b32e9b264a382ad494327acb7e135c Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Fri, 21 Feb 2025 17:30:19 +0530
+Subject: [PATCH 23/24] Restore old user-runtime-path functionality
+
+Restore the old user-runtime-path functionality for systems that default sysvinit and use systemd-shim
+---
+ src/login/logind-user.c | 93 ++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 92 insertions(+), 1 deletion(-)
+
+diff --git a/src/login/logind-user.c b/src/login/logind-user.c
+index 276d5b86..ba787980 100644
+--- a/src/login/logind-user.c
++++ b/src/login/logind-user.c
+@@ -2,6 +2,7 @@
+ 
+ #include <errno.h>
+ #include <unistd.h>
++#include <sys/mount.h>
+ 
+ #include "alloc-util.h"
+ #include "bus-common-errors.h"
+@@ -23,11 +24,14 @@
+ #include "logind-user-dbus.h"
+ #include "logind-user.h"
+ #include "mkdir-label.h"
++#include "mountpoint-util.h"
+ #include "parse-util.h"
+ #include "path-util.h"
+ #include "percent-util.h"
+ #include "rm-rf.h"
++#include "sd-daemon.h"
+ #include "serialize.h"
++#include "smack-util.h"
+ #include "special.h"
+ #include "stdio-util.h"
+ #include "string-table.h"
+@@ -384,6 +388,59 @@ static bool user_wants_service_manager(const User *u) {
+         return false;
+ }
+ 
++static int user_mkdir_runtime_path(User *u) {
++        int r;
++
++        assert(u);
++
++        r = mkdir_safe_label("/run/user", 0755, 0, 0, MKDIR_WARN_MODE);
++        if (r < 0)
++                return log_error_errno(r, "Failed to create /run/user: %m");
++
++        if (path_is_mount_point_full(u->runtime_path, NULL, 0) <= 0) {
++                _cleanup_free_ char *t = NULL;
++
++                (void) mkdir_label(u->runtime_path, 0700);
++
++                if (mac_smack_use())
++                        r = asprintf(&t, "mode=0700,smackfsroot=*,uid=" UID_FMT ",gid=" GID_FMT ",size=%" PRIu64, u->user_record->uid, u->user_record->gid, u->manager->runtime_dir_size);
++                else
++                        r = asprintf(&t, "mode=0700,uid=" UID_FMT ",gid=" GID_FMT ",size=%" PRIu64, u->user_record->uid, u->user_record->gid, u->manager->runtime_dir_size);
++                if (r < 0) {
++                        r = log_oom();
++                        goto fail;
++                }
++
++                r = mount("tmpfs", u->runtime_path, "tmpfs", MS_NODEV|MS_NOSUID, t);
++                if (r < 0) {
++                        if (errno != EPERM && errno != EACCES) {
++                                r = log_error_errno(errno, "Failed to mount per-user tmpfs directory %s: %m", u->runtime_path);
++                                goto fail;
++                        }
++
++                        log_debug_errno(errno, "Failed to mount per-user tmpfs directory %s, assuming containerized execution, ignoring: %m", u->runtime_path);
++
++                        r = chmod_and_chown(u->runtime_path, 0700, u->user_record->uid, u->user_record->gid);
++                        if (r < 0) {
++                                log_error_errno(r, "Failed to change runtime directory ownership and mode: %m");
++                                goto fail;
++                        }
++                }
++
++                r = label_fix(u->runtime_path, 0);
++                if (r < 0)
++                        log_warning_errno(r, "Failed to fix label of '%s', ignoring: %m", u->runtime_path);
++        }
++
++        return 0;
++
++fail:
++        /* Try to clean up, but ignore errors */
++        (void) rmdir(u->runtime_path);
++        return r;
++}
++
++
+ int user_start_service_manager(User *u) {
+         _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
+         int r;
+@@ -514,8 +571,15 @@ int user_start(User *u) {
+                  * stopped. */
+                 u->stopping = false;
+ 
+-                if (!u->started)
++                if (!u->started) {
+                         log_debug("Tracking new user %s.", u->user_record->user_name);
++                if (!sd_booted()) {
++                        /* Make XDG_RUNTIME_DIR */
++                        r = user_mkdir_runtime_path(u);
++                        if (r < 0)
++                                return r;
++                }
++                }
+ 
+                 /* Save the user data so far, because pam_systemd will read the XDG_RUNTIME_DIR out of it
+                  * while starting up systemd --user. We need to do user_save_internal() because we have not
+@@ -570,6 +634,29 @@ static void user_stop_service(User *u, bool force) {
+                                   u->runtime_dir_unit, bus_error_message(&error, r));
+ }
+ 
++static int user_remove_runtime_path(User *u) {
++        int r;
++
++        assert(u);
++
++        r = rm_rf(u->runtime_path, 0);
++        if (r < 0)
++                log_error_errno(r, "Failed to remove runtime directory %s: %m", u->runtime_path);
++
++        /* Ignore cases where the directory isn't mounted, as that's
++         * quite possible, if we lacked the permissions to mount
++         * something */
++        r = umount2(u->runtime_path, MNT_DETACH);
++        if (r < 0 && errno != EINVAL && errno != ENOENT)
++                log_error_errno(errno, "Failed to unmount user runtime directory %s: %m", u->runtime_path);
++
++        r = rm_rf(u->runtime_path, REMOVE_ROOT);
++        if (r < 0)
++                log_error_errno(r, "Failed to remove runtime directory %s: %m", u->runtime_path);
++
++        return r;
++}
++
+ int user_stop(User *u, bool force) {
+         int r = 0;
+ 
+@@ -614,6 +701,10 @@ int user_finalize(User *u) {
+         LIST_FOREACH(sessions_by_user, s, u->sessions)
+                 RET_GATHER(r, session_finalize(s));
+ 
++        if (!sd_booted()) {
++                RET_GATHER(r, user_remove_runtime_path(u));
++        }
++
+         /* Clean SysV + POSIX IPC objects, but only if this is not a system user. Background: in many setups cronjobs
+          * are run in full PAM and thus logind sessions, even if the code run doesn't belong to actual users but to
+          * system components. Since enable RemoveIPC= globally for all users, we need to be a bit careful with such
+-- 
+2.46.0.27.gfa3b914457
+
+
+From a3edc63a421a0e8f83bf400d8ff9bc29826d3eeb Mon Sep 17 00:00:00 2001
+From: Mike Gilbert <floppym@gentoo.org>
+Date: Tue, 25 Dec 2018 22:52:50 -0500
+Subject: [PATCH 24/24] path-lookup: look for generators in
+ /usr/lib/systemd/system-generators
+
+Bug: https://bugs.gentoo.org/625402
+---
+ src/basic/path-lookup.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/basic/path-lookup.c b/src/basic/path-lookup.c
+index 0166fdcb..6ee97b46 100644
+--- a/src/basic/path-lookup.c
++++ b/src/basic/path-lookup.c
+@@ -826,6 +826,7 @@ char **generator_binary_paths(RuntimeScope scope) {
+                         add = strv_new("/run/systemd/system-generators",
+                                        "/etc/systemd/system-generators",
+                                        "/usr/local/lib/systemd/system-generators",
++                                       "/usr/lib/systemd/system-generators",
+                                        SYSTEM_GENERATOR_DIR);
+                         break;
+ 
+-- 
+2.46.0.27.gfa3b914457
+
