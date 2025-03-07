@@ -1,0 +1,80 @@
+A patch from Stefan Müller to add the --downdate option, which works
+in the opposite manner as --update.
+
+To use this patch, run these commands for a successful build:
+
+    patch -p1 <patches/downdate.diff
+    ./configure                                 (optional if already run)
+    make
+
+based-on: 3305a7a063ab0167cab5bf7029da53abaa9fdb6e
+diff --git a/generator.c b/generator.c
+--- a/generator.c
++++ b/generator.c
+@@ -57,6 +57,7 @@ extern int ignore_errors;
+ extern int remove_source_files;
+ extern int delay_updates;
+ extern int update_only;
++extern int downdate_only;
+ extern int human_readable;
+ extern int ignore_existing;
+ extern int ignore_non_existing;
+@@ -1716,6 +1717,12 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
+ 		goto cleanup;
+ 	}
+ 
++	if (downdate_only > 0 && statret == 0 && file->modtime - sx.st.st_mtime >= modify_window) {
++		if (INFO_GTE(SKIP, 1))
++			rprintf(FINFO, "%s is older\n", fname);
++		return;
++	}
++
+ 	fnamecmp_type = FNAMECMP_FNAME;
+ 
+ 	if (statret == 0 && !(stype == FT_REG || (write_devices && stype == FT_DEVICE))) {
+@@ -2166,6 +2173,7 @@ void check_for_finished_files(int itemizing, enum logcode code, int check_redo)
+ 			ignore_existing = -ignore_existing;
+ 			ignore_non_existing = -ignore_non_existing;
+ 			update_only = -update_only;
++			downdate_only = -downdate_only;
+ 			always_checksum = -always_checksum;
+ 			size_only = -size_only;
+ 			append_mode = -append_mode;
+@@ -2191,6 +2199,7 @@ void check_for_finished_files(int itemizing, enum logcode code, int check_redo)
+ 			ignore_existing = -ignore_existing;
+ 			ignore_non_existing = -ignore_non_existing;
+ 			update_only = -update_only;
++			downdate_only = -downdate_only;
+ 			always_checksum = -always_checksum;
+ 			size_only = -size_only;
+ 			append_mode = -append_mode;
+diff --git a/options.c b/options.c
+--- a/options.c
++++ b/options.c
+@@ -68,6 +68,7 @@ int omit_dir_times = 0;
+ int omit_link_times = 0;
+ int trust_sender = 0;
+ int update_only = 0;
++int downdate_only = 0;
+ int open_noatime = 0;
+ int cvs_exclude = 0;
+ int dry_run = 0;
+@@ -693,6 +694,7 @@ static struct poptOption long_options[] = {
+   {"no-one-file-system",0, POPT_ARG_VAL,    &one_file_system, 0, 0, 0 },
+   {"no-x",             0,  POPT_ARG_VAL,    &one_file_system, 0, 0, 0 },
+   {"update",          'u', POPT_ARG_NONE,   &update_only, 0, 0, 0 },
++  {"downdate",        'w', POPT_ARG_NONE,   &downdate_only, 0, 0, 0 },
+   {"existing",         0,  POPT_ARG_NONE,   &ignore_non_existing, 0, 0, 0 },
+   {"ignore-non-existing",0,POPT_ARG_NONE,   &ignore_non_existing, 0, 0, 0 },
+   {"ignore-existing",  0,  POPT_ARG_NONE,   &ignore_existing, 0, 0, 0 },
+diff --git a/rsync.1.md b/rsync.1.md
+--- a/rsync.1.md
++++ b/rsync.1.md
+@@ -431,6 +431,7 @@ has its own detailed description later in this manpage.
+ --backup-dir=DIR         make backups into hierarchy based in DIR
+ --suffix=SUFFIX          backup suffix (default ~ w/o --backup-dir)
+ --update, -u             skip files that are newer on the receiver
++--downdate, -w           skip files that are older on the receiver
+ --inplace                update destination files in-place
+ --append                 append data onto shorter files
+ --append-verify          --append w/old data in file checksum
