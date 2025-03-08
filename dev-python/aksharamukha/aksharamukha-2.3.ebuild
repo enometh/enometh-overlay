@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,25 +8,26 @@
 #   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 230405 - 2.1.2 (WIP)
-
+# ;madhu 250308 - 2.3 (WIP)
 
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit distutils-r1 pypi
 
 DESCRIPTION="Library Provides script conversion (a.k.a transliteration) between various script"
 HOMEPAGE="https://github.com/virtualvinodh/aksharamukha-python
 https://pypi.org/project/aksharamukha"
 
+RESTRICT="test"
+
 ## ;madhu 230405 TODO OMITTED -- WILL CAUSE SOME RUNTIME FAILURES
 # pykakasi>=2.0.6
 # Flask>=2.0.3
 # Flask-CORS>=3.0.6
 # Requests>=2.20.1
-
 
 RDEPEND="
 	>=dev-python/pyyaml-5.4.1[${PYTHON_USEDEP}]
