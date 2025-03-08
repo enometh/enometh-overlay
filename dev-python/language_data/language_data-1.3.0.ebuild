@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,11 +8,12 @@
 #   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 230404   1.1.0
+# ;madhu 250308   1.3.0
 
 EAPI=8
 
-DISTUTILS_USE_PEP517=poetry
-PYTHON_COMPAT=( python3_{9..11} )
+DISTUTILS_USE_PEP517=setuptools
+PYTHON_COMPAT=( python3_{10..13} )
 inherit distutils-r1 pypi
 
 DESCRIPTION="language_data: a supplement to langcodes"
@@ -26,6 +27,8 @@ DEPEND="
 	dev-python/marisa-trie[${PYTHON_USEDEP}]
 "
 DOCS=( README.md CHANGELOG.md )
+
+RESTRICT="test"
 
 src_prepare()
 {
