@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,7 +8,7 @@
 #   Copyright (C) 2024 Madhu.  All Rights Reserved.
 #
 # ;madhu 241122 2.40-r5: bring back USE=crypt (need package.unmask/libcrypt:virtual/libcrypt:0/1 package.mask/libcrypt:>=virtual/libcrypt-2 package.use/glibc:sys-libs/glibc crypt package.use/glibc:sys-libs/libxcrypt -system profile/package.use.mask/glibc:sys-libs/glibc -crypt profile/package.use.mask/glibc:sys-libs/libxcrypt system)
-#
+# ;madhu 250308 2.41
 
 EAPI=8
 
