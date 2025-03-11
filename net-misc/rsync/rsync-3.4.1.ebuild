@@ -17,7 +17,7 @@
 # https://download.samba.org/pub/rsync/src/rsync-patches-3.4.1.tar.gz
 
 EAPI=8
-USE_GIT=false
+USE_GIT=true
 
 # MY_COMMIT=" 9994933c8ccf7ead27c81fe4ce2eb4e08af20c7f" # v3.4.1-8-g9994933c
 
