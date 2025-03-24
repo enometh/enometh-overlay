@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>enometh@meer.net</email>
+  </maintainer>
+  <upstream>
+    <remote-id type="cpan">MIDI-Perl</remote-id>
+    <remote-id type="cpan-module">MIDI::event</remote-id>
+    <remote-id type="cpan-module">MIDI::Opus</remote-id>
+    <remote-id type="cpan-module">MIDI::Score</remote-id>
+    <remote-id type="cpan-module">MIDI::Simple</remote-id>
+    <remote-id type="cpan-module">MIDI::Track</remote-id>
+  </upstream>
+</pkgmetadata>
