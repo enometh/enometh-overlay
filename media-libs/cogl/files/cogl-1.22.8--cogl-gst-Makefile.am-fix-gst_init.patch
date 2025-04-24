@@ -1,0 +1,32 @@
+From 38ae2c8d8ae56e092297accc6de42412da9ef52a Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 24 Apr 2025 20:46:55 +0530
+Subject: [PATCH 2/2] cogl-gst/Makefile.am: fix gst_init
+
+the makefile recipe includes --c-include='gst/gst.h' but this doesn't
+get included in the tmpintrospection/CoglGst-2.0.c file for some reason.
+and g-ir-scanner fails saying
+```
+error: implicit declaration of function 'gst_init'; did you mean 'g_test_init'?
+[-Wimplic it-function-declaration]
+```
+hack it with explicitly add the signature
+---
+ cogl-gst/Makefile.am | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/cogl-gst/Makefile.am b/cogl-gst/Makefile.am
+index 0395e29..85eaeb7 100644
+--- a/cogl-gst/Makefile.am
++++ b/cogl-gst/Makefile.am
+@@ -93,6 +93,7 @@ CoglGst_2_0_gir_SCANNERFLAGS = \
+ 	--c-include="gst/gst.h" \
+ 	--include-uninstalled=$(top_builddir)/cogl/Cogl-2.0.gir \
+ 	--pkg gstreamer-1.0 \
++	--add-init-section='extern void gst_init (int *argc, char **argv[]);' \
+ 	--add-init-section="gst_init(NULL, NULL);"
+ 
+ INTROSPECTION_GIRS += CoglGst-2.0.gir
+-- 
+2.46.0.27.gfa3b914457
+

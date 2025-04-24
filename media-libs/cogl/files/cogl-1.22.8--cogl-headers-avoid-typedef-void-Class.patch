@@ -1,0 +1,113 @@
+From 1383b724857e60705a1b629ee1bdb4e8871f4266 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 24 Apr 2025 15:51:49 +0530
+Subject: [PATCH 1/2] cogl headers: avoid typedef void <Class>
+
+The generated Cogl-2.0.gir has a line
+```
+ <alias name="Buffer" c:type="CoglBuffer"> <type name="none" c:type="void"/>
+```
+
+which is obviously wrong, but it
+seems to be generated from #ifdef __COGL_H_INSIDE__ typedef void CoglBuffer; in cogl-buffer.h
+
+consequently vapigen fails with the "error: The base type void of struct
+Cogl.Buffer is not a struct"
+
+Fix: replace all typedef voids with typedefs to proper structs when
+__GI_SCANNER__ is defined, so it's reflected as a class in GIR
+
+Doing this outside of *__H_INSIDE definitions leads to compilation
+failures in the tests.
+---
+ cogl/cogl-buffer.h            | 6 +++++-
+ cogl/cogl-framebuffer.h       | 4 ++++
+ cogl/cogl-meta-texture.h      | 4 ++++
+ cogl/cogl-primitive-texture.h | 4 ++++
+ cogl/cogl-texture.h           | 4 ++++
+ 5 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/cogl/cogl-buffer.h b/cogl/cogl-buffer.h
+index adbc51f..414cfe9 100644
+--- a/cogl/cogl-buffer.h
++++ b/cogl/cogl-buffer.h
+@@ -70,7 +70,11 @@ COGL_BEGIN_DECLS
+ /* For the public C api we typedef interface types as void to avoid needing
+  * lots of casting in code and instead we will rely on runtime type checking
+  * for these objects. */
+-typedef void CoglBuffer;
++#ifdef __GI_SCANNER__
++typedef struct _CoglBuffer CoglBuffer;
++#else
++ typedef void CoglBuffer;
++#endif
+ #else
+ typedef struct _CoglBuffer CoglBuffer;
+ #define COGL_BUFFER(buffer) ((CoglBuffer *)(buffer))
+diff --git a/cogl/cogl-framebuffer.h b/cogl/cogl-framebuffer.h
+index 58d65a8..32a4efb 100644
+--- a/cogl/cogl-framebuffer.h
++++ b/cogl/cogl-framebuffer.h
+@@ -45,7 +45,11 @@
+ /* For the public C api we typedef interface types as void to avoid needing
+  * lots of casting in code and instead we will rely on runtime type checking
+  * for these objects. */
++#ifdef __GI_SCANNER__
++typedef struct _CoglFramebuffer CoglFramebuffer;
++#else
+ typedef void CoglFramebuffer;
++#endif
+ #else
+ typedef struct _CoglFramebuffer CoglFramebuffer;
+ #define COGL_FRAMEBUFFER(X) ((CoglFramebuffer *)(X))
+diff --git a/cogl/cogl-meta-texture.h b/cogl/cogl-meta-texture.h
+index 69c8cb0..44ba5d2 100644
+--- a/cogl/cogl-meta-texture.h
++++ b/cogl/cogl-meta-texture.h
+@@ -96,7 +96,11 @@ COGL_BEGIN_DECLS
+ /* For the public C api we typedef interface types as void to avoid needing
+  * lots of casting in code and instead we will rely on runtime type checking
+  * for these objects. */
++#ifdef __GI_SCANNER__
++typedef struct _CoglMetaTexture CoglMetaTexture;
++#else
+ typedef void CoglMetaTexture;
++#endif
+ #else
+ typedef struct _CoglMetaTexture CoglMetaTexture;
+ #define COGL_META_TEXTURE(X) ((CoglMetaTexture *)X)
+diff --git a/cogl/cogl-primitive-texture.h b/cogl/cogl-primitive-texture.h
+index effaac3..e48fb92 100644
+--- a/cogl/cogl-primitive-texture.h
++++ b/cogl/cogl-primitive-texture.h
+@@ -67,7 +67,11 @@ COGL_BEGIN_DECLS
+ /* For the public C api we typedef interface types as void to avoid needing
+  * lots of casting in code and instead we will rely on runtime type checking
+  * for these objects. */
++#ifdef __GI_SCANNER__
++typedef struct _CoglPrimitiveTexture CoglPrimitiveTexture;
++#else
+ typedef void CoglPrimitiveTexture;
++#endif
+ #else
+ typedef struct _CoglPrimitiveTexture CoglPrimitiveTexture;
+ #define COGL_PRIMITIVE_TEXTURE(X) ((CoglPrimitiveTexture *)X)
+diff --git a/cogl/cogl-texture.h b/cogl/cogl-texture.h
+index 2718830..0c80758 100644
+--- a/cogl/cogl-texture.h
++++ b/cogl/cogl-texture.h
+@@ -42,7 +42,11 @@
+ /* For the public C api we typedef interface types as void to avoid needing
+  * lots of casting in code and instead we will rely on runtime type checking
+  * for these objects. */
++#ifdef __GI_SCANNER__
++typedef struct _CoglTexture CoglTexture;
++#else
+ typedef void CoglTexture;
++#endif
+ #else
+ typedef struct _CoglTexture CoglTexture;
+ #define COGL_TEXTURE(X) ((CoglTexture *)X)
+-- 
+2.46.0.27.gfa3b914457
+
