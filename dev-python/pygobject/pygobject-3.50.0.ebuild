@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,27 +10,30 @@
 # ;madhu 210630 3.40.1-r1 (addpython3_7) upstream dropped python2_7
 # ;madhu 220428 3.42.1 (40.0)
 # ;madhu 230601 3.44.1
-
+# ;madhu 250506 3.50.0
 EAPI=8
 
 DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517=no
-PYTHON_COMPAT=( python3_{9..11} pypy3 )
+PYTHON_COMPAT=( python3_{10..13} pypy3 pypy3_11 )
 
 inherit gnome.org meson virtualx xdg distutils-r1
 
 DESCRIPTION="Python bindings for GObject Introspection"
-HOMEPAGE="https://pygobject.readthedocs.io/"
+HOMEPAGE="
+	https://pygobject.gnome.org/
+	https://gitlab.gnome.org/GNOME/pygobject/
+"
 
 LICENSE="LGPL-2.1+"
 SLOT="3"
-KEYWORDS="~alpha amd64 arm arm64 hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
-IUSE="+cairo examples test"
+KEYWORDS="~alpha amd64 arm arm64 hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
+IUSE="+cairo test"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	>=dev-libs/glib-2.56:2
-	>=dev-libs/gobject-introspection-1.56:=
+	>=dev-libs/glib-2.64:2
+	>=dev-libs/gobject-introspection-1.64:=
 	dev-libs/libffi:=
 	cairo? (
 		>=dev-python/pycairo-1.16.0[${PYTHON_USEDEP}]
@@ -79,9 +82,4 @@ python_test() {
 python_install() {
 	meson_src_install
 	python_optimize
-}
-
-python_install_all() {
-	distutils-r1_python_install_all
-	use examples && dodoc -r examples
 }
