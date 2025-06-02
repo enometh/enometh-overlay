@@ -1,7 +1,7 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2025-05-11 09:01:31 IST>
+#   Time-stamp: <>
 #   Touched: Sun Feb 23 11:24:28 2020 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -24,6 +24,7 @@
 # ;madhu 230928 2.42.0
 # ;madhu 240820 2.46.0
 # ;madhu 250511 2.49.0 - no meson, fix adoc,perl installlocations, doc untested.
+# ;madhu 250601 2.49.0 - fix doc.
 
 EAPI=8
 
@@ -41,6 +42,7 @@ PLOCALES=""
 
 if  ${USE_GIT} || [[ ${PV} == *9999 ]] ; then
 	EGIT_REPO_URI="https://git.kernel.org/pub/scm/git/git.git"
+	GITMAN_URI=https://git.kernel.org/pub/scm/git/git-manpages.git
 
 	inherit git-r3
 
@@ -312,6 +314,7 @@ fi
 		fi
 	else
 		git-r3_src_unpack
+
 #		cp "${FILESDIR}"/GIT-VERSION-GEN .
 
 		# setting the remote ref to the ${EGIT_MANPAGES_COMMIT} does not
@@ -320,10 +323,19 @@ fi
 		# can't be refs/remotes/origin/man.
 
 		if ${USE_GIT} ; then
-			unset EGIT_OVERRIDE_BRANCH_GIT_GIT
-			EGIT_BRANCH=man
-			git-r3_fetch ${EGIT_REPO_URI}  ${EGIT_MANPAGES_COMMIT} ${CATEGORY}/${PN}/manpages/${SLOT%/*}
-			git-r3_checkout ${EGIT_REPO_URI} ${WORKDIR}/${P}/manpages  ${CATEGORY}/${PN}/manpages/${SLOT%/*}
+#;madhu 250601
+			EGIT_BRANCH=master EGIT_COMMIT=${EGIT_MANPAGES_COMMIT} EGIT_REPO_URI=$GITMAN_URI EGIT_CHECKOUT_DIR=${WORKDIR}/${P}/manpages git-r3_src_unpack
+
+# override  EGIT_OVERRIDE_REPO_GIT_GIT_MANPAGES
+#   EGIT_OVERRIDE_BRANCH_GIT_GIT_MANPAGES
+#   EGIT_OVERRIDE_COMMIT_GIT_GIT_MANPAGES
+#   EGIT_OVERRIDE_COMMIT_DATE_GIT_GIT_MANPAGES
+
+# this  was from when manpages were on a man branch on the main git repo.
+#			unset EGIT_OVERRIDE_BRANCH_GIT_GIT
+#			EGIT_BRANCH=man
+#			git-r3_fetch ${EGIT_REPO_URI}  ${EGIT_MANPAGES_COMMIT} ${CATEGORY}/${PN}/manpages/${SLOT%/*}
+#			git-r3_checkout ${EGIT_REPO_URI} ${WORKDIR}/${P}/manpages  ${CATEGORY}/${PN}/manpages/${SLOT%/*}
 			(cd ${WORKDIR}/${P} ;
 			 for i in manpages/man? ; do ln -sv $i; done)
 		fi
