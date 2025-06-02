@@ -85,7 +85,7 @@ src_configure() {
 
 multilib_src_install() {
 	cmake_src_install
-	if multilib_is_native_abi; then
+	if multilib_is_native_abi && use examples; then
 		exeinto usr/$(get_libdir)/glfw3
 		doexe examples/{boing,gears,heightmap,offscreen,particles,sharing,splitview,triangle-opengl,triangle-opengles,wave,windows}
 	fi
