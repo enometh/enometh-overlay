@@ -31,14 +31,14 @@
 # ;madhu 240116 254.0_pre
 # ;madhu 240507 255.0_pre loses merged-usr, git patches installation of emptydirs, udev_reload
 # ;madhu 250121 255.5-r1 v255-pre-70-g1da78237, fix jinja2 in deps
-
+# ;madhu 250603 255.5-r2 v255.17-66-g712c0ff6d
 EAPI=8
 USE_GIT=true
-PYTHON_COMPAT=( python3_{9..12} )
+PYTHON_COMPAT=( python3_{9..13} )
 
 if ${USE_GIT}; then
 	inherit git-r3
-	EGIT_BRANCH="madhu" #make sure its not set in package.env
+	EGIT_BRANCH="madhu-v255-stable" #make sure its not set in package.env
 	EGIT_REPO_URI="https://github.com/elogind/elogind.git"
 	EGIT_SUBMODULES=()
 	SRC_URI=
@@ -47,7 +47,7 @@ else
 	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 sparc x86"
 fi
 
-inherit linux-info meson pam python-any-r1 udev xdg-utils
+inherit eapi9-ver linux-info meson pam python-any-r1 udev xdg-utils
 
 DESCRIPTION="The systemd project's logind, extracted to a standalone package"
 HOMEPAGE="https://github.com/elogind/elogind"
@@ -85,6 +85,7 @@ PDEPEND="
 "
 
 DOCS=( README.md )
+
 # we don't apply the docs patch, GVARIANT_SERIALIZATION is installed by meson
 #DOCS += ( src/libelogind/sd-gvabus/GVARIANT-SERIALIZATION )
 
@@ -106,6 +107,8 @@ src_prepare() {
 	default
 	sed -i -e "s/^subdir('po')/#subdir('po')/g" meson.build
 	xdg_environment_reset
+
+	# don't cleanup /dev/shm/ on logout on logout - handled by git branch
 }
 
 src_configure() {
@@ -162,6 +165,13 @@ src_configure() {
 		-Dutmp=$(usex elibc_musl false true)
 
 #		-Dmode=release
+
+		# Ensure consistency between merged-usr and split-usr (bug 945965)
+		-Dhalt-path="${EPREFIX}/sbin/halt"
+		-Dkexec-path="${EPREFIX}/usr/sbin/kexec"
+		-Dnologin-path="${EPREFIX}/sbin/nologin"
+		-Dpoweroff-path="${EPREFIX}/sbin/poweroff"
+		-Dreboot-path="${EPREFIX}/sbin/reboot"
 
 		-Dzshcompletiondir="${EPREFIX}/usr/share/zsh/site-functions"
 		-Dsystem-uid-max=499
