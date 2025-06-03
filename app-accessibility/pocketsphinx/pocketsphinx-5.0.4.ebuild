@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Gentoo Authors
+# Copyright 1997-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -8,16 +8,26 @@
 #   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 230324 pocketsphinx-5.0.0 (WIP, STUB)
-#
+# ;madhu 250603 5.0.4 USE_GIT=true
+
 EAPI=8
 
-DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{9..11} )
+USE_GIT=true
+
+DISTUTILS_USE_PEP517=scikit-build-core
+PYTHON_COMPAT=( python3_{11..13} )
 inherit cmake distutils-r1
 
 DESCRIPTION="One of Carnegie Mellon University's open source large vocabulary, speaker-independent continuous speech recognition engines"
 HOMEPAGE="https://github.com/cmusphinx/pocketsphinx"
-SRC_URI="https://github.com/cmusphinx/pocketsphinx/archive/refs/tags/v${PN}.tar.gz -> ${P}.tar.gz"
+if ${USE_GIT}; then
+   inherit git-r3
+   EGIT_REPO_URI="https://github.com/cmusphinx/pocketsphinx"
+   EGIT_BRANCH=master
+else
+	SRC_URI="https://github.com/cmusphinx/pocketsphinx/archive/refs/tags/v${PN}.tar.gz -> ${P}.tar.gz"
+fi
+
 IUSE="gstreamer fixed-point sphinx-debug"
 
 LICENSE="BSD"					#notrly FIXME: LICENSE is complex.
@@ -33,7 +43,7 @@ DEPEND="
 
 BDEPEND="
 	>=dev-python/cython-0.27
-	>=dev-python/scikit-build-0.15[${PYTHON_USEDEP}]
+	>=dev-python/scikit-build-core-0.11[${PYTHON_USEDEP}]
 "
 
 src_prepare() {
