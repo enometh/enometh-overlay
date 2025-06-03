@@ -1,0 +1,25 @@
+From 8f3b0c2b834a349a360fc392ac84c043eed8584d Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 23 Nov 2023 00:09:31 +0530
+Subject: [PATCH] setup-old.py: package fitz.table
+
+---
+ setup-old.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/setup-old.py b/setup-old.py
+index 1a30ba2..1bf17ad 100755
+--- a/setup-old.py
++++ b/setup-old.py
+@@ -896,7 +896,7 @@ setup(
+     cmdclass={"build_py": build_ext_first},
+     ext_modules=[module],
+     python_requires=">=3.7",
+-    py_modules=["fitz.fitz", "fitz.utils", "fitz.__main__"],
++    py_modules=["fitz.fitz", "fitz.utils", "fitz.table", "fitz.__main__"],
+     license="GNU AFFERO GPL 3.0",
+     project_urls={
+         "Documentation": "https://pymupdf.readthedocs.io/",
+-- 
+2.39.2.101.g768bb238c4
+
