@@ -9,8 +9,7 @@
 #
 # ;madhu 200804 0.1 v0.1-696-gad2ff5d
 # ebuild from https://git.sr.ht/~happy_shredder/eph_kit/blob/master/sys-process/nohang/nohang-9999.ebuild
-# ;madhu 250604 0.2.0 v0.2.0-19-gbf477da
-# - ship the tarball in Manifest even of USE_GIT=true, but don't unpack it
+# ;madhu 250604 0.2.0 v0.2.0-19-gbf477da. - ship the tarball in Manifest even of USE_GIT=true, but don't unpack it (expr report: not good), fix logrotate for prefix
 
 EAPI=8
 
@@ -79,8 +78,10 @@ src_install() {
 		  emake DESTDIR="${D}" "${install_args[@]}"
 
 	# - fix logrotate makefile oversight
-	mv ${D}/etc/logrotate.d ${ED}/etc/logrotate.d
-	rmdir ${D}/etc || die like a dog on the highway
+	if ${ED} != ${D}; then
+		mv ${D}/etc/logrotate.d ${ED}/etc/logrotate.d
+		rmdir ${D}/etc || die like a dog on the highway
+	fi
 
 	docompress -x /usr/share/man/
 }
