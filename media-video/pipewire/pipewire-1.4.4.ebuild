@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -23,7 +23,7 @@
 # ;madhu 230623 0.3.71-r3
 # ;madhu 231120 0.3.85 -- don't bump webrtc, jack-sdk shouldn't conflict with jack-audio-connection-kit (just with jack2)
 # ;madhu 240725 1.2.1 -- get rid of docs nonsense, bogus doxygen dep. USE=-gsettings with pulse.
-
+# ;madhu 250604 1.4.4
 EAPI=8
 
 # 1. Please regularly check (even at the point of bumping) Fedora's packaging
@@ -36,11 +36,12 @@ EAPI=8
 # continue to move quickly. It's not uncommon for fixes to be made shortly
 # after releases.
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit meson-multilib optfeature prefix python-any-r1 systemd tmpfiles udev
 
 if [[ ${PV} == 9999 ]]; then
 	EGIT_REPO_URI="https://gitlab.freedesktop.org/${PN}/${PN}.git"
+	EGIT_BRANCH="${PV%.*}"
 	inherit git-r3
 else
 	if [[ ${PV} == *_p* ]] ; then
@@ -61,7 +62,7 @@ LICENSE="MIT LGPL-2.1+ GPL-2"
 # ABI was broken in 0.3.42 for https://gitlab.freedesktop.org/pipewire/wireplumber/-/issues/49
 SLOT="0/0.4"
 # ;madhu 231120 axe sound-server
-IUSE="bluetooth dbus doc echo-cancel extra ffmpeg flatpak gstreamer gsettings ieee1394 jack-client jack-sdk liblc3 lv2 man udev"
+IUSE="bluetooth elogind dbus doc echo-cancel extra ffmpeg flatpak gstreamer gsettings ieee1394 jack-client jack-sdk liblc3 loudness lv2 man udev"
 IUSE+=" modemmanager pipewire-alsa readline roc selinux ssl system-service systemd test v4l X zeroconf"
 
 # Once replacing system JACK libraries is possible, it's likely that
@@ -113,8 +114,8 @@ BDEPEND="
 # * While udev could technically be optional, it's needed for a number of options,
 # and not really worth it, bug #877769.
 #
-# * Supports both legacy webrtc-audio-processing:0 and new webrtc-audio-processing:1.
-# We depend on :1 as it prefers that, it's not legacy, and to avoid automagic.
+# * Supports both legacy webrtc-audio-processing:2 and new webrtc-audio-processing:1.
+# Automagic but :2 isn't yet packaged.
 #
 # * Older Doxygen (<1.9.8) may work but inferior output is created:
 #   - https://gitlab.freedesktop.org/pipewire/pipewire/-/merge_requests/1778
@@ -136,6 +137,7 @@ RDEPEND="
 		>=net-wireless/bluez-4.101:=
 		virtual/libusb:1
 	)
+	elogind? ( sys-auth/elogind )
 	dbus? ( sys-apps/dbus[${MULTILIB_USEDEP}] )
 	echo-cancel? ( media-libs/webrtc-audio-processing )
 	extra? ( >=media-libs/libsndfile-1.0.20 )
@@ -154,9 +156,10 @@ RDEPEND="
 		!media-sound/jack2
 	)
 	liblc3? ( media-sound/liblc3 )
+	loudness? ( media-libs/libebur128:=[${MULTILIB_USEDEP}] )
 	lv2? ( media-libs/lilv )
 	modemmanager? ( >=net-misc/modemmanager-1.10.0 )
-	pipewire-alsa? ( >=media-libs/alsa-lib-1.1.7[${MULTILIB_USEDEP}] )
+	pipewire-alsa? ( >=media-libs/alsa-lib-1.2.10[${MULTILIB_USEDEP}] )
 	roc? ( media-libs/roc-toolkit )
 	readline? ( sys-libs/readline:= )
 	selinux? ( sys-libs/libselinux )
@@ -190,8 +193,6 @@ DOCS=( {README,INSTALL}.md NEWS )
 if false; then
 PATCHES=(
 	"${FILESDIR}"/${PN}-0.3.25-enable-failed-mlock-warning.patch
-	# https://gitlab.freedesktop.org/pipewire/pipewire/-/merge_requests/2061
-	"${FILESDIR}"/${P}-automagic-gsettings.patch
 )
 fi
 
@@ -204,12 +205,25 @@ pkg_setup() {
 src_prepare() {
 	default
 
+	sed -i -e "s/^subdir('po')/#&/g" meson.build
+
 #;madhu 230224 FIXME
 	# Used for upstream backports
-	[[ -d "${FILESDIR}"/${PV} ]] && eapply "${FILESDIR}"/${PV}
+	if [[ ${PV} != *9999 && -d "${FILESDIR}"/${PV} ]] ; then
+		eapply "${FILESDIR}"/${PV}
+	fi
 }
 
 multilib_src_configure() {
+	local logind=disabled
+	if multilib_is_native_abi ; then
+		if use systemd ; then
+			logind=enabled
+		elif use elogind ; then
+			logind=enabled
+		fi
+	fi
+
 	local emesonargs=(
 		-Ddocdir="${EPREFIX}"/usr/share/doc/${PF}
 
@@ -217,7 +231,6 @@ multilib_src_configure() {
 		$(meson_native_use_feature zeroconf avahi)
 		$(meson_native_use_feature doc docs)
 		$(meson_native_enabled examples) # TODO: Figure out if this is still important now that media-session gone
-		$(meson_native_enabled man)
 		$(meson_feature test tests)
 		-Dinstalled_tests=disabled # Matches upstream; Gentoo never installs tests
 		$(meson_feature ieee1394 libffado)
@@ -225,6 +238,9 @@ multilib_src_configure() {
 		$(meson_native_use_feature gstreamer gstreamer-device-provider)
 		$(meson_native_use_feature gsettings)
 		$(meson_native_use_feature systemd)
+#XXX
+		-Dlogind=${logind}
+		-Dlogind-provider=$(usex systemd 'libsystemd' 'libelogind')
 
 		$(meson_native_use_feature system-service systemd-system-service)
 		-Dsystemd-system-unit-dir="$(systemd_get_systemunitdir)"
@@ -248,6 +264,7 @@ multilib_src_configure() {
 		$(meson_native_use_feature bluetooth bluez5-codec-aac)
 		$(meson_native_use_feature bluetooth bluez5-codec-aptx)
 		$(meson_native_use_feature bluetooth bluez5-codec-ldac)
+		$(meson_native_use_feature bluetooth bluez5-codec-g722)
 		$(meson_native_use_feature bluetooth opus)
 		$(meson_native_use_feature bluetooth bluez5-codec-opus)
 		$(meson_native_use_feature bluetooth libusb) # At least for now only used by bluez5 native (quirk detection of adapters)
@@ -266,6 +283,7 @@ multilib_src_configure() {
 		-Dtest=disabled # fakesink and fakesource plugins
 		-Dbluez5-codec-lc3plus=disabled # unpackaged
 		$(meson_native_use_feature liblc3 bluez5-codec-lc3)
+		$(meson_feature loudness ebur128)
 		$(meson_native_use_feature lv2)
 		$(meson_native_use_feature v4l v4l2)
 		-Dlibcamera=disabled # libcamera is not in Portage tree
@@ -338,10 +356,15 @@ multilib_src_install_all() {
 		dosym ../../../usr/share/alsa/alsa.conf.d/99-pipewire-default-hook.conf /etc/alsa/conf.d/99-pipewire-default-hook.conf
 	fi
 
+	exeinto /etc/user/init.d
+	newexe "${FILESDIR}"/pipewire.initd pipewire
+
 	#FIXME ;madhu 230224 let wireplumber deal with this.
 	# Enable required wireplumber alsa and bluez monitors
 	if false; then
 	if use sound-server; then
+		newexe "${FILESDIR}"/pipewire-pulse.initd pipewire-pulse
+
 		# Install sound-server enabler for wireplumber 0.5.0+ conf syntax
 		insinto /etc/wireplumber/wireplumber.conf.d
 		doins "${FILESDIR}"/gentoo-sound-server-enable-audio-bluetooth.conf
