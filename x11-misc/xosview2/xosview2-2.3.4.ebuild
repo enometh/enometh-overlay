@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #
@@ -9,7 +9,7 @@
 #   Copyright (C) 2023 Madhu.  All Rights Reserved.
 #
 # ;madhu 230328 - 2.3.3
-
+# ;madhu 250619 - 2.3.4
 EAPI=8
 
 inherit toolchain-funcs xdg-utils
@@ -22,7 +22,7 @@ HOMEPAGE="https://sourceforge.net/projects/xosview/"
 # ;madhu 230412 hasn't sf mirror with portage wget been busted for years?
 # you have to download files manually and put them in distdir.
 #SRC_URI=mirror://sourceforge/${PN}/${P}.tar.xz
-SRC_URI="http://liquidtelecom.dl.sourceforge.net/project/xosview/xosview2-2.3.3.tar.gz"
+SRC_URI="http://master.dl.sourceforge.net/project/xosview/${P}.tar.gz?viasf=1 -> ${P}.tar.gz"
 
 # "There is a balance to leaving debug messages in the code and filling
 # your fellow developer's screen with the a stream of information
