@@ -8,6 +8,7 @@
 #   Copyright (C) 2025 Madhu.  All Rights Reserved.
 #
 # ;madhu 250106 0.1.1
+# ;madhu 250622 0.1.3
 
 EAPI=8
 
@@ -17,7 +18,7 @@ DESCRIPTION="Hyprland graphics / resource utilities"
 HOMEPAGE="https://github.com/hyprwm/hyprgraphics"
 SRC_URI="https://github.com/hyprwm/${PN}/archive/v${PV}.tar.gz -> ${P}.gh.tar.gz"
 
-LICENSE="GPL-3"
+LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 
@@ -25,10 +26,11 @@ RDEPEND="
 	>=gui-libs/hyprutils-0.1.1:=
 	media-libs/libjpeg-turbo:=
 	media-libs/libjxl:=
+	media-libs/libspng
 	media-libs/libwebp:=
 	sys-apps/file
 	x11-libs/cairo
 "
 DEPEND="${RDEPEND}"
 
-PATCHES=( ${FILESDIR}/hyprgraphics-0.1.1-use-fmt-instead-of-c26.patch )
+# PATCHES=( ${FILESDIR}/hyprgraphics-0.1.1-use-fmt-instead-of-c26.patch )
