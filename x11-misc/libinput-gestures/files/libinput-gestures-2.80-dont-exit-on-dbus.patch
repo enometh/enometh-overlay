@@ -1,0 +1,25 @@
+From df875c8ef708f138bf80eebc06724653851b2690 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 14 Oct 2024 22:26:22 +0530
+Subject: [PATCH] libinput-gestures: dbus_listener(): don't exit on dbus
+ disconnect
+
+---
+ libinput-gestures | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libinput-gestures b/libinput-gestures
+index 19cd545..183d2b1 100755
+--- a/libinput-gestures
++++ b/libinput-gestures
+@@ -790,6 +790,7 @@ def dbus_listener() -> None:
+             if (val := vals.get('LockedHint')) is not None:
+                 session_locked = bool(val)
+ 
++    dbus.SystemBus().set_exit_on_disconnect(False)
+     # Listen to get session locked state
+     dbus.SystemBus().add_signal_receiver(  # type: ignore
+         proc,
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
