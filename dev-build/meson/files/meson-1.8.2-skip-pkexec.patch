@@ -1,25 +1,25 @@
-From 66484396c387da88ffeac21c4111ee3982198f3b Mon Sep 17 00:00:00 2001
+From 69235083f9596878b19fa85e08e00e09706f9a20 Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Wed, 17 May 2023 02:02:57 +0530
-Subject: [PATCH] mesonbuild/minstall.py: refuse to call pkexec
+Subject: [PATCH 3/3] mesonbuild/minstall.py: refuse to call pkexec
 
 ---
  mesonbuild/minstall.py | 2 ++
  1 file changed, 2 insertions(+)
 
 diff --git a/mesonbuild/minstall.py b/mesonbuild/minstall.py
-index 27e9929..031b2cf 100644
+index f65087c..dc67bf3 100644
 --- a/mesonbuild/minstall.py
 +++ b/mesonbuild/minstall.py
-@@ -557,6 +557,8 @@ class Installer:
+@@ -579,6 +579,8 @@ class Installer:
              if is_windows() or destdir != '' or not os.isatty(sys.stdout.fileno()) or not os.isatty(sys.stderr.fileno()):
                  # can't elevate to root except in an interactive unix environment *and* when not doing a destdir install
                  raise
 +            print('MADHU - forget it: pkexec %s %s' % (sys.executable,main_file), *sys.argv[1:], " -C ", os.getcwd())
 +            raise
-             rootcmd = os.environ.get('MESON_ROOT_CMD') or shutil.which('sudo') or shutil.which('doas')
-             pkexec = shutil.which('pkexec')
-             if rootcmd is None and pkexec is not None and 'PKEXEC_UID' not in os.environ:
+             rootcmd = (
+                 os.environ.get('MESON_ROOT_CMD')
+                 or shutil.which('sudo')
 -- 
-2.39.2.101.g768bb238c4
+2.49.0.9.gd50a5e8939.dirty
 
