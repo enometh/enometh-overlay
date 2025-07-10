@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 2023-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -17,13 +17,14 @@
 # ;madhu 230516 4.10.3
 # ;madhu 231210 4.13.3
 # ;madhu 240623 4.15.2 ffmpeg gone
+# ;madhu 250710 4.19.3
 
 EAPI=8
 
 USE_GIT=true
-MY_COMMIT=0b57bd5a53afd0124a0252e6314c8c5e4136f424
+MY_COMMIT=8698d66ff72e39f5763eb3f278711b3e98a8cdfa
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit gnome.org gnome2-utils meson optfeature python-any-r1 toolchain-funcs virtualx xdg
 
 DESCRIPTION="GTK is a multi-platform toolkit for creating graphical user interfaces"
@@ -31,7 +32,6 @@ HOMEPAGE="https://www.gtk.org/ https://gitlab.gnome.org/GNOME/gtk/"
 
 LICENSE="LGPL-2+"
 SLOT="4"
-IUSE="aqua broadway cloudproviders colord cups examples gstreamer gtk-doc +introspection sysprof test vulkan wayland +X tracker cpu_flags_x86_f16c debug"
 REQUIRED_USE="
 	|| ( aqua wayland X )
 	gtk-doc? ( introspection )
@@ -45,19 +45,24 @@ if ${USE_GIT}; then
 	EGIT_CLONE_TYPE=shallow
 fi
 
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+IUSE="accessibility aqua broadway cloudproviders colord cups examples gstreamer +introspection sysprof test vulkan wayland +X cpu_flags_x86_f16c gtk-doc tracker debug"
 
+#	examples? ( gnome-base/librsvg:2.50:2 )
+#	vulkan? ( >=media-libs/vulkan-loader-1.3:=[wayland?,X?] )
+
+# TODO: Optional gst build dep on >=gst-plugins-base-1.23.1, so depend on it once we can
 COMMON_DEPEND="
 	>=dev-libs/glib-2.76.0:2
-	>=x11-libs/cairo-1.18.0[aqua?,glib,svg(+),X?]
-	>=x11-libs/pango-1.52.0[introspection?]
+	>=x11-libs/cairo-1.18.2[aqua?,glib,svg(+),X?]
+	>=x11-libs/pango-1.56.0[introspection?]
 	>=dev-libs/fribidi-1.0.6
-	>=media-libs/harfbuzz-2.6.0:=
+	>=media-libs/harfbuzz-8.4.0:=
 	>=x11-libs/gdk-pixbuf-2.30:2[introspection?]
 	media-libs/libpng:=
 	media-libs/tiff:=
 	media-libs/libjpeg-turbo:=
-	>=media-libs/libepoxy-1.4[egl,X(+)?]
+	>=media-libs/libepoxy-1.4[egl(+),X(+)?]
 	>=media-libs/graphene-1.10.0[introspection?]
 	app-text/iso-codes
 	x11-misc/shared-mime-info
@@ -65,15 +70,20 @@ COMMON_DEPEND="
 	cloudproviders? ( net-libs/libcloudproviders )
 	colord? ( >=x11-misc/colord-0.1.9:0= )
 	cups? ( >=net-print/cups-2.0 )
+	examples? ( gnome-base/librsvg:2.50 )
 	gstreamer? (
-		>=media-libs/gst-plugins-bad-1.12.3:1.0
-		>=media-libs/gst-plugins-base-1.12.3:1.0[opengl]
+		>=media-libs/gstreamer-1.24.0:1.0
+		>=media-libs/gst-plugins-bad-1.24.0:1.0
+		|| (
+			>=media-libs/gst-plugins-base-1.24.0:1.0[gles2]
+			>=media-libs/gst-plugins-base-1.24.0:1.0[opengl]
+		)
 	)
 	introspection? ( >=dev-libs/gobject-introspection-1.76:= )
 	vulkan? ( media-libs/vulkan-loader:= )
 	wayland? (
-		>=dev-libs/wayland-1.21.0
-		>=dev-libs/wayland-protocols-1.31
+		>=dev-libs/wayland-1.23.0
+		>=dev-libs/wayland-protocols-1.41
 		media-libs/mesa[wayland]
 		>=x11-libs/libxkbcommon-0.2
 	)
@@ -103,6 +113,7 @@ RDEPEND="${COMMON_DEPEND}
 	>=dev-util/gtk-update-icon-cache-3
 "
 # librsvg for svg icons (PDEPEND to avoid circular dep on wd40 profiles with librsvg[tools]), bug #547710
+# gnome-base/librsvg:2.5
 PDEPEND="
 	gnome-base/librsvg
 	>=x11-themes/adwaita-icon-theme-3.14
@@ -116,7 +127,7 @@ BDEPEND="
 		')
 	)
 	dev-python/docutils
-	dev-libs/glib
+	>=dev-libs/glib-2.80
 	>=dev-util/gdbus-codegen-2.48
 	dev-util/glib-utils
 	>=sys-devel/gettext-0.19.7
@@ -160,10 +171,6 @@ src_prepare() {
 
 #4.10
 if false; then
-	# Workaround RWX ELF sections, https://gitlab.gnome.org/GNOME/gtk/-/issues/4598
-	sed -i -e 's/^ld =.*/ld = disabler()/g' gtk/meson.build demos/gtk-demo/meson.build demos/widget-factory/meson.build || die
-	sed -i -e 's/^objcopy =.*/objcopy = disabler()/g' gtk/meson.build demos/gtk-demo/meson.build demos/widget-factory/meson.build || die
-
 	# The border-image-excess-size.ui test is known to fail on big-endian platforms
 	# See https://gitlab.gnome.org/GNOME/gtk/-/issues/5904
 	if [[ $(tc-endian) == big ]]; then
@@ -182,6 +189,7 @@ src_configure() {
 		$(meson_use wayland wayland-backend)
 		$(meson_use broadway broadway-backend)
 		-Dwin32-backend=false
+		-Dandroid-backend=false
 		$(meson_use aqua macos-backend)
 
 		# Media backends
@@ -201,11 +209,14 @@ src_configure() {
 		# See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71993
 		$(meson_feature cpu_flags_x86_f16c f16c)
 
-		# Documentation and introspection
-#		-Dgtk_doc=false # we ship pregenerated API docs from tarball
+		# Introspection
+		$(meson_feature introspection)
+
+		# Documentation
+#		-Ddocumentation=false # we ship pregenerated API docs from tarball
+# no tarball here bro
 		-Dscreenshots=false
 		-Dman-pages=true
-		$(meson_feature introspection)
 
 		# Demos, examples, and tests
 		-Dprofile=default
@@ -233,6 +244,12 @@ src_configure() {
 src_test() {
 	"${BROOT}${GLIB_COMPILE_SCHEMAS}" --allow-any-name "${S}/gtk" || die
 
+	addwrite /dev/dri
+
+	# Note that skipping gsk-compare entirely means we do run *far*
+	# fewer tests, but a reliable testsuite for us is more important
+	# than absolute-maximum coverage if we can't trust the results and
+	# dismiss any failures as "probably font related" and so on.
 	if use X; then
 		einfo "Running tests under X"
 		GSETTINGS_SCHEMA_DIR="${S}/gtk" virtx meson_src_test --timeout-multiplier=130 \
@@ -241,7 +258,10 @@ src_test() {
 			--no-suite=x11_failing \
 			--no-suite=flaky \
 			--no-suite=headless \
-			--no-suite=gsk-compare-broadway
+			--no-suite=gsk-compare \
+			--no-suite=gsk-compare-broadway \
+			--no-suite=needs-udmabuf \
+			--no-suite=pango
 	fi
 
 	if use wayland; then
@@ -259,7 +279,9 @@ src_test() {
 			--no-suite=wayland_failing \
 			--no-suite=flaky \
 			--no-suite=headless \
-			--no-suite=gsk-compare-broadway
+			--no-suite=gsk-compare \
+			--no-suite=gsk-compare-broadway \
+			--no-suite=needs-udmabuf
 
 		exit_code=$?
 		kill ${compositor}
@@ -270,9 +292,12 @@ src_install() {
 	meson_src_install
 
 	if ! ${USE_GIT}; then
-	insinto /usr/share/gtk-doc/html
+		:
+	# TODO: Seems that HTML docs are no longer in the tarball after
+	# upstream switched to CI-generated releases? bug #947514
+	#insinto /usr/share/gtk-doc/html
 	# This will install API docs specific to X11 and wayland regardless of USE flags, but this is intentional
-	doins -r "${S}"/docs/reference/{gtk/gtk4,gsk/gsk4,gdk/gdk4{,-wayland,-x11}}
+	#doins -r "${S}"/docs/reference/{gtk/gtk4,gsk/gsk4,gdk/gdk4{,-wayland,-x11}}
 	elif use gtk-doc; then
 		mkdir -pv ${ED}/usr/share/gtk-doc/html
 		for i in gdk4 gdk4-wayland gdk4-x11 gsk4 gtk4; do
