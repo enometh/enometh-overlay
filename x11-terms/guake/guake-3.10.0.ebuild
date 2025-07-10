@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -11,7 +11,8 @@
 # without git. 3.8.0-15-gb2c6893
 # ;madhu 220327 3.8.5 3.8.5-4-g2081945
 # ;madhu 221024 3.9.0 3.9.0-22-ga294664
-# ;madhu 240607 3.10.0 3.10-9-gbb76160
+# ;madhu 240607 3.9.10 3.10-9-gbb76160  (misnamed)
+# ;madhu 250710 3.10.0 3.10-26-g2197650
 
 EAPI=8
 
@@ -19,7 +20,7 @@ USE_GIT=true
 
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=setuptools
-PYTHON_COMPAT=( python3_{8..11} )
+PYTHON_COMPAT=( python3_{10..13} )
 inherit distutils-r1 gnome2-utils optfeature virtualx xdg # plocale
 
 #PLOCALES="ca cs de el es fa fi fr gl hr hu id it ja ko nb nl pa pl pt_BR ru sv tr uk zh_CN zh_TW"
@@ -31,22 +32,17 @@ if [[ ${PV} == *9999 ]] || ${USE_GIT} ; then
 	# XXX
 	EGIT_COMMIT=bb76160dc1ccc3147567f323bfcf63c4ebffbe58
 	EGIT_CLONE_TYPE=shallow
-	KEYWORDS="amd64 arm ~arm64 ~ppc64 x86"
 else
 	SRC_URI="https://github.com/Guake/guake/archive/refs/tags/${PV}.tar.gz -> ${P}.gh.tar.gz"
 #	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
-	KEYWORDS="amd64 arm x86"
 fi
 
 DESCRIPTION="Drop-down terminal for GNOME"
-HOMEPAGE="https://github.com/Guake/guake/
-http://guake-project.org/"
-
-#	"https://pypi.org/project/guake/"
+HOMEPAGE="https://guake.github.io/"
 
 LICENSE="GPL-2+"
 SLOT="0"
-#KEYWORDS="amd64 arm ~arm64 ~ppc64 x86"
+KEYWORDS="amd64 arm ~arm64 ~ppc64 x86"
 IUSE="utempter"
 
 RDEPEND="
@@ -71,7 +67,10 @@ BDEPEND="
 	gnome-base/gsettings-desktop-schemas
 	sys-devel/gettext"
 
-PATCHES=( ${FILESDIR}/guake-3.9.0-terminal.py-encode-uname-to-bytes-for-utempter.patch )
+PATCHES=(
+${FILESDIR}/guake-3.9.0-terminal.py-encode-uname-to-bytes-for-utempter.patch
+${FILESDIR}/guake-3.10.0-prefs.py-PrefsDialog.load_configs-set-font-lev.patch
+)
 
 distutils_enable_tests pytest
 
