@@ -1,0 +1,93 @@
+From a0bdb1304889804bf41057100de2a576593ae4ef Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 25 Dec 2018 20:48:22 +0530
+Subject: [PATCH 3/3] bin/misc-functions.sh: rpmbuild fixes
+
+- binary builds dont need a source tarball
+- HOMEPAGE can be multiple tokens not URL
+---
+ bin/misc-functions.sh | 44 +++++++++++++++++++++++++++----------------
+ 1 file changed, 28 insertions(+), 16 deletions(-)
+
+diff --git a/bin/misc-functions.sh b/bin/misc-functions.sh
+index 4ce3acb..f7dccce 100755
+--- a/bin/misc-functions.sh
++++ b/bin/misc-functions.sh
+@@ -567,13 +567,13 @@ __dyn_package() {
+ }
+ 
+ __dyn_spec() {
+-	local sources_dir=${T}/rpmbuild/SOURCES
+-	mkdir -p "${sources_dir}"
+-	declare -a tar_args=("${EBUILD}")
+-	[[ -d ${FILESDIR} ]] && tar_args=("${EBUILD}" "${FILESDIR}")
+-	tar czf "${sources_dir}/${PF}.tar.gz" \
+-		"${tar_args[@]}" || \
+-		die "Failed to create base rpm tarball."
++#	local sources_dir=${T}/rpmbuild/SOURCES
++#	mkdir -p "${sources_dir}"
++#	declare -a tar_args=("${EBUILD}")
++#	[[ -d ${FILESDIR} ]] && tar_args=("${EBUILD}" "${FILESDIR}")
++#	tar czf "${sources_dir}/${PF}.tar.gz" \
++#		"${tar_args[@]}" || \
++#		die "Failed to create base rpm tarball."
+ 
+ 	cat <<__END1__ > ${PF}.spec
+ Summary: ${DESCRIPTION}
+@@ -582,23 +582,27 @@ Version: ${PV}
+ Release: ${PR}
+ License: GPL
+ Group: portage/${CATEGORY}
+-Source: ${PF}.tar.gz
++URL: $(echo ${HOMEPAGE} | tr ' ' '\n' | head -n 1)
++Source: $(if [[ ${PV} == 9999* ]]; then echo ${EGIT_REPO_URI}; else echo ${SRC_URI}; fi)
++
++
+ %description
+ ${DESCRIPTION}
+-
+-${HOMEPAGE}
++$(echo ${HOMEPAGE} | tr ' ' '\n' | tail -n +2)
+ 
+ %prep
+-%setup -c
+-
++#%setup -c
+ %build
+-
+ %install
+-
+ %clean
+ 
+ %files
+-/
++$(cd ${D} && find * \! -type d -printf '/%p\n')
++
++%changelog
++* $(date +"%a %b %e %Y Madhu <enometh@net.meer> ${PV}.${PR}")
++Portage ebuild
++
+ __END1__
+ 
+ }
+@@ -615,8 +619,16 @@ __dyn_rpm() {
+ 
+ 	addwrite "${RPMDIR}"
+ 	__dyn_spec
++
++#	if [ -z ${RPMBUILD_FLAGS ]; then
++#		   die "you bastard"
++#	fi
++#	__vecho ">>>RPMBUILD" ">>>CHOST=${CHOST}" CFLAGS=${CFLAGS} PV=${PV}  SRC_URI=${SRC_URI} ${RPMBUILD_FLAGS} -bb --clean --nodeps "${PF}.spec" --buildroot "${D}" --target "${CHOST}"
++
+ 	HOME=${T} \
+-	rpmbuild -bb --clean --nodeps --rmsource "${PF}.spec" --buildroot "${D}" --target "${CHOST}" || die "Failed to integrate rpm spec file"
++#	rpmbuild -bb --clean --nodeps --rmsource "${PF}.spec" --buildroot "${D}" --target "${CHOST}" || die "Failed to integrate rpm spec file"
++	rpmbuild ${RPMBUILD_FLAGS} -bb "${PF}.spec" --buildroot "${D}" --target "${CHOST}"
++	# || die "Failed to integrate rpm spec file"
+ 
+ 	install -D "${dest_dir}/${PN}-${PV}-${PR}.${machine_name}.rpm" \
+ 		"${RPMDIR}/${CATEGORY}/${PN}-${PV}-${PR}.rpm" || \
+-- 
+2.39.2.101.g768bb238c4
+
