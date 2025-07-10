@@ -1,0 +1,30 @@
+From 3b047f9991709ee914d39bb43fe07631a02431b9 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 19 Nov 2020 11:13:12 +0530
+Subject: [PATCH] guake/prefs.py: (PrefsDialog.load_configs): set font level
+ features
+
+Calling gtk_font_chooser_set_level gives wrong results. choosing Luxi
+Mono actually chooses Luxi Mono Bold Oblique - and doesn't let you
+choose Luxi Mono Regular. Likewise Consolas Bold is chosen by default.
+
+So allow selecting the style. And everything else
+---
+ guake/prefs.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/guake/prefs.py b/guake/prefs.py
+index d692375..213d5ad 100644
+--- a/guake/prefs.py
++++ b/guake/prefs.py
+@@ -1256,6 +1256,7 @@ class PrefsDialog(SimpleGladeApp):
+         value = self.settings.styleFont.get_string("style")
+         if value:
+             self.get_widget("font_style").set_font_name(value)
++            self.get_widget("font_style").set_level(Gtk.FontChooserLevel.FAMILY | Gtk.FontChooserLevel.SIZE | Gtk.FontChooserLevel.VARIATIONS | Gtk.FontChooserLevel.FEATURES)
+ 
+         # allow bold font
+         value = self.settings.styleFont.get_boolean("allow-bold")
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
