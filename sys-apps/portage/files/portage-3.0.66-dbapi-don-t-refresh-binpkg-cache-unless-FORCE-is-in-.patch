@@ -1,0 +1,59 @@
+From c7b5b052349226b1cc4a4557afe04caad8463a98 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 28 Jan 2024 22:16:43 +0530
+Subject: [PATCH 4/4] dbapi: don't refresh binpkg cache unless FORCE is in the
+ environment
+
+* _emerge/actions.py: (run_action): reset getbinpkg_refresh keyword
+parameter to binaryTree.populate if FORCE is not defined in the process
+environment.
+* portage/dbapi/bintree.py: (binaryTtree.populate): debug.
+---
+ lib/_emerge/actions.py       | 6 +++++-
+ lib/portage/dbapi/bintree.py | 3 +++
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/lib/_emerge/actions.py b/lib/_emerge/actions.py
+index 4554445..3854487 100644
+--- a/lib/_emerge/actions.py
++++ b/lib/_emerge/actions.py
+@@ -3503,9 +3503,13 @@ def run_action(emerge_config):
+             kwargs["pretend"] = "--pretend" in emerge_config.opts
+ 
+             try:
++                my_getbinpkg_refresh=True;
++                if not os.getenv('FORCE'):
++                    print('MADHU: run_action: setting binpkg_refresh=False')
++                    my_getbinpkg_refresh=False
+                 mytrees["bintree"].populate(
+                     getbinpkgs="--getbinpkg" in emerge_config.opts,
+-                    getbinpkg_refresh=True,
++                    getbinpkg_refresh=my_getbinpkg_refresh,
+                     **kwargs,
+                 )
+             except ParseError as e:
+diff --git a/lib/portage/dbapi/bintree.py b/lib/portage/dbapi/bintree.py
+index 6099bab..7fbb040 100644
+--- a/lib/portage/dbapi/bintree.py
++++ b/lib/portage/dbapi/bintree.py
+@@ -956,6 +956,7 @@ class binarytree:
+                         noiselevel=-1,
+                     )
+                 else:
++                    #print('MADHU: calling populate.remote with getbinpkg_refresh = %d' % (getbinpkg_refresh));
+                     self._populate_remote(
+                         getbinpkg_refresh=getbinpkg_refresh, pretend=pretend
+                     )
+@@ -1417,7 +1418,9 @@ class binarytree:
+                 url = base_url.rstrip("/") + "/Packages"
+                 f = None
+ 
++                print('MADHU: get_binpkg_refresh = %d local_timestamp=%s download_timestamp=%d' %  (getbinpkg_refresh,  local_timestamp, download_timestamp))
+                 if local_timestamp and (repo.frozen or not getbinpkg_refresh):
++                    print('MADHU: UseCachedCopy')
+                     raise UseCachedCopyOfRemoteIndex()
+ 
+                 try:
+-- 
+2.46.0.27.gfa3b914457
+
