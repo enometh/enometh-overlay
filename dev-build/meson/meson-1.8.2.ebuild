@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Gentoo Authors
+# Copyright 2016-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,13 +10,14 @@
 # ;madhu 230517 1.1.0
 # ;madhu 231103 1.2.3
 # ;madhu 241001 1.5.2
+# ;madhu 250710 1.8.2
 
 EAPI=8
 
 PYTHON_COMPAT=( python3_{10..13} pypy3 )
 DISTUTILS_USE_PEP517=setuptools
 
-inherit bash-completion-r1 edo distutils-r1 flag-o-matic toolchain-funcs
+inherit shell-completion edo distutils-r1 flag-o-matic toolchain-funcs
 
 if [[ ${PV} = *9999* ]]; then
 	EGIT_REPO_URI="https://github.com/mesonbuild/meson"
@@ -52,8 +53,9 @@ HOMEPAGE="https://mesonbuild.com/"
 
 LICENSE="Apache-2.0"
 SLOT="0"
-IUSE="test"
+IUSE="test test-full"
 RESTRICT="!test? ( test )"
+REQUIRED_USE="test-full? ( test )"
 
 DEPEND="
 	test? (
@@ -63,6 +65,42 @@ DEPEND="
 		dev-vcs/git
 		sys-libs/zlib[static-libs(+)]
 		virtual/pkgconfig
+		dev-build/cmake
+	)
+	test-full? (
+		|| ( dev-lang/rust dev-lang/rust-bin )
+		dev-lang/nasm
+		>=dev-lang/pypy-3
+		dev-lang/vala
+		dev-python/cython
+		virtual/fortran
+		virtual/jdk
+
+		app-text/doxygen
+		dev-cpp/gtest
+		dev-libs/protobuf
+		dev-util/bindgen
+		dev-util/gtk-doc
+		dev-util/itstool
+		llvm-core/llvm
+		media-libs/libsdl2
+		media-libs/libwmf
+		net-libs/libpcap
+		sci-libs/hdf5[fortran]
+		sci-libs/netcdf
+		sys-cluster/openmpi[fortran]
+		sys-devel/bison
+		sys-devel/flex
+
+		dev-qt/linguist-tools:5
+		dev-qt/qtwidgets:5
+		dev-qt/qtbase:6[gui,widgets]
+		dev-qt/qttools:6
+		dev-util/gdbus-codegen
+		x11-libs/gtk+:3
+
+		dev-libs/wayland
+		dev-util/wayland-scanner
 	)
 "
 RDEPEND="
@@ -72,7 +110,7 @@ RDEPEND="
 
 PATCHES=(
 	"${FILESDIR}"/${PN}-1.2.1-python-path.patch
-	"${FILESDIR}"/meson-1.1.0-skip-pkexec.patch
+	"${FILESDIR}"/meson-1.8.2-skip-pkexec.patch
 	"${FILESDIR}"/meson-1.1.0-prefer-ccache.patch
 )
 
@@ -90,6 +128,7 @@ python_prepare_all() {
 		# ASAN and sandbox both want control over LD_PRELOAD
 		# https://bugs.gentoo.org/673016
 		-e 's/test_generate_gir_with_address_sanitizer/_&/'
+		-e 's/test_env_cflags_ldflags/_&/'
 
 		# ASAN is unsupported on some targets
 		# https://bugs.gentoo.org/692822
@@ -189,9 +228,7 @@ python_install_all() {
 	insinto /usr/share/vim/vimfiles
 	doins -r data/syntax-highlighting/vim/{ftdetect,indent,syntax}
 
-	insinto /usr/share/zsh/site-functions
-	doins data/shell-completions/zsh/_meson
-
+	dozshcomp data/shell-completions/zsh/_meson
 	dobashcomp data/shell-completions/bash/meson
 
 	if [[ ${PV} = *9999* ]]; then
