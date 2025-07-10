@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Gentoo Authors
+# Copyright 2022-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -14,22 +14,21 @@
 # ;madhu 231210 1.4.0-r1 (1.5alpha) 1.4.0-33-g42c04e0
 # ;madhu 240215 1.5_beta (1.5.beta-7-ge8f1582)
 # ;madhu 240725 1.6_alpha (1.6.alpha-38-g3441dca5)
-
+# ;madhu 250710 1.8.alpha (1.8-g6d6a4b98)
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{11..14} )
 inherit gnome.org meson python-any-r1 vala virtualx gnome-versioning
 USE_GIT=true
 
-MY_COMMIT=3441dca514c3696f81b5c5c4c2a2cf557fae70a9
+MY_COMMIT=6d6a4b98144cc0f8a71b28d8ed315599dba9193f
 
 DESCRIPTION="Building blocks for modern adaptive GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
 
 LICENSE="LGPL-2.1+"
 SLOT="1"
-IUSE="+introspection test +vala +gtk-doc examples"
-REQUIRED_USE="vala? ( introspection )"
+KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 
 if ${USE_GIT}; then
 	SRC_URI=""
@@ -42,14 +41,15 @@ if ${USE_GIT}; then
 	S=${WORKDIR}/${P}
 fi
 
-KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
+IUSE="+introspection test +vala +gtk-doc examples"
+REQUIRED_USE="vala? ( introspection )"
 
 RDEPEND="
-	>=dev-libs/glib-2.76:2
-	>=gui-libs/gtk-4.13.4:4[introspection?]
+	>=dev-libs/glib-2.80.0:2
+	>=gui-libs/gtk-4.17.5:4[introspection?]
 	dev-libs/appstream:=
 	dev-libs/fribidi
-	introspection? ( >=dev-libs/gobject-introspection-1.54:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.83.2:= )
 "
 DEPEND="${RDEPEND}
 	x11-base/xorg-proto"
@@ -59,6 +59,7 @@ BDEPEND="
 	dev-util/glib-utils
 	sys-devel/gettext
 	virtual/pkgconfig
+	dev-lang/sassc
 "
 
 src_prepare() {
@@ -66,6 +67,7 @@ src_prepare() {
 	echo > po/LINGUAS
 	default
 	use vala && vala_setup
+	xdg_environment_reset
 }
 
 src_configure() {
@@ -83,7 +85,7 @@ src_configure() {
 
 	if ${USE_GIT}; then
 		local emesonargs+=(
-			$(meson_use gtk-doc gtk_doc)
+			$(meson_use gtk-doc documentation)
 		)
 	fi
 
@@ -91,6 +93,7 @@ src_configure() {
 }
 
 src_test() {
+	addwrite /dev/dri
 	virtx meson_src_test --timeout-multiplier 2
 }
 
