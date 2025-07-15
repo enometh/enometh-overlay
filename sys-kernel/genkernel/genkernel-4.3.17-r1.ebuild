@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -7,8 +7,7 @@
 #   Status: Experimental.  Do not redistribute
 #   Copyright (C) 2020 Madhu.  All Rights Reserved.
 #
-# ;madhu 200514 -9999 to hotfix zfs with existing deps
-# ;madhu 200803 -9999 madhu-v4.1.0-beta1
+
 # genkernel-9999        -> latest Git branch "master"
 # genkernel-VERSION     -> normal genkernel release
 # ;madhu 201001 v4.1.2-14-g2dd063c USE_GIT sync with 4.1.2
@@ -22,7 +21,7 @@
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{10..12} )
+PYTHON_COMPAT=( python3_{10..13} )
 USE_GIT=true
 
 inherit bash-completion-r1 python-single-r1
@@ -37,8 +36,8 @@ VERSION_BUSYBOX="1.36.1"
 VERSION_COREUTILS="9.5" #"9.4"
 VERSION_CRYPTSETUP="2.7.4" #"2.6.1"
 VERSION_DMRAID="1.0.0.rc16-3"
-VERSION_DROPBEAR="2020.81" #"2022.83"
-VERSION_EUDEV="3.2.10"
+VERSION_DROPBEAR="2022.83"
+VERSION_EUDEV="3.2.14"
 VERSION_EXPAT="2.6.3" #"2.5.0"
 VERSION_E2FSPROGS="1.47.0"
 VERSION_FUSE="2.9.9"
@@ -48,7 +47,7 @@ VERSION_HWIDS="20210613"
 # open-iscsi-2.1.9 static build not working yet
 VERSION_ISCSI="2.0.878" #"2.1.8"
 # json-c-0.17 needs gkbuild ported to meson
-VERSION_JSON_C="0.17"
+VERSION_JSON_C="0.17" #"0.18"
 VERSION_KMOD="31"
 VERSION_LIBAIO="0.3.112" #"0.3.113"
 VERSION_LIBGCRYPT="1.9.3" #"1.10.3"
@@ -63,7 +62,7 @@ VERSION_THIN_PROVISIONING_TOOLS="0.9.0"
 # unionfs-fuse-3.4 needs fuse:3
 VERSION_UNIONFS_FUSE="2.0"
 VERSION_USERSPACE_RCU="0.10.2" #"0.14.0"
-VERSION_UTIL_LINUX="2.38" #"2.39.3"
+VERSION_UTIL_LINUX="2.39.3"
 VERSION_XFSPROGS="5.10.0" #"6.4.0"
 VERSION_XZ="5.6.1" #"5.4.2"
 VERSION_ZLIB="1.2.11" #"1.3.1"
@@ -86,7 +85,7 @@ COMMON_URI="
 	https://www.kernel.org/pub/linux/utils/cryptsetup/v$(ver_cut 1-2 ${VERSION_CRYPTSETUP})/cryptsetup-${VERSION_CRYPTSETUP}.tar.xz
 	https://people.redhat.com/~heinzm/sw/dmraid/src/dmraid-${VERSION_DMRAID}.tar.bz2
 	https://matt.ucc.asn.au/dropbear/releases/dropbear-${VERSION_DROPBEAR}.tar.bz2
-	https://dev.gentoo.org/~blueness/eudev/eudev-${VERSION_EUDEV}.tar.gz
+	https://github.com/eudev-project/eudev/releases/download/v${VERSION_EUDEV}/eudev-${VERSION_EUDEV}.tar.gz
 	https://github.com/libexpat/libexpat/releases/download/R_${VERSION_EXPAT//\./_}/expat-${VERSION_EXPAT}.tar.xz
 	https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v${VERSION_E2FSPROGS}/e2fsprogs-${VERSION_E2FSPROGS}.tar.xz
 	https://github.com/libfuse/libfuse/releases/download/fuse-${VERSION_FUSE}/fuse-${VERSION_FUSE}.tar.gz
@@ -123,11 +122,11 @@ if [[ ${PV} == 9999* ]] || ${USE_GIT} ; then
 	inherit git-r3
 	S="${WORKDIR}/${P}"
 	SRC_URI="${COMMON_URI}"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 else
 	SRC_URI="https://dev.gentoo.org/~bkohler/dist/${P}.tar.xz
 		${COMMON_URI}"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
 fi
 
 DESCRIPTION="Gentoo automatic kernel building scripts"
@@ -135,7 +134,7 @@ HOMEPAGE="https://wiki.gentoo.org/wiki/Genkernel https://gitweb.gentoo.org/proj/
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="ibm +firmware"
+IUSE="ibm +firmware systemd"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 # Note:
@@ -170,6 +169,7 @@ RDEPEND="${PYTHON_DEPS}
 "
 
 PATCHES=(
+	"${FILESDIR}"/genkernel-4.3.16-globbing-workaround.patch
 )
 
 src_unpack() {
@@ -237,6 +237,14 @@ src_install() {
 #	doins ${A/${P}.tar.xz/}
 	ls ${A/${P}.tar.xz/} > ${ED}/usr/share/genkernel/distfiles.d/${P}.list
 	popd &>/dev/null || die
+
+	# Workaround for bug 944499, for now this patch will live in FILESDIR and is
+	# conditionally installed but we could add it to genkernel.git and conditionally
+	# remove it here instead.
+	if ! use systemd; then
+		insinto /usr/share/genkernel/patches/lvm/${VERSION_LVM}/
+		doins "${FILESDIR}"/lvm2-2.03.20-dm_lvm_rules_no_systemd_v2.patch
+	fi
 }
 
 pkg_postinst() {
