@@ -224,8 +224,11 @@ src_install() {
 	doins "${FILESDIR}"/initramfs.mounts
 
 	pushd "${DISTDIR}" &>/dev/null || die
-	insinto /usr/share/genkernel/distfiles
-	doins ${A/${P}.tar.xz/}
+	mkdir ${ED}/usr/share/genkernel/distfiles.d/
+#;madhu 230803
+#	insinto /usr/share/genkernel/distfiles
+#	doins ${A/${P}.tar.xz/}
+	ls ${A/${P}.tar.xz/} > ${ED}/usr/share/genkernel/distfiles.d/${P}.list
 	popd &>/dev/null || die
 
 	# Workaround for bug 944499, for now this patch will live in FILESDIR and is
