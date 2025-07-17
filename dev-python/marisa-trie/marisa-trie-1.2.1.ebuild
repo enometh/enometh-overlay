@@ -15,9 +15,11 @@ EAPI=8
 PYPI_NO_NORMALIZE=1
 PYPI_PN=${PN/-/_}
 
-#DISTUTILS_USE_PEP517=setuptools
+DISTUTILS_EXT=1
+DISTUTILS_USE_PEP517=setuptools
 #;madhu 230405 cannot use DISTUTILS_USE_PEP517  because we want to call setup.py build and not build_ext (which fails)
-DISTUTILS_USE_SETUPTOOLS=bdepend
+#;madhu 250717 - back to the grind
+#DISTUTILS_USE_SETUPTOOLS=bdepend
 
 PYTHON_COMPAT=( python3_{10..13} )
 inherit distutils-r1 pypi
@@ -25,6 +27,11 @@ inherit distutils-r1 pypi
 DESCRIPTION="Static memory-efficient Trie-like structures based on C++ marisa-trie"
 HOMEPAGE="https://github.com/kmike/marisa-trie
 https://pypi.org/project/marisa-trie/"
+
+RDEPEND="${PYTHON_DEPS}"
+BDEPEND="
+	${PYTHON_DEPS}
+	${DISTUTILS_DEPS}"
 
 # ;madhu 230405  - filename doesn't follow pypi underscore?
 #SRC_URI="https://files.pythonhosted.org/packages/source/m/marisa-trie/marisa-trie-${PV}.tar.gz"
