@@ -1,5 +1,12 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+#
+#   Time-stamp: <>
+#   Touched: Thu May 14 08:24:06 2020 +0530 <enometh@net.meer>
+#   Bugs-To: enometh@net.meer
+#   Status: Experimental.  Do not redistribute
+#   Copyright (C) 2020 Madhu.  All Rights Reserved.
+#
 
 # genkernel-9999        -> latest Git branch "master"
 # genkernel-VERSION     -> normal genkernel release
@@ -55,7 +62,7 @@ VERSION_THIN_PROVISIONING_TOOLS="0.9.0"
 # unionfs-fuse-3.4 needs fuse:3
 VERSION_UNIONFS_FUSE="2.0"
 VERSION_USERSPACE_RCU="0.10.2" #"0.14.0"
-VERSION_UTIL_LINUX="2.38" #"2.39.3"
+VERSION_UTIL_LINUX="2.39.3"
 VERSION_XFSPROGS="5.10.0" #"6.4.0"
 VERSION_XZ="5.6.1" #"5.4.2"
 VERSION_ZLIB="1.2.11" #"1.3.1"
