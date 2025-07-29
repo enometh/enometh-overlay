@@ -11,6 +11,8 @@
 # ;madhu 250205 - 0.5.1
 # ;madhu 250205 - 0.7.2
 # ;madhu 250408 - 0.8.0
+# ;madhu 250729 - 0.9.2
+
 EAPI=8
 
 inherit cmake
@@ -23,30 +25,31 @@ if [[ "${PV}" = *9999 ]]; then
 	EGIT_REPO_URI="https://github.com/hyprwm/${PN^}.git"
 else
 	SRC_URI="https://github.com/hyprwm/${PN^}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64"
+	KEYWORDS="amd64"
 fi
 
 LICENSE="BSD"
 SLOT="0"
+# SLOT="0/$(ver_cut 1-2)"
 
 # Upstream states that the simpleWindow test is broken, see bug 936653
 RESTRICT="test"
 # 	media-libs/mesa
 RDEPEND="
-	dev-libs/wayland
-	media-libs/mesa
-	media-libs/libdisplay-info
 	>=dev-libs/libinput-1.26.1
+	dev-libs/wayland
+	media-libs/libdisplay-info
+	media-libs/mesa
 	>=dev-util/hyprwayland-scanner-0.4.0
-	>=gui-libs/hyprutils-0.2.3
+	>=gui-libs/hyprutils-0.8.0
+	sys-apps/hwdata
+	>=sys-auth/seatd-0.8.0
 	x11-libs/cairo
 	x11-libs/libxkbcommon
 	x11-libs/libdrm
 	x11-libs/pango
 	x11-libs/pixman
 	virtual/libudev
-	sys-apps/hwdata
-	>=sys-auth/seatd-0.8.0
 "
 DEPEND="
 	${RDEPEND}
