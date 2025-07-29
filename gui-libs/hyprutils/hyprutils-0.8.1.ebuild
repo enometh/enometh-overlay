@@ -11,6 +11,7 @@
 # ;madhu 250205 0.3.2 -> 0.5.0
 # ;madhu 250408 0.5.0 -> 0.6.0
 # ;madhu 250622 0.6.0 -> 0.7.1
+# ;madhu 250729 0.7.1 -> 0.8.1
 
 EAPI=8
 
@@ -30,8 +31,8 @@ else
 fi
 
 LICENSE="BSD"
-# SLOT="0/$(ver_cut 1-2)"
 SLOT="0"
+# SLOT="0/$(ver_cut 1-2)"
 
 DEPEND="
 	x11-libs/pixman
