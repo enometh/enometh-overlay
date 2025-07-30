@@ -1,7 +1,8 @@
-From b3cadd34db7356048a74a60425a6d233510f9fa3 Mon Sep 17 00:00:00 2001
+From 7004c92267b537116e16f52b0d50e32607c6a6c7 Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Mon, 14 Oct 2024 16:04:54 +0530
-Subject: [PATCH] fix dynamic libq.so (to include gnulib and undefined symbols)
+Subject: [PATCH 3/3] fix dynamic libq.so (to include gnulib and undefined
+ symbols)
 
 * configure.ac: (my_ldadd) new AC_SUBST, to hack around
   Wl,whole-archive limitations. add libq-extra/Makefile to
@@ -94,13 +95,13 @@ index 0000000..6833b43
 +int argv0;
 +FILE *warnout;
 diff --git a/libq/Makefile.am b/libq/Makefile.am
-index 64b4f6d..1d211c1 100644
+index 61f6884..a7840be 100644
 --- a/libq/Makefile.am
 +++ b/libq/Makefile.am
-@@ -35,3 +35,15 @@ libq_la_CPPFLAGS = \
+@@ -34,3 +34,15 @@ libq_la_CPPFLAGS = \
+ 	$(OPENMP_CFLAGS) \
  	-I$(top_builddir)/autotools/gnulib \
- 	-I$(top_srcdir)/autotools/gnulib \
- 	-I$(top_srcdir)
+ 	-I$(top_srcdir)/autotools/gnulib
 +
 +libq_la_LIBADD=$(my_libadd)
 +
@@ -113,7 +114,6 @@ index 64b4f6d..1d211c1 100644
 +	$(LIB_EACCESS) \
 +	$(SENDFILE_LIBS) \
 +	$(NULL)
-\ No newline at end of file
 -- 
-2.46.0.27.gfa3b914457
+2.34.1
 

@@ -15,7 +15,8 @@
 # ;madhu 220817 0.94.1 v0.94-1-g62503bb
 # ;madhu 231012 0.96.1 v0.96.1
 # ;madhu 241013 0.97 v0.97-9-g3a525dc (patches to ship a libq.so to facilitate use from lisp via ffi), ISSUES 1. FEATURES=installsources doesn't copy gnulib sources 2. does main.c conflict with libq-extra in libq.a?
-# ;madhu 250729 0.97 v0.07 - downgrade to tag v0.97 (qdepends -t was failing in prefix), handle llvm renames, rename patch files
+# ;madhu 250729 0.97 v0.07 downgrade to tag v0.97 (qdepends -t was failing in prefix), handle llvm renames, rename patch files
+# ;madhu 250729 0.97-r1 v0.97-23-g6fe49a4
 
 EAPI=8
 USE_GIT=true
@@ -29,7 +30,6 @@ if [[ ${PV} == *9999 ]] || ${USE_GIT} ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://anongit.gentoo.org/git/proj/portage-utils.git"
 	EGIT_BRANCH=master
-	EGIT_COMMIT=refs/tags/v0.97
 #	EGIT_CLONE_TYPE=shallow
 
 else
@@ -73,14 +73,13 @@ QA_CONFIG_IMPL_DECL_SKIP=(
 )
 
 PATCHES=(
-	${FILESDIR}/portage-utils-0.97-configure.ac-reintroduce-libtool.patch
-	${FILESDIR}/portage-utils-0.97-libq-Makefile.am-install-libq.a-and-libq.so-but-link.patch
-	${FILESDIR}/portage-utils-0.97-fix-dynamic-libq.so-to-include-gnulib-and-undefined-.patch
+#	${FILESDIR}/portage-utils-0.97-configure.ac-reintroduce-libtool.patch
+#	${FILESDIR}/portage-utils-0.97-libq-Makefile.am-install-libq.a-and-libq.so-but-link.patch
+#	${FILESDIR}/portage-utils-0.97-fix-dynamic-libq.so-to-include-gnulib-and-undefined-.patch
 
-#	${FILESDIR}/portage-utils-0.97-tip-configure.ac-reintroduce-libtool.patch
-#	${FILESDIR}/portage-utils-0.97-tip-libq-Makefile.am-install-libq.a-and-libq.so-but-link.patch
-#	${FILESDIR}/portage-utils-0.97-tip-fix-dynamic-libq.so-to-include-gnulib-and-undefined-.patch
-
+	${FILESDIR}/portage-utils-0.97-tip-configure.ac-reintroduce-libtool.patch
+	${FILESDIR}/portage-utils-0.97-tip-libq-Makefile.am-install-libq.a-and-libq.so-but-link.patch
+	${FILESDIR}/portage-utils-0.97-tip-fix-dynamic-libq.so-to-include-gnulib-and-undefined-.patch
 )
 
 pkg_setup() {

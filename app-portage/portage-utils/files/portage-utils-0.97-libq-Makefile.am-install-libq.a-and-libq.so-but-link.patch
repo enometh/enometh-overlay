@@ -1,7 +1,7 @@
-From fa5b9343efff34e257b8f37bd8e73db481bff811 Mon Sep 17 00:00:00 2001
+From 57451af7943d052ebac1e0257eaa5d5d01db903d Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Sat, 14 Mar 2020 22:39:46 +0530
-Subject: [PATCH] libq/Makefile.am:  install libq.a and libq.so, but link q
+Subject: [PATCH 2/3] libq/Makefile.am: install libq.a and libq.so, but link q
  statically
 
 ---
@@ -39,7 +39,7 @@ index 772f984..b742339 100644
  headers='#ifdef HAVE_STDDEF_H
  #include <stddef.h>
 diff --git a/libq/Makefile.am b/libq/Makefile.am
-index 3384b0c..64b4f6d 100644
+index 6ce29fb..61f6884 100644
 --- a/libq/Makefile.am
 +++ b/libq/Makefile.am
 @@ -28,7 +28,7 @@ QFILES = \
@@ -52,5 +52,5 @@ index 3384b0c..64b4f6d 100644
  libq_la_CPPFLAGS = \
  	$(OPENMP_CFLAGS) \
 -- 
-2.46.0.27.gfa3b914457
+2.34.1
 

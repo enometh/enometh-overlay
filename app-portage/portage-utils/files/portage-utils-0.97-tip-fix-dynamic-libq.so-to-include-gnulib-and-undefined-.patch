@@ -1,0 +1,120 @@
+From d0378559fefb54d5dd4374ba3c7ad818373aae48 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 14 Oct 2024 16:04:54 +0530
+Subject: [PATCH 3/3] fix dynamic libq.so (to include gnulib and undefined
+ symbols)
+
+* configure.ac: (my_ldadd) new AC_SUBST, to hack around
+  Wl,whole-archive limitations. add libq-extra/Makefile to
+  AC_CONFIG_FILES.
+* libq-extra/Makefile.am: noinst libq_extra.la
+* libq-extra/f.c: dummy library to supply externally defined vars
+* libq/Makefile.am: link static gnulib.a into libq.so via *_la_LIBADD
+* autotools/gnulib/Makefile.am: build libgnu.a with -fPIC
+* Makefile.am: account libq-extra in SUBDIRS
+---
+ Makefile.am                  |  1 +
+ autotools/gnulib/Makefile.am |  4 ++--
+ configure.ac                 |  6 ++++++
+ libq-extra/Makefile.am       |  4 ++++
+ libq-extra/f.c               |  4 ++++
+ libq/Makefile.am             | 12 ++++++++++++
+ 6 files changed, 29 insertions(+), 2 deletions(-)
+ create mode 100644 libq-extra/Makefile.am
+ create mode 100644 libq-extra/f.c
+
+diff --git a/Makefile.am b/Makefile.am
+index 8374c44..f576279 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,6 +2,7 @@ ACLOCAL_AMFLAGS = -I autotools/m4
+ 
+ SUBDIRS = \
+ 	autotools/gnulib \
++	libq-extra \
+ 	libq \
+ 	. \
+ 	tests \
+diff --git a/autotools/gnulib/Makefile.am b/autotools/gnulib/Makefile.am
+index ca0a4da..fd797a9 100644
+--- a/autotools/gnulib/Makefile.am
++++ b/autotools/gnulib/Makefile.am
+@@ -76,8 +76,8 @@ DISTCLEANFILES =
+ MAINTAINERCLEANFILES =
+ # No GNU Make output.
+ 
+-AM_CPPFLAGS =
+-AM_CFLAGS =
++AM_CPPFLAGS = -fPIC
++AM_CFLAGS = -fPIC
+ 
+ noinst_LIBRARIES += libgnu.a
+ 
+diff --git a/configure.ac b/configure.ac
+index b742339..64f8906 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -103,6 +103,11 @@ if test "x$enable_qmanifest" != xno ; then
+ 			  [Define if qmanifest should be compiled])
+ fi
+ 
++# circumvent the kilayim and introduce the static gnulib.a in our dynamic library
++# c.f. https://lists.gnu.org/archive/html/automake/2015-03/msg00004.html
++my_libadd='-Wl,--whole-archive ../libq-extra/libq_extra.a ../autotools/gnulib/libgnu.a -Wl,--no-whole-archive'
++AC_SUBST([my_libadd])
++
+ AX_CFLAGS_WARN_ALL
+ AC_DEFUN([PT_CHECK_CFLAG],[AX_CHECK_COMPILER_FLAGS([$1],[CFLAGS="$CFLAGS $1"])])
+ m4_foreach_w([flag], [
+@@ -132,6 +137,7 @@ m4_foreach_w([flag], [
+ 
+ AC_CONFIG_FILES([
+ 	Makefile
++	libq-extra/Makefile
+ 	libq/Makefile
+ 	autotools/gnulib/Makefile
+ 	tests/init.sh
+diff --git a/libq-extra/Makefile.am b/libq-extra/Makefile.am
+new file mode 100644
+index 0000000..f34c298
+--- /dev/null
++++ b/libq-extra/Makefile.am
+@@ -0,0 +1,4 @@
++#AM_CPPFLAGS = -fPIC
++#AM_CFLAGS = -fPIC
++noinst_LIBRARIES = libq_extra.a
++libq_extra_a_SOURCES = f.c
+diff --git a/libq-extra/f.c b/libq-extra/f.c
+new file mode 100644
+index 0000000..6833b43
+--- /dev/null
++++ b/libq-extra/f.c
+@@ -0,0 +1,4 @@
++// libq-extra/f.c : dummy file for linking a shared libq.so (without main)
++#include <stdio.h>
++int argv0;
++FILE *warnout;
+diff --git a/libq/Makefile.am b/libq/Makefile.am
+index 64b4f6d..1d211c1 100644
+--- a/libq/Makefile.am
++++ b/libq/Makefile.am
+@@ -35,3 +35,15 @@ libq_la_CPPFLAGS = \
+ 	-I$(top_builddir)/autotools/gnulib \
+ 	-I$(top_srcdir)/autotools/gnulib \
+ 	-I$(top_srcdir)
++
++libq_la_LIBADD=$(my_libadd)
++
++libq_la_LDFLAGS = \
++	$(LIBBL2_LIBS) \
++	$(LIBZ_LIBS) \
++	$(GPGME_LIBS) \
++	$(LIB_CRYPTO) \
++	$(LIB_CLOCK_GETTIME) \
++	$(LIB_EACCESS) \
++	$(SENDFILE_LIBS) \
++	$(NULL)
+\ No newline at end of file
+-- 
+2.34.1
+
