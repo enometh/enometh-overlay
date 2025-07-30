@@ -55,6 +55,8 @@ src_prepare() {
 	default_src_prepare
 }
 
+# www.llvm.org/docs/CMake.html
+
 src_configure() {
 	local llvm_prefix=${EPREFIX}/opt/llvm-${PV}
 	local mycmakeargs=(
@@ -64,9 +66,9 @@ src_configure() {
 # set(LLVM_ALL_PROJECTS "bolt;clang;clang-tools-extra;compiler-rt;cross-project-tests;libc;libclc;lld;lldb;mlir;openmp;polly;pstl")
 
 		# ;openmp;clang-tools-extra;openmp
-		-DLLVM_ENABLE_PROJECTS="clang"
-#		-DLLVM_ENABLE_RUNTIMES="libc"
+		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;lldb;libclc"
 		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU"
+		-DLLVM_ENABLE_RUNTIMES="libc;libunwind;libcxxabi;libcxx;compiler-rt;openmp"
 
 		# XXX
 		-DLIBCLC_TARGETS_TO_BUILD="amdgcn-mesa-mesa3d"
@@ -121,7 +123,7 @@ src_install() {
 		   ninja -C ${BUILD_DIR} install
 
 	local llvm_prefix=${EPREFIX}/opt/llvm-${PV}
-	ln -sv lib ${ED}/opt/${llvm_prefix}/lib64
+#	ln -sv lib ${ED}/opt/${llvm_prefix}/lib64
 #	ln -sv ../ ${ED}/opt/llvm-20.1.8/{share/pkgconfig,lib64/}
 
 	# ;madhu 250730 CHECK this numbering scheme. scheme. this has to be
