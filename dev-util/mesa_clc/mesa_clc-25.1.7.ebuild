@@ -8,7 +8,8 @@
 #   Copyright (C) 2025 Madhu.  All Rights Reserved.
 #
 # ;madhu 250719 25.1.6 - use alt llvm /etc/portage/profile/package.provided/bindgen, make symlinx under bin/
-#
+# ;madhu 250731 25.1.7
+
 EAPI=8
 
 LLVM_COMPAT=( {18..20} )
