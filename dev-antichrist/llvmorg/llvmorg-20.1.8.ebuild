@@ -67,7 +67,7 @@ src_configure() {
 
 		# ;openmp;clang-tools-extra;openmp
 		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;lldb;libclc"
-		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU"
+		-DLLVM_TARGETS_TO_BUILD="X86;AMDGPU;BPF"
 		-DLLVM_ENABLE_RUNTIMES="libc;libunwind;libcxxabi;libcxx;compiler-rt;openmp"
 
 		# XXX
