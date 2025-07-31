@@ -17,7 +17,8 @@
 # ;madhu 250413 25.0.[0,3] glvnd
 # ;madhu 250718 25.1.6 bite the rust bullet for xe
 # - USE="llvm_slot_20" with /opt/llvm-20.x.x
-#
+# ;madhu 250731 25.1.7
+
 EAPI=8
 
 LLVM_COMPAT=( {18..20} )
@@ -336,7 +337,6 @@ pkg_setup() {
 }
 
 src_prepare() {
-
 	default
 	sed -i -e "/^PLATFORM_SYMBOLS/a '__gentoo_check_ldflags__'," \
 		bin/symbols-check.py || die # bug #830728
@@ -517,12 +517,13 @@ multilib_src_configure() {
 		-Db_ndebug=$(usex debug false true)
 	)
 
-	#; madhu hack, in case llvm was miscompiled without cpp_rtti
-	if [ -n ${NOCPP_RTTI} ]; then
-		emesonargs+=(
-			-Dcpp_rtti=false
-		)
-	fi
+#	#; madhu hack, in case llvm was miscompiled without cpp_rtti
+#	if [ -n ${NOCPP_RTTI} ]; then
+#		emesonargs+=(
+#			-Dcpp_rtti=false
+#		)
+#	fi
+
 	meson_src_configure
 
 	if ! multilib_is_native_abi && use video_cards_nvk; then
