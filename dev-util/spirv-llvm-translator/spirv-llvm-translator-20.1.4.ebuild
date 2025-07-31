@@ -22,6 +22,8 @@ HOMEPAGE="https://github.com/KhronosGroup/SPIRV-LLVM-Translator"
 SRC_URI="https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v${PV}.tar.gz -> SPIRV-LLVM-Translator-${PV}.tar.gz"
 S=${WORKDIR}/SPIRV-LLVM-Translator-${PV}
 
+MULTILIB_ABIS="amd64"
+
 LICENSE="UoI-NCSA"
 SLOT="$(ver_cut 1)"
 KEYWORDS="amd64 ~arm64 ~loong ~riscv x86"
