@@ -8,7 +8,7 @@
 #   Copyright (C) 2025 Madhu.  All Rights Reserved.
 #
 # ;madhu 250719 25.1.6 - use alt llvm /etc/portage/profile/package.provided/bindgen, make symlinx under bin/
-# ;madhu 250731 25.1.7
+# ;madhu 250731 25.1.7 (ln -sv  llvm-config x86_64-pc-linux-gnu-llvm-config)
 
 EAPI=8
 
@@ -81,7 +81,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-#	PATH=/opt/llvm-20.1.8/bin:$PATH
+	PATH=/opt/llvm-20.1.8/bin:$PATH
 	default
 }
 
