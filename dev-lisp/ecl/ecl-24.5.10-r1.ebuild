@@ -12,21 +12,24 @@
 # ;madhu 191125 - copy to 1.16.3-r2
 # ;madhu 211121 - 21.2.1-r5 (USE_GIT) 21.2.1-115-g6aa02de4c
 # ;madhu 240516 - 24.5.10  (USE_GIT) 24.5.10-248-gb32ccc3d8
+# ;madhu 250805 - 25.5.10-r1 (USE_GIT) 24.5.10-441-gbebb43d
+#  use bundled boehm-gc & libatomic_ops, but system gmp & system libffi, fix texinfo category
 
 EAPI=8
 
 USE_GIT=true
+MY_COMMIT="bebb43d558e813f253523185e189ce831e4ad914"
 
-inherit readme.gentoo-r1
+inherit flag-o-matic readme.gentoo-r1
 
 DESCRIPTION="ECL is an embeddable Common Lisp implementation"
 HOMEPAGE="https://common-lisp.net/project/ecl/"
 
 if [[ "${PV}" == 9999 ]] || ${USE_GIT} ; then
 	EGIT_REPO_URI="https://gitlab.com/embeddable-common-lisp/ecl.git"
+	EGIT_COMMIT="$MY_COMMIT"
 #	EGIT_REPO_URI="https://gitlab.common-lisp.net/embeddable-common-lisp/ecl.git"
 	inherit git-r3
-
 	EGIT_BRANCH="develop"
 	EGIT_CLONE_TYPE="shallow"
 #EGIT_MIRROR_URI="file:///build/git-mirror"
@@ -41,7 +44,7 @@ fi
 
 LICENSE="BSD-2 LGPL-2.1+"
 SLOT="0/${PV}"
-KEYWORDS="amd64 ~ppc ppc64 ~sparc x86 ~amd64-linux"
+KEYWORDS="~amd64 ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux"
 IUSE="cxx debug emacs gengc precisegc cpu_flags_x86_sse +threads +unicode X"
 # test phase only works if ecl already installed #516876
 RESTRICT="test"
@@ -50,7 +53,8 @@ RESTRICT="test"
 #DEPEND		app-text/texi2html
 #RDEPEND virtual/libffi:=
 
-RDEPEND="dev-libs/gmp:0
+RDEPEND="dev-libs/gmp:0=
+		dev-libs/libffi:=
 		dev-libs/libatomic_ops
 		>=dev-libs/boehm-gc-7.1[threads?]"
 DEPEND="${RDEPEND}
@@ -63,6 +67,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-16.1.3-headers-gentoo.patch"
 	"${FILESDIR}/${PN}-16.1.3-build.patch"
 	"${FILESDIR}/${PN}-21.2.1-donotcompressinfo.patch"
+	# gcc15 in upstream
 	"${FILESDIR}/${PN}-24.5.10-extend-ffi-defcallback-to-support-exported-symbols.patch"
 )
 
@@ -78,13 +83,19 @@ src_prepare() {
 #		--enable-libatomic=system \
 
 src_configure() {
+	append-cflags -std=gnu23
+	filter-lto # bug #931081
+
 	econf \
-		--enable-gmp=system \
-		--enable-boehm=system \
 		--with-asdf=no \
 		--with-defsystem=no \
-		--with-ieee-fp=yes \
+		--enable-gmp=system \
+		--enable-boehm=included \
 		--with-dffi \
+		--enable-libatomic=included \
+		--with-ieee-fp=yes \
+		--with-libffi-incdir=/usr/lib64/libffi/include \
+		--with-libffi-libdir=/usr/lib64/ \
 		$(use_with cxx) \
 		$(use_enable gengc) \
 		$(use_enable precisegc) \
