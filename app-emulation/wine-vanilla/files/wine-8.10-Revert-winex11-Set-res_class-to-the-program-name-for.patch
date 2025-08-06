@@ -1,0 +1,48 @@
+From 73b18c3db0e795effcd2927f5b6a9820262a2a27 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 13 Dec 2020 22:32:44 +0530
+Subject: [PATCH] Revert "winex11: Set res_class to the program name for
+ Crostini."
+
+This reverts commit 6eb05dab7c83893684b5e17e9e3a765835d77fcd.
+
+winex11: Set res_class to the program name for Crostini.
+
+GNOME implements the startup notification protocol correctly which
+means it checks StartupWMClass against both WM name (res_name) and
+WM class (res_class). Thus it does not need this patch.
+The situation is different for desktop environments that thunk to
+Wayland such as Crostini. Wayland does not have separate concepts
+that WM name and WM class can be mapped to. So Crostini decided to
+only use res_class resulting in it trying to match 'Wine' to the
+program name stored in StartupWMClass.
+While Crostini's choice is unfortunate for Wine, most other
+applications (e.g. all GTK applications) already store the same value
+in both WM name and class. So in the interest of compatiblity it makes
+sense for Wine to do the same.
+
+Signed-off-by: Francois Gouget <fgouget@codeweavers.com>
+Signed-off-by: Alexandre Julliard <julliard@winehq.org>
+---
+ dlls/winex11.drv/window.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
+index 974bd376fe6..aeb71a1a608 100644
+--- a/dlls/winex11.drv/window.c
++++ b/dlls/winex11.drv/window.c
+@@ -864,8 +864,10 @@ static void set_initial_wm_hints( Display *display, Window window )
+     /* class hints */
+     if ((class_hints = XAllocClassHint()))
+     {
++        static char wine[] = "Wine";
++
+         class_hints->res_name = process_name;
+-        class_hints->res_class = process_name;
++        class_hints->res_class = wine;
+         XSetClassHint( display, window, class_hints );
+         XFree( class_hints );
+     }
+-- 
+2.39.2.101.g768bb238c4
+
