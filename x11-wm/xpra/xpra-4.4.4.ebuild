@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -24,7 +24,7 @@ else
 	KEYWORDS="~amd64 ~x86"
 fi
 
-PYTHON_COMPAT=( python3_{9..11} )
+PYTHON_COMPAT=( python3_{9..13} )
 DISTUTILS_SINGLE_IMPL=yes
 DISTUTILS_USE_SETUPTOOLS=no
 

@@ -13,7 +13,7 @@
 # ;madhu 250710 2.58.5-r1 USE="-abi_x86_32" only, can't deal
 
 EAPI=8
-PYTHON_COMPAT=( python3_{8..10} )
+PYTHON_COMPAT=( python3_{10..13} )
 CARGO_OPTIONAL=1
 CRATES=""
 
