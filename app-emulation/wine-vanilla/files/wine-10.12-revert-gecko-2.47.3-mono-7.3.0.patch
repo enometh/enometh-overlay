@@ -1,0 +1,60 @@
+diff --git a/dlls/appwiz.cpl/addons.c b/dlls/appwiz.cpl/addons.c
+index 65d13a66c34..933ea33bb3d 100644
+--- a/dlls/appwiz.cpl/addons.c
++++ b/dlls/appwiz.cpl/addons.c
+@@ -44,22 +44,22 @@
+ 
+ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
+ 
+-#define GECKO_VERSION "2.47.4"
++#define GECKO_VERSION "2.47.3"
+ #ifdef __i386__
+ #define GECKO_ARCH "x86"
+-#define GECKO_SHA "26cecc47706b091908f7f814bddb074c61beb8063318e9efc5a7f789857793d6"
++#define GECKO_SHA "e5b9b06d3ce355646a8d2e72e044e37e1e0c8d18464eb1985adcd187a7f48e01"
+ #elif defined(__x86_64__)
+ #define GECKO_ARCH "x86_64"
+-#define GECKO_SHA "e590b7d988a32d6aa4cf1d8aa3aa3d33766fdd4cf4c89c2dcc2095ecb28d066f"
++#define GECKO_SHA "a53ee954392b6d1fe3d68545f6e4e2a97afbc8dc8b03a8b443349545ce139675"
+ #else
+ #define GECKO_ARCH ""
+ #define GECKO_SHA "???"
+ #endif
+ 
+-#define MONO_VERSION "10.1.0"
++#define MONO_VERSION "7.3.0"
+ #if defined(__i386__) || defined(__x86_64__)
+ #define MONO_ARCH "x86"
+-#define MONO_SHA "c88c2431890bc32cacec8d7ea70e53a5ae4b95c8c55ca6e75ef8db0e4ccf1070"
++#define MONO_SHA "939e2f5669720d0d0fc7e305426622a11a33b7ae385c4d7e581e29ea264e22ff"
+ #else
+ #define MONO_ARCH ""
+ #define MONO_SHA "???"
+diff --git a/dlls/mscoree/mscoree_private.h b/dlls/mscoree/mscoree_private.h
+index 7044cb968d9..6fc9cae4f55 100644
+--- a/dlls/mscoree/mscoree_private.h
++++ b/dlls/mscoree/mscoree_private.h
+@@ -45,7 +45,7 @@ extern HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version);
+ extern HRESULT assembly_get_vtable_fixups(ASSEMBLY *assembly, VTableFixup **fixups, DWORD *count);
+ extern HRESULT assembly_get_native_entrypoint(ASSEMBLY *assembly, NativeEntryPointFunc *func);
+ 
+-#define WINE_MONO_VERSION "10.1.0"
++#define WINE_MONO_VERSION "7.3.0"
+ 
+ /* Mono embedding */
+ typedef struct _MonoDomain MonoDomain;
+diff --git a/tools/gitlab/test.yml b/tools/gitlab/test.yml
+index 2b03a05264f..9e11e5df4ff 100644
+--- a/tools/gitlab/test.yml
++++ b/tools/gitlab/test.yml
+@@ -6,8 +6,8 @@
+   interruptible: true
+   variables:
+     GIT_STRATEGY: none
+-    GECKO_VER: 2.47.4
+-    MONO_VER: 10.1.0
++    GECKO_VER: 2.47.3
++    MONO_VER: 7.3.0
+   cache:
+     - key: wine-gecko-$GECKO_VER
+       paths:
