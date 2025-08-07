@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -16,6 +16,7 @@
 # ;
 # ;madhu 230928 - 1.12.2 GIT  v1.12.2-10-g7c2ebad
 # ;madhu 240918 - 1.13.0 GIT
+# ;madhu 250807 - 1.13.1-r1  fix typos
 #
 #
 # "eclass" notes
@@ -34,7 +35,7 @@ EAPI=8
 USE_GIT=true
 USE_BOOTSTRAP_INSTALLED=true
 
-MY_GIT_COMMIT="7c2ebad51efd68e8ca2f8f2186ed6f4c71c51079"
+MY_GIT_COMMIT="842515360d84b2f4703a27856ba94a7c93f6edc4"
 
 inherit multilib toolchain-funcs vcs-clean
 
@@ -84,7 +85,9 @@ if ${USE_GIT}; then
 	# EGIT_OVERRIDE_COMMIT_CLOZURE_CCL
 
 	EGIT_OVERRIDE_BRANCH_ENOMETH_CCL=madhu-tip
-	EGIT_COMMIT=$MY_COMMIT
+	if [ -n $MY_GIT_COMMIT]; then
+		EGIT_COMMIT=$MY_GIT_COMMIT
+	fi
 
 	#;madhu 230928 TODO may need to manually copy shallow to $GIT_DIR
 	#EGIT_OVERRIDE_CLONE_TYPE_ENOMETH_CCL=shallow
