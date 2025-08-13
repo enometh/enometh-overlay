@@ -1,0 +1,13 @@
+--- qemu-10.0.3-orig/linux-user/strace.c	2025-07-24 02:35:28.000000000 +0530
++++ qemu-10.0.3/linux-user/strace.c	2025-08-13 14:59:23.575738915 +0530
+@@ -1119,8 +1119,10 @@
+     FLAG_GENERIC(RESOLVE_NO_SYMLINKS),
+     FLAG_GENERIC(RESOLVE_BENEATH),
+     FLAG_GENERIC(RESOLVE_IN_ROOT),
++#if 0
+     FLAG_GENERIC(RESOLVE_CACHED),
+ #endif
++#endif
+     FLAG_END,
+ };
+ 
