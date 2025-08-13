@@ -1,0 +1,11 @@
+--- bcc-0.35.0-orig/CMakeLists.txt	2025-05-30 08:39:17.000000000 +0530
++++ bcc-0.35.0/CMakeLists.txt	2025-08-14 00:38:26.119987527 +0530
+@@ -8,6 +8,8 @@
+   set(CMAKE_BUILD_TYPE Release)
+ endif()
+ 
++link_libraries(-lLLVMBPFAsmParser -lLLVMBPFCodeGen -lLLVMBPFDesc -lLLVMBPFDisassembler -lLLVMBPFInfo)
++
+ if(CMAKE_SANITIZE_TYPE)
+   add_compile_options(-fsanitize=${CMAKE_SANITIZE_TYPE})
+   add_link_options(-fsanitize=${CMAKE_SANITIZE_TYPE})
