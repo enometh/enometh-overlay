@@ -8,7 +8,9 @@
 #   Copyright (C) 2025 Madhu.  All Rights Reserved.
 #
 # ;madhu 250719 25.1.6 - use alt llvm /etc/portage/profile/package.provided/bindgen, make symlinx under bin/
-# ;madhu 250731 25.1.7
+# ;madhu 250731 25.1.7 (ln -sv  llvm-config x86_64-pc-linux-gnu-llvm-config)
+# ;madhu 250813 25.1.2
+# ;madhu 250813 25.2.0
 
 EAPI=8
 
@@ -34,6 +36,7 @@ fi
 
 LICENSE="MIT"
 SLOT="0"
+LLVM_VER="20.1.8"
 
 VIDEO_CARDS="asahi panfrost"
 for card in ${VIDEO_CARDS}; do
@@ -41,15 +44,13 @@ for card in ${VIDEO_CARDS}; do
 done
 IUSE="${IUSE_VIDEO_CARDS} debug"
 
-RDEPEND="
-	dev-util/spirv-tools
-	$(llvm_gen_dep '
-		dev-util/spirv-llvm-translator:${LLVM_SLOT}
-		llvm-core/clang:${LLVM_SLOT}=
-		=llvm-core/libclc-${LLVM_SLOT}*
-		llvm-core/llvm:${LLVM_SLOT}=
-	')
-"
+#	$(llvm_gen_dep '
+#		dev-util/spirv-llvm-translator:${LLVM_SLOT}
+#		llvm-core/clang:${LLVM_SLOT}=
+#		=llvm-core/libclc-${LLVM_SLOT}*
+#		llvm-core/llvm:${LLVM_SLOT}=
+#	')
+
 RDEPEND="
 	dev-util/spirv-tools
 "
@@ -81,12 +82,12 @@ pkg_setup() {
 }
 
 src_prepare() {
-#	PATH=/opt/llvm-20.1.8/bin:$PATH
+	PATH=/opt/llvm-${LLVM_VER}/bin:$PATH
 	default
 }
 
 get_llvm_prefix() {
-	echo ${ESYSROOT}"/opt/llvm-20.1.8/"
+	echo ${ESYSROOT}"/opt/llvm-${LLVM_VER}/"
 }
 
 src_configure() {
@@ -123,15 +124,14 @@ src_configure() {
 		-Dzstd=disabled
 
 		-Db_ndebug=$(usex debug false true)
-
 	)
 
-	#;madhu hack, in case llvm was miscompiled without cpp_rtti
-	if [[ -n "${NO_CPP_RTTI}" ]]; then
-		emesonargs+=(
-			-Dcpp_rtti=false
-		)
-	fi
+#	#;madhu hack, in case llvm was miscompiled without cpp_rtti
+#	if [[ -n "${NO_CPP_RTTI}" ]]; then
+#		emesonargs+=(
+#			-Dcpp_rtti=false
+#		)
+#	fi
 
 	meson_src_configure
 }
