@@ -3,6 +3,11 @@ From: Madhu <enometh@net.meer>
 Date: Tue, 28 May 2013 19:05:46 +0530
 Subject: [PATCH 4/6] xterm-allow_iso-utf_fonts_in_menu.patch
 
+Source: opensuse
+ # HG changeset patch
+ # Parent  0bdc9a50b149b2f85acde8e6b22b63259f36e057
+ # allow UTF-8 fonts (iso-10464) as well
+
 ---
  XTerm.ad | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

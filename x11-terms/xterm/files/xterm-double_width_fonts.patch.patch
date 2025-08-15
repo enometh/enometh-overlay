@@ -3,6 +3,10 @@ From: Madhu <enometh@net.meer>
 Date: Fri, 22 Sep 2017 17:23:18 +0530
 Subject: [PATCH 1/6] xterm-double_width_fonts.patch
 
+Source: opensuse
+ # HG changeset patch
+ # Parent  682df5267f4b25286ab78bfbbfd91fe664cbbd21
+
 ---
  fontutils.c | 62 ++++++-----------------------------------------------
  1 file changed, 7 insertions(+), 55 deletions(-)

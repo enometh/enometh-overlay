@@ -3,6 +3,12 @@ From: Madhu <enometh@net.meer>
 Date: Fri, 10 Nov 2017 21:17:30 +0530
 Subject: [PATCH 6/6] xterm-settings.patch
 
+Source: opensuse
+ # from c7753810ca3026190c5da0536ecf86e9b13800d3
+ # various distribution configuration tweaks
+ # from 7ecf75281e09a29875b61f38bb66920529368050:
+ # improve display of chinese letters (bsc#1089049)
+
 ---
  UXTerm.ad    | 47 +++++++++++++++++++++++----
  XTerm-col.ad |  6 ++--

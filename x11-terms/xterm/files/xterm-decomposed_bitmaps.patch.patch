@@ -3,6 +3,22 @@ From: Madhu <enometh@net.meer>
 Date: Fri, 22 Sep 2017 17:23:17 +0530
 Subject: [PATCH 5/6] xterm-decomposed_bitmaps.patch
 
+Source: opensuse
+ From: Egbert Eich <eich@suse.de>
+ Date: Tue Jun 3 18:17:07 2014 +0200
+ Subject: [PATCH]Fix number of colormap entries for DirectColor and TrueColor visuals
+ Patch-mainline: to be upstreamed
+ Git-commit: 071525466531009223f1c21a40aa2e081d5ef99a
+ References: bnc#
+
+DirectColor and TrueColor have a decomposed colormap,
+therefore the colormap_size field in the XVisualInfo
+structure is meant per sub-field (take a look at the output
+of xdpyinfo).
+With 3 sub-fields there are colormap_size^3 entires.
+
+Signed-off-by: Egbert Eich <eich@suse.de>
+
 ---
  misc.c | 2 ++
  1 file changed, 2 insertions(+)

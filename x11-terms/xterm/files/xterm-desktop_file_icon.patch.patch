@@ -3,6 +3,12 @@ From: Madhu <enometh@net.meer>
 Date: Thu, 10 Mar 2016 03:53:09 +0530
 Subject: [PATCH 2/6] xterm-desktop_file_icon.patch
 
+Source: opensuse
+ # HG changeset patch
+ # Parent  fa7b175db269546b9408d1af03d9c04dddbc4d9b
+ # use system stock icon for XTerm
+
+
 ---
  xterm.desktop | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
