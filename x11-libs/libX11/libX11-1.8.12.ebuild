@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -12,7 +12,9 @@
 #   eclass. svg docs should not be compresed. don't use
 #   xorg-3_src_configure as docs get built for each arch during multilib
 #   compile.
+
 # ;madhu 241214 1.18.10
+# ;madhu 250815 1.18.12 - reintroduce 1.8.5 patch missed in 1.18.10
 
 EAPI=8
 
@@ -31,23 +33,28 @@ RESTRICT="!test? ( test )"
 RDEPEND="
 	>=x11-libs/libxcb-1.11.1[${MULTILIB_USEDEP}]
 	x11-misc/compose-tables
+	x11-base/xorg-proto
 "
 DEPEND="${RDEPEND}
-	x11-base/xorg-proto
 	x11-libs/xtrans
 "
 BDEPEND="test? ( dev-lang/perl )"
 
-src_configure() {
-	local XORG_CONFIGURE_OPTIONS=(
-		$(use_with doc xmlto)
-		$(use_enable doc specs)
+# was src_configure
+multilib_src_configure() {
+	xorg-3_flags_setup
+	#;madhu 250815 actually don't use XORG_CONFIGURE_OPTIONS  or xorg-3_src_configure
+	local myeconfargs=(
+		$(multilib_native_use_with doc xmlto)
+		$(multilib_native_use_enable doc specs)
 		--enable-ipv6
 		--without-fop
 		--with-keysymdefdir="${ESYSROOT}/usr/include/X11"
 		CPP="$(tc-getPROG CPP cpp)"
 	)
-	xorg-3_src_configure
+
+	ECONF_SOURCE="${S}" \
+		econf "${myeconfargs[@]}"
 }
 
 src_install() {
