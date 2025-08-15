@@ -1,18 +1,19 @@
-# Copyright 1999-2022 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2022-08-18 20:32:10 IST>
+#   Time-stamp: <>
 #   Touched: Thu Aug 18 20:24:12 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
 #   Copyright (C) 2022 Madhu.  All Rights Reserved.
 #
 # ;madhu 220818 - xterm-372: PRIVATE repo: USE_GIT, ship basic PATCHES
+# ;madhu 250815 - xterm-401, patches now document they are from suse. added BackArrow2* scripts, terminal.png (from suse), 16color.txt (from rawhide)
 
 EAPI=8
 USE_GIT=true
 
-inherit desktop flag-o-matic toolchain-funcs
+inherit desktop flag-o-matic toolchain-funcs xdg
 
 DESCRIPTION="Terminal Emulator for X Windows"
 HOMEPAGE="https://invisible-island.net/xterm/"
@@ -26,7 +27,7 @@ SRC_URI="ftp://ftp.invisible-island.net/${PN}/${P}.tgz"
 fi
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~sparc-solaris ~sparc64-solaris ~x64-solaris ~x86-solaris"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
 IUSE="+openpty sixel toolbar truetype unicode Xaw3d xinerama"
 
 BDEPEND="virtual/pkgconfig
@@ -34,6 +35,7 @@ BDEPEND="virtual/pkgconfig
 DEPEND="
 	kernel_linux? ( sys-libs/libutempter )
 	media-libs/fontconfig:1.0
+	media-libs/freetype
 	>=sys-libs/ncurses-5.7-r7:0=
 	x11-apps/xmessage
 	x11-libs/libICE
@@ -52,7 +54,6 @@ RDEPEND="${DEPEND}
 	x11-apps/rgb"
 
 DOCS=( README{,.i18n} ctlseqs.txt )
-
 
 PATCHES=(
 ${FILESDIR}/xterm-double_width_fonts.patch.patch
@@ -90,6 +91,8 @@ src_configure() {
 		--enable-wide-chars
 		--libdir="${EPREFIX}"/etc
 		--with-app-defaults="${DEFAULTS_DIR}"
+		--with-icon-theme=hicolor
+		--with-icondir="${EPREFIX}"/usr/share/icons
 		--with-utempter
 		--with-x
 		$(use_enable openpty)
@@ -108,16 +111,21 @@ src_configure() {
 src_install() {
 	default
 
+	dobin ${FILESDIR}/Backarrow2{BackSpace,Delete}
+	dodoc ctlseqs.txt ${FILESDIR}/16colors.txt
 	docinto html
 	dodoc xterm.log.html
+	sed -i -e 's/_48x48//g' *.desktop || die
 	domenu *.desktop
+	# xterm.desktop icon is patched
+	doicon ${FILESDIR}/terminal.png #suse
 
 	# Fix permissions -- it grabs them from live system, and they can
 	# be suid or sgid like they were in pre-unix98 pty or pre-utempter days,
 	# respectively (#69510).
 	# (info from Thomas Dickey) - Donnie Berkholz <spyderous@gentoo.org>
-	fperms 0755 /usr/bin/xterm
+#	fperms 0755 /usr/bin/xterm
 
 	# restore the navy blue
-	sed -i -e 's:blue2$:blue:' "${D}${DEFAULTS_DIR}"/XTerm-color || die
+#	sed -i -e 's:blue2$:blue:' "${D}${DEFAULTS_DIR}"/XTerm-color || die
 }
