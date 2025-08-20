@@ -101,6 +101,8 @@ BDEPEND="
 	wayland? ( dev-util/wayland-scanner )
 "
 
+PATCHES=( ${FILESDIR}/3.2.20-src-io-io_uring-SDL_asyncio_liburing.c-include-sys-s.patch )
+
 src_prepare() {
 	cmake_src_prepare
 
