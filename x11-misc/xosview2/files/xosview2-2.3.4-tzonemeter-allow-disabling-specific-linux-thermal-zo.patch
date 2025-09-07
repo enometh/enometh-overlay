@@ -1,0 +1,96 @@
+From f582d9eb3d1042267b7271c7f2631dcf89674085 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 4 Sep 2025 23:45:52 +0530
+Subject: [PATCH] tzonemeter: allow disabling specific linux thermal zone
+ meters
+
+---
+ Xdefaults.in        |  1 +
+ linux/MeterMaker.cc | 14 ++++++++++----
+ linux/MeterMaker.h  |  2 +-
+ xosview.1.in        |  9 +++++++++
+ 4 files changed, 21 insertions(+), 5 deletions(-)
+
+diff --git a/Xdefaults.in b/Xdefaults.in
+index f98a064..150a167 100644
+--- a/Xdefaults.in
++++ b/Xdefaults.in
+@@ -294,6 +294,7 @@ xosview*RAIDUsedDecay:         False
+ 
+ ! Thermal Zone
+ xosview*tzone:                 True
++xosview*tzoneDisable:	       none ! none or tzone0, tzone1
+ xosview*tzoneForeGround:       #56E67B
+ xosview*tzoneBackground:       #03315E
+ xosview*tzoneHotColor:         #F2EF44
+diff --git a/linux/MeterMaker.cc b/linux/MeterMaker.cc
+index 58f458c..900ac72 100644
+--- a/linux/MeterMaker.cc
++++ b/linux/MeterMaker.cc
+@@ -89,7 +89,7 @@ ComMeterMaker::mlist MeterMaker::makeMeters(const ResDB &rdb) {
+         meters.push_back(std::make_unique<BtryMeter>());
+ 
+     if (rdb.isResourceTrue("tzone"))
+-        tzoneFactory(meters);
++        tzoneFactory(rdb, meters);
+ 
+     if (rdb.isResourceTrue("lmstemp"))
+         lmsTempFactory(rdb, meters);
+@@ -168,12 +168,18 @@ void MeterMaker::lmsTempFactory(const ResDB &rdb, mlist &meters) const {
+ }
+ 
+ 
+-void MeterMaker::tzoneFactory(mlist &meters) const {
++void MeterMaker::tzoneFactory(const ResDB &rdb, mlist &meters) const {
+     const size_t nzones = TZoneMeter::count();
+ 
+     if (!nzones)
+         logProblem << "tzone enabled but no thermal zones found.\n";
+ 
+-    for (size_t i = 0 ; i < nzones ; i++)
+-        meters.push_back(std::make_unique<TZoneMeter>(i));
++    std::string res = rdb.getResource("tzoneDisable");
++    for (size_t i = 0 ; i < nzones ; i++) {
++	static char buf[10];
++	snprintf(buf, sizeof buf, "tzone%ld", i);
++	std::string s1(buf);
++	if (res.find(s1) == std::string::npos)
++	    meters.push_back(std::make_unique<TZoneMeter>(i));
++    }
+ }
+diff --git a/linux/MeterMaker.h b/linux/MeterMaker.h
+index 27cc5f0..918b9af 100644
+--- a/linux/MeterMaker.h
++++ b/linux/MeterMaker.h
+@@ -20,7 +20,7 @@ private:
+     void cpuFactory(const ResDB &rdb, mlist &meters) const;
+     void serialFactory(const ResDB &rdb, mlist &meters) const;
+     void intFactory(const ResDB &rdb, mlist &meters) const;
+-    void tzoneFactory(mlist &meters) const;
++    void tzoneFactory(const ResDB &rdb, mlist &meters) const;
+     void lmsTempFactory(const ResDB &rdb, mlist &meters) const;
+ };
+ 
+diff --git a/xosview.1.in b/xosview.1.in
+index 200c9bf..edfa057 100644
+--- a/xosview.1.in
++++ b/xosview.1.in
+@@ -692,6 +692,15 @@ values that are shared by all thermal zones.
+ Enabling this creates a seperate meter for each thermal zone found.
+ .RE
+ 
++xosview*tzoneDisable: \fInone OR list\fP
++.RS
++If this resource is set to none then xosview will show all thermal
++zone devices found under /sys/class/thermal/themral_zone*.  To disable
++some devices (say zones 6,7) set it to a list of tzone device names
++(such as tzone6, tzone7).
++
++.RE
++
+ xosview*tzoneForeGround: \fIcolor\fP
+ .RS
+ The foreground color for temperatues below the hotTrip point.
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

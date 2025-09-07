@@ -49,6 +49,7 @@ PATCHES=(
 	$FILESDIR/xosview2-2.3.3-linux-memmeter.cc-MemMeter-getmeminfo-do-not-subtrac.patch
 	$FILESDIR/xosview2-2.3.3-log.cc-Log-readConfig-use-environment-variable-LOGCO.patch
 	$FILESDIR/xosview2-2.3.3-xftfont.c-X11ftFont-setFont-log-missing-font.patch
+	$FILESDIR/xosview2-2.3.4-tzonemeter-allow-disabling-specific-linux-thermal-zo.patch
 )
 
 DOCS+=(doc)
