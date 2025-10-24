@@ -1,0 +1,96 @@
+From f24d3be0fa33ea6c3dca83dc7fe0fd6329ed9d87 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sat, 23 May 2020 15:48:01 +0530
+Subject: [PATCH] src/forward.c: (forward_query): drop all AAAA queries
+
+TODO make this conditional on not using IPv6.
+
+Since we are not using ipv6, even if we have a host in /etc/hosts
+dnsmasq will contact upstream webservers for an AAAA record because
+glibc or lookup programs will sneakily insist on looking up an IPv6
+address, just to leave a trace on the DNS servers.
+
+* src/dnsmasq.h: (OPT_NOSEND_AAAA)
+* src/forward.c: skip check here
+* src/option.c: (LOPT_NOSEND_AAA): (opts,usage, one_opt).
+---
+ src/dnsmasq.h | 3 ++-
+ src/forward.c | 8 ++++++++
+ src/option.c  | 7 +++++++
+ 3 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/src/dnsmasq.h b/src/dnsmasq.h
+index 59d1dfa..9d73797 100644
+--- a/src/dnsmasq.h
++++ b/src/dnsmasq.h
+@@ -281,7 +281,8 @@ struct event_desc {
+ #define OPT_LOG_PROTO      73
+ #define OPT_NO_0x20        74
+ #define OPT_DO_0x20        75
+-#define OPT_LAST           76
++#define OPT_NOSEND_AAAA    76
++#define OPT_LAST           77
+ 
+ #define OPTION_BITS (sizeof(unsigned int)*8)
+ #define OPTION_SIZE ( (OPT_LAST/OPTION_BITS)+((OPT_LAST%OPTION_BITS)!=0) )
+diff --git a/src/forward.c b/src/forward.c
+index 28b6ffd..c2c2180 100644
+--- a/src/forward.c
++++ b/src/forward.c
+@@ -366,6 +366,14 @@ static void forward_query(int udpfd, union mysockaddr *udpaddr,
+       if (flags || ede == EDE_NOT_READY)
+ 	goto reply;
+ 
++      // Don't forward any AAAA queries
++      if (gotname == F_IPV6 &&
++	  option_bool(OPT_NOSEND_AAAA))
++      {
++	      flags = F_NOERR;
++	      goto reply;
++      }
++
+       master = daemon->serverarray[first];
+ 
+       if (!(forward = get_new_frec(now, master, 0)))
+diff --git a/src/option.c b/src/option.c
+index 07d66ae..123ec2c 100644
+--- a/src/option.c
++++ b/src/option.c
+@@ -195,6 +195,7 @@ struct myoption {
+ #define LOPT_PXE_OPT       386
+ #define LOPT_NO_ENCODE     387
+ #define LOPT_DO_ENCODE     388
++#define LOPT_NOSEND_AAAA   389
+ 
+ #ifdef HAVE_GETOPT_LONG
+ static const struct option opts[] =  
+@@ -234,6 +235,7 @@ static const struct myoption opts[] =
+     { "filterwin2k", 0, 0, 'f' },
+     { "filter-A", 0, 0, LOPT_FILTER_A },
+     { "filter-AAAA", 0, 0, LOPT_FILTER_AAAA },
++    { "nosend-AAAA", 0, 0, LOPT_NOSEND_AAAA },
+     { "filter-rr", 1, 0, LOPT_FILTER_RR },
+     { "pid-file", 2, 0, 'x' },
+     { "strict-order", 0, 0, 'o' },
+@@ -423,6 +425,7 @@ static struct {
+   { 'f', OPT_FILTER, NULL, gettext_noop("Don't forward spurious DNS requests from Windows hosts."), NULL },
+   { LOPT_FILTER_A, ARG_DUP, NULL, gettext_noop("Don't include IPv4 addresses in DNS answers."), NULL },
+   { LOPT_FILTER_AAAA, ARG_DUP, NULL, gettext_noop("Don't include IPv6 addresses in DNS answers."), NULL },
++  { LOPT_NOSEND_AAAA, ARG_DUP, NULL, gettext_noop("Don't send requests for  IPv6"), NULL },
+   { LOPT_FILTER_RR, ARG_DUP, "<RR-type>", gettext_noop("Don't include resource records of the given type in DNS answers."), NULL },
+   { 'F', ARG_DUP, "<ipaddr>,...", gettext_noop("Enable DHCP in the range given with lease duration."), NULL },
+   { 'g', ARG_ONE, "<groupname>", gettext_noop("Change to this group after startup (defaults to %s)."), CHGRP },
+@@ -3536,6 +3539,10 @@ static int one_opt(int option, char *arg, char *errstr, char *gen_err, int comma
+ 	}
+       break;
+ 
++    case LOPT_NOSEND_AAAA: /* --nosend-aaaa */
++	set_option_bool(OPT_NOSEND_AAAA);
++	break;
++
+     case LOPT_CACHE_RR: /* --cache-rr */
+     case LOPT_FILTER_RR: /* --filter-rr */
+     case LOPT_FILTER_A: /* --filter-A */
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
