@@ -1,0 +1,61 @@
+From 5b5ed89ab0ae76d2b37ec6245153320147ddea49 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 28 Jan 2024 22:16:43 +0530
+Subject: [PATCH 4/4] dbapi: don't refresh binpkg cache unless FORCE is in the
+ environment
+
+* _emerge/actions.py: (run_action): reset getbinpkg_refresh keyword
+parameter to binaryTree.populate if FORCE is not defined in the process
+environment.
+* portage/dbapi/bintree.py: (binaryTtree.populate): debug.
+---
+ lib/_emerge/actions.py       | 6 +++++-
+ lib/portage/dbapi/bintree.py | 4 ++++
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/lib/_emerge/actions.py b/lib/_emerge/actions.py
+index 2bbe58d..44fa8a5 100644
+--- a/lib/_emerge/actions.py
++++ b/lib/_emerge/actions.py
+@@ -3518,9 +3518,13 @@ def run_action(emerge_config):
+             kwargs["pretend"] = "--pretend" in emerge_config.opts
+ 
+             try:
++                my_getbinpkg_refresh=True;
++                if not os.getenv('FORCE'):
++                    print('MADHU: run_action: setting binpkg_refresh=False')
++                    my_getbinpkg_refresh=False
+                 mytrees["bintree"].populate(
+                     getbinpkgs="--getbinpkg" in emerge_config.opts,
+-                    getbinpkg_refresh=True,
++                    getbinpkg_refresh=my_getbinpkg_refresh,
+                     verbose="--verbose" in emerge_config.opts,
+                     **kwargs,
+                 )
+diff --git a/lib/portage/dbapi/bintree.py b/lib/portage/dbapi/bintree.py
+index 43611bf..b45e708 100644
+--- a/lib/portage/dbapi/bintree.py
++++ b/lib/portage/dbapi/bintree.py
+@@ -962,6 +962,7 @@ class binarytree:
+                         noiselevel=-1,
+                     )
+                 else:
++                    #print('MADHU: calling populate.remote with getbinpkg_refresh = %d' % (getbinpkg_refresh));
+                     self._populate_remote(
+                         getbinpkg_refresh=getbinpkg_refresh,
+                         pretend=pretend,
+@@ -1420,8 +1421,11 @@ class binarytree:
+             proc = None
+             tmp_filename = None
+             try:
++                print('MADHU: get_binpkg_refresh = %d local_timestamp=%s download_timestamp=%d' %  (getbinpkg_refresh,  local_timestamp, download_timestamp))
+                 if local_timestamp and (repo.frozen or not getbinpkg_refresh):
++                    print('MADHU: UseCachedCopy')
+                     if repo.frozen:
++                        print('MADHU: UseCachedCopy(frozen)')
+                         raise UseCachedCopyOfRemoteIndex("frozen")
+                     raise UseCachedCopyOfRemoteIndex("")
+ 
+-- 
+2.34.1
+

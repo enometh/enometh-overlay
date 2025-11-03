@@ -1,0 +1,27 @@
+From 195154774b5e2c9321c7b3c13b81253aedaef288 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 27 Feb 2019 02:44:15 +0000
+Subject: [PATCH 2/4] estrip: preserve timestamps with elfutils strip
+
+---
+ bin/estrip | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/bin/estrip b/bin/estrip
+index 3b2e4df..f1ca54f 100755
+--- a/bin/estrip
++++ b/bin/estrip
+@@ -486,8 +486,8 @@ case $("${name_of[strip]}" --version 2>/dev/null) in
+ 	*GNU*) # sys-devel/binutils
+ 		# We'll leave out -R .note for now until we can check out the relevance
+ 		# of the section when it has the ALLOC flag set on it ...
+-		SAFE_STRIP_FLAGS="--strip-unneeded -N __gentoo_check_ldflags__"
+-		DEF_STRIP_FLAGS="-R .comment -R .GCC.command.line -R .note.gnu.gold-version"
++		SAFE_STRIP_FLAGS="-p --strip-unneeded -N __gentoo_check_ldflags__"
++		DEF_STRIP_FLAGS="-p -R .comment -R .GCC.command.line -R .note.gnu.gold-version"
+ 		SPLIT_STRIP_FLAGS=
+ esac
+ 
+-- 
+2.34.1
+
