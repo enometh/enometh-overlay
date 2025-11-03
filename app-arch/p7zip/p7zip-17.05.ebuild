@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -9,7 +9,7 @@
 #
 # ;madhu 17.05 230319 bring back wxwidgets
 
-EAPI=7
+EAPI=8
 
 WX_GTK_VER="3.1-gtk3"
 inherit multilib toolchain-funcs wrapper wxwidgets xdg
