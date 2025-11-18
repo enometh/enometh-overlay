@@ -1,0 +1,24 @@
+From 8ddc3380c1241b21e74b53e18099731e723a5978 Mon Sep 17 00:00:00 2001
+From: madhu <enometh@net.meer>
+Date: Tue, 18 Nov 2025 20:10:06 +0000
+Subject: [PATCH] src/decl.c: don't barf on CXCursor_LinkageSpec
+
+---
+ src/decl.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/decl.c b/src/decl.c
+index de18ee0..d78e779 100644
+--- a/src/decl.c
++++ b/src/decl.c
+@@ -849,6 +849,7 @@ resect_decl_result resect_decl_create(resect_translation_context context, CXCurs
+         case CXCursor_UnexposedDecl:
+         case CXCursor_MacroExpansion:
+         case CXCursor_InclusionDirective:
++    case CXCursor_LinkageSpec:
+             /* we might encounter exposed declarations within unexposed one, e.g. inside extern "C"/"C++" block */
+             clang_visitChildren(cursor, resect_visit_child_declaration, context);
+             return result;
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
