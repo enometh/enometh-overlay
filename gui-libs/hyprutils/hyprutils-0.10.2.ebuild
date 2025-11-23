@@ -13,6 +13,7 @@
 # ;madhu 250622 0.6.0 -> 0.7.1
 # ;madhu 250729 0.7.1 -> 0.8.1
 # ;madhu 251014 0.10.0
+# ;madhu 251123 0.10.2 no GTEST
 
 EAPI=8
 
@@ -39,3 +40,10 @@ DEPEND="
 	x11-libs/pixman
 "
 RDEPEND="${DEPEND}"
+
+src_configure() {
+	local mycmakeargs=(
+		-DBUILD_TESTING=OFF
+	)
+	cmake_src_configure
+}
