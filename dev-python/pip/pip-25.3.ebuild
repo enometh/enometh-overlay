@@ -1,7 +1,7 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2022-07-05 17:06:32 IST>
+#   Time-stamp: <>
 #   Touched: Tue Jul 05 15:27:30 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -10,15 +10,17 @@
 # ;madhu 220705 22.1.2 - pypi, no gentoo python baggage (except shell completions)
 # ;madhu 24040411 24.0
 # ;madhu 250813 25.1.1
+# ;madhu 251123 25.3 - distutils use flit
 
 EAPI=8
 
-DISTUTILS_USE_PEP517=setuptools
+DISTUTILS_USE_PEP517=flit
 PYTHON_COMPAT=( python3_{11..14} pypy3 )
 #PYTHON_COMPAT=( "${PYTHON_TESTED[@]}" )
 PYTHON_REQ_USE="ssl(+),threads(+)"
 
-inherit  distutils-r1 shell-completion pypi
+inherit  distutils-r1 pypi shell-completion
+FLIT_CORE_PV=3.12.0
 
 DESCRIPTION="The PyPA recommended tool for installing Python packages"
 HOMEPAGE="
@@ -41,10 +43,11 @@ KEYWORDS="~amd64 ~x86"
 IUSE="test test-rust"
 RESTRICT="!test? ( test )"
 
-PATCHES+=( "${FILESDIR}/pip-20.0.2-disable-system-install.patch" )
+PATCHES+=( "${FILESDIR}/pip-25.3-disable-system-install.patch" )
 
+# see src/pip/_vendor/vendor.txt
 RDEPEND="
-	>=dev-python/setuptools-70.3.0[${PYTHON_USEDEP}]
+	>=dev-python/flit-core-3.12.0[${PYTHON_USEDEP}]
 "
 BDEPEND="
 	${RDEPEND}
