@@ -1,5 +1,14 @@
 # Copyright 2023-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+#
+#   Time-stamp: <>
+#   Touched: Sun Nov 23 14:43:43 2025 +0530 <enometh@net.meer>
+#   Bugs-To: enometh@net.meer
+#   Status: Experimental.  Do not redistribute
+#   Copyright (C) 2025 Madhu.  All Rights Reserved.
+#
+# ;madhu 250106 0.6.0
+# ;madhu 251123 0.6.6
 
 EAPI=8
 
@@ -16,4 +25,4 @@ KEYWORDS="~amd64"
 RDEPEND=">=gui-libs/hyprutils-0.1.1:="
 DEPEND="${RDEPEND}"
 
-PATCHES=( ${FILESDIR}/hyprlang-0.6.0-use-fmt-instead-of-c26.patch )
+# PATCHES=( ${FILESDIR}/hyprlang-0.6.0-use-fmt-instead-of-c26.patch )
