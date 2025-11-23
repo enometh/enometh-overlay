@@ -1,0 +1,37 @@
+From 8cdb95f0b162c6cf9d82cdcad846507068b1a77d Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 10 Aug 2022 22:48:44 +0530
+Subject: [PATCH 4/8] xpra/platform/xposix/keyboard.py: fix str byte conversion
+ error
+
+   v = self.get_xkb_rules_names_property()
+  File "/usr/lib/python3.9/site-packages/xpra/platform/xposix/keyboard.py", line 1
+31, in get_xkb_rules_names_property
+    xkb_rules_names = prop.split("\0")
+TypeError: a bytes-like object is required, not 'str'
+---
+ xpra/platform/posix/keyboard.py | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/xpra/platform/posix/keyboard.py b/xpra/platform/posix/keyboard.py
+index 4c59768b7..e6a9efa18 100644
+--- a/xpra/platform/posix/keyboard.py
++++ b/xpra/platform/posix/keyboard.py
+@@ -182,6 +182,14 @@ class Keyboard(KeyboardBase):
+         with xlog:
+             prop = get_X11_root_property("_XKB_RULES_NAMES", "STRING")
+             log("get_xkb_rules_names_property() _XKB_RULES_NAMES=%s", prop)
++            print("MADHU: get_xkb_rules_names_property() _XKB_RULES_NAMES=%s" % prop)
++            if (prop == str(prop)):
++                pass
++            else:
++                tmp_prop = prop
++                prop = prop.decode("utf-8")
++                print("MADHU: converted %s to %s" % (tmp_prop, prop))
++
+             #ie: 'evdev\x00pc104\x00gb,us\x00,\x00\x00'
+             if prop:
+                 xkb_rules_names = bytestostr(prop).split("\0")
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

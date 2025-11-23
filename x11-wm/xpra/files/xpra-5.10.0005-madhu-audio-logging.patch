@@ -1,0 +1,78 @@
+From 6a1992a6e714ebda6f9eee373d18706830763a42 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Mon, 23 May 2022 22:59:04 +0530
+Subject: [PATCH 5/8] madhu: audio logging
+
+---
+ xpra/audio/pulseaudio/pulseaudio_common_util.py | 1 +
+ xpra/audio/sink.py                              | 5 +++--
+ xpra/client/mixins/audio.py                     | 2 +-
+ xpra/log.py                                     | 1 +
+ 4 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/xpra/audio/pulseaudio/pulseaudio_common_util.py b/xpra/audio/pulseaudio/pulseaudio_common_util.py
+index 0a70758eb..2c5114186 100755
+--- a/xpra/audio/pulseaudio/pulseaudio_common_util.py
++++ b/xpra/audio/pulseaudio/pulseaudio_common_util.py
+@@ -12,6 +12,7 @@ from xpra.os_util import bytestostr
+ from xpra.log import Logger
+ log = Logger("audio")
+ 
++print('madhu: log=%s' % log)
+ 
+ def get_x11_property(atom_name:str) -> bytes:
+     from xpra.os_util import OSX, POSIX
+diff --git a/xpra/audio/sink.py b/xpra/audio/sink.py
+index 3474fc222..33e2c1268 100755
+--- a/xpra/audio/sink.py
++++ b/xpra/audio/sink.py
+@@ -216,6 +216,7 @@ class AudioSink(AudioPipeline):
+         if self.queue_state=="starting" or 1000*(now-self.start_time)<GRACE_PERIOD:
+             gstlog("ignoring underrun during startup")
+             return True
++        log("MADHU: underrun")
+         self.underruns += 1
+         gstlog("queue_underrun")
+         self.queue_state = "underrun"
+@@ -532,11 +533,11 @@ def main() -> int:
+             if qtime<=0:
+                 log.info("underrun (end of stream)")
+                 start_thread(ss.stop, "stop", daemon=True)
+-                GLib.timeout_add(500, glib_mainloop.quit)
++                GLib.timeout_add(1500, glib_mainloop.quit)
+                 return False
+             return True
+-        GLib.timeout_add(1000, check_for_end)
+         GLib.idle_add(ss.add_data, data)
++        GLib.timeout_add(1000, check_for_end)
+ 
+         glib_mainloop.run()
+         return 0
+diff --git a/xpra/client/mixins/audio.py b/xpra/client/mixins/audio.py
+index b01407698..f41a69dbe 100644
+--- a/xpra/client/mixins/audio.py
++++ b/xpra/client/mixins/audio.py
+@@ -247,7 +247,7 @@ class AudioClient(StubClientMixin):
+         self.server_audio_encoders = c.strtupleget(f"{prefix}encoders")
+         self.server_audio_receive = c.boolget(f"{prefix}receive")
+         self.server_audio_send = c.boolget(f"{prefix}send")
+-        log("pulseaudio id=%s, server=%s, audio decoders=%s, audio encoders=%s, receive=%s, send=%s",
++        log("AUDIO.PY: PARSE_SERVER_CAPABILITIES: MADHU: pulseaudio id=%s, server=%s, sound decoders=%s, sound encoders=%s, receive=%s, send=%s",
+                  self.server_pulseaudio_id, self.server_pulseaudio_server,
+                  csv(self.server_audio_decoders), csv(self.server_audio_encoders),
+                  self.server_audio_receive, self.server_audio_send)
+diff --git a/xpra/log.py b/xpra/log.py
+index 2341a69f3..edd5b6413 100644
+--- a/xpra/log.py
++++ b/xpra/log.py
+@@ -21,6 +21,7 @@ if os.name!="posix" or os.getuid()!=0:
+     DEBUG_MODULES = tuple(x.strip() for x in os.environ.get("XPRA_DEBUG_MODULES", "").split(",") if x.strip())
+ NOPREFIX_FORMAT : str = "%(message)s"
+ 
++print('MADHU: log.py ', DEBUG_MODULES)
+ 
+ logging.basicConfig(format=LOG_FORMAT)
+ logging.root.setLevel(logging.INFO)
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

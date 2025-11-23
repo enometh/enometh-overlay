@@ -1,18 +1,18 @@
-From 0cc532de104ef8ef9c327d059dd20d673fc9a3f4 Mon Sep 17 00:00:00 2001
+From 4245ba41752717e208620ca8f629b7d8e43a9cb0 Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Thu, 26 May 2022 11:39:20 +0530
-Subject: [PATCH 3/5] xpra/sound/src.py: fix monitor_devices is a dict, not an
+Subject: [PATCH 3/8] xpra/sound/src.py: fix monitor_devices is a dict, not an
  array
 
 ---
- xpra/sound/src.py | 4 ++--
+ xpra/audio/src.py | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/xpra/sound/src.py b/xpra/sound/src.py
-index 4c0ac30..9cdc7cf 100755
---- a/xpra/sound/src.py
-+++ b/xpra/sound/src.py
-@@ -59,14 +59,14 @@ class SoundSource(SoundPipeline):
+diff --git a/xpra/audio/src.py b/xpra/audio/src.py
+index 1d91441ac..4317e6d09 100755
+--- a/xpra/audio/src.py
++++ b/xpra/audio/src.py
+@@ -59,14 +59,14 @@ class AudioSource(AudioPipeline):
              except ImportError as e:
                  log.warn("Warning: pulseaudio is not available!")
                  log.warn(" %s", e)
@@ -30,5 +30,5 @@ index 4c0ac30..9cdc7cf 100755
                  log.info(" '%s'", monitor_device)
                  src_type = "pulsesrc"
 -- 
-2.35.1.dirty
+2.49.0.9.gd50a5e8939.dirty
 

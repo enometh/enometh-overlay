@@ -1,0 +1,27 @@
+From a79166c9e14e500335c37f1fe8de1a87586e5983 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 24 May 2022 01:24:23 +0530
+Subject: [PATCH 2/8] xpra/sound/sink.py: (SoundSink.__init__): start off with
+ a non-zero volume
+
+application doesn't show up on pulse playback
+---
+ xpra/audio/sink.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/xpra/audio/sink.py b/xpra/audio/sink.py
+index d26501406..3474fc222 100755
+--- a/xpra/audio/sink.py
++++ b/xpra/audio/sink.py
+@@ -119,7 +119,7 @@ class AudioSink(AudioPipeline):
+                 "max-size-time"         : QUEUE_TIME,
+                 "leaky"                 : QUEUE_LEAK,
+                 }))
+-        pipeline_els.append(get_element_str("volume", {"name" : "volume", "volume" : 0}))
++        pipeline_els.append(get_element_str("volume", {"name" : "volume", "volume" : 0.1}))
+         if CLOCK_SYNC:
+             if not has_plugins("clocksync"):
+                 log.warn("Warning: cannot enable clocksync, element not found")
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

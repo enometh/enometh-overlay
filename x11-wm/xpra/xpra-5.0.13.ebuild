@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <2024-10-02 08:09:15 IST>
@@ -14,6 +14,7 @@
 # ;madhu 231007 5.0.6 -- use PYTHON_TARGETS=python3_9 PYTHON_SINGLE_TARGET=python3_9
 # ;madhu 231201 5.0.4 - cython update.
 # ;madhu 241002 5.0.11 - v5.0.10-19-gb33340f29, "beta", python3.9 only, (vs 6.0ebuild): ffmpeg not gone, "test" untested, todo test minimal, no avif_decoder, todo: disable asan, xdummy forced
+# ;madhu 251123 5.0.13 v5.0.12-22-g4816c2d86 use single+shallow
 EAPI=8
 USE_GIT=true
 
@@ -23,7 +24,9 @@ if ${USE_GIT} ||  [[ ${PV} = 9999* ]]; then
 #	EGIT_REPO_URI="file:///7/gtk/xpra/.git"
 # copy shallow manually
 #sudo -u portage cp /7/gtk/xpra/.git/shallow /gentoo/git3-src/7_gtk_xpra_.git/shallow
-	EGIT_BRANCH=madhu-5.0.10
+	EGIT_CLONE_TYPE=single
+	EGIT_BRANCH=v5.x
+	EGIT_COMMIT=4816c2d86d102d16e460d40b9f635b743d61af89
 	KEYWORDS="~amd64 ~x86"
 else
 #	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
@@ -43,7 +46,8 @@ DESCRIPTION="X Persistent Remote Apps (xpra) and Partitioning WM (parti) based o
 HOMEPAGE="https://xpra.org/"
 LICENSE="GPL-2 BSD"
 SLOT="0"
-IUSE="+X avif brotli +client +clipboard crypt cuda csc cups dbus debug doc examples gstreamer +gtk3  jpeg html ibus +lz4 lzo mdns minimal oauth opengl openh264 pinentry qrcode pulseaudio +server sound systemd test +trayicon udev vpx webcam webp x264 xdg xinerama ffmpeg"
+# minimal
+IUSE="+X avif brotli +client +clipboard crypt cuda csc cups dbus debug doc examples ffmpeg gstreamer +gtk3  jpeg html ibus +lz4 lzo mdns oauth opengl openh264 pinentry qrcode pulseaudio +server sound systemd test +trayicon udev vpx webcam webp x264 xdg xinerama"
 IUSE+=" video_cards_nvidia"
 RESTRICT="!test? ( test )"
 
@@ -108,7 +112,7 @@ DEPEND="
 		media-libs/gstreamer:1.0
 		media-libs/gst-plugins-base:1.0
 	)
-	vpx? ( media-libs/libvpx )
+	vpx? ( media-libs/libvpx media-video/ffmpeg )
 	webp? ( media-libs/libwebp )
 	X? (
 		x11-apps/xrandr
@@ -132,7 +136,7 @@ RDEPEND="
 		lz4? ( dev-python/lz4[${PYTHON_USEDEP}] )
 		lzo? ( >=dev-python/python-lzo-0.7.0[${PYTHON_USEDEP}] )
 		oauth? ( dev-python/oauthlib[${PYTHON_USEDEP}] )
-		opengl? ( dev-python/pyopengl_accelerate[${PYTHON_USEDEP}] )
+		opengl? ( dev-python/pyopengl-accelerate[${PYTHON_USEDEP}] )
 		webcam? (
 			dev-python/numpy[${PYTHON_USEDEP}]
 			dev-python/pyinotify[${PYTHON_USEDEP}]
@@ -164,19 +168,28 @@ BDEPEND="
 		dev-python/pip[${PYTHON_USEDEP}]
 	')
 	virtual/pkgconfig
-	doc? ( app-text/pandoc )
+	doc? ( virtual/pandoc )
 "
 
-if ${USE_GIT}; then
-	:
-else
-PATCHES=(
-	"${FILESDIR}"/${PN}-9999-xdummy.patch
-)
-fi
+#if ${USE_GIT}; then
+#	:
+#else
+#PATCHES=(
+#	"${FILESDIR}"/${PN}-9999-xdummy.patch
+#)
+#fi
 
-PATCHES+=(
+PATCHES=(
+	"${FILESDIR}"/xpra-5.10.0001.xpra-server-source-webcam_mixin.py-WebCamMixin.proce.patch
+	"${FILESDIR}"/xpra-5.10.0002.xpra-sound-sink.py-SoundSink.__init__-start-off-with.patch
+	"${FILESDIR}"/xpra-5.10.0003.xpra-sound-src.py-fix-monitor_devices-is-a-dict-not-.patch
+	"${FILESDIR}"/xpra-5.10.0004-xpra-platform-xposix-keyboard.py-fix-str-byte-conver.patch
+	"${FILESDIR}"/xpra-5.10.0005-madhu-audio-logging.patch
+	"${FILESDIR}"/${PN}-9999-xdummy.patch
+	"${FILESDIR}"/xpra-5.10.0007-xpra-client-mixins-network_state.py-NMClient-don-t-f.patch
+	"${FILESDIR}"/xpra-5.10.0008-xpra-client-mixins-window_manager.py-import-subproce.patch
 #	"${FILESDIR}/${PN}-9999-pep517.patch"
+	"${FILESDIR}"/xpra-5.10.008-xpra-net-ssh-agent.py-setup_client_ssh_agent_socket-.patch
 )
 
 src_prepare() {
@@ -196,13 +209,6 @@ python_prepare_all() {
 
 	sed -r -e "/\bdoc_dir =/s:/${PN}/\":/${PF}/html\":" \
 		-i setup.py || die
-
-	if use minimal; then
-		sed -r -e '/pam_ENABLED/s/DEFAULT/False/' \
-			-e 's/^(xdg_open)_ENABLED = .*/\1_ENABLED = False/' \
-			-i setup.py || die
-		PATCHES+=( "${FILESDIR}"/${PN}-4.4.6_xpra-4.4.6_minimal-features.patch )
-	fi
 }
 
 python_configure_all() {
@@ -217,10 +223,12 @@ python_configure_all() {
 		"$(use_with client)"
 		"$(use_with clipboard)"
 		"$(use_with csc csc_cython)"
+		"$(use_with csc csc_swscale)"
 		--without-csc_libyuv
 		# "$(use_with csc csc_libyuv)" # https://chromium.googlesource.com/libyuv/libyuv
 		"$(use_with cuda cuda_rebuild)"
 		"$(use_with cuda cuda_kernels)"
+		"$(use_with cups printing)"
 		"$(use_with dbus)"
 		"$(use_with debug)"
 		"$(use_with doc docs)"
@@ -242,7 +250,6 @@ python_configure_all() {
 		# "$(use_with nvenc nvfbc)" # NVIDIA Capture SDK
 		"$(use_with opengl)"
 		"$(use_with openh264)"
-		"$(use_with cups printing)"
 		--without-pandoc_lua
 		"$(use_with qrcode qrencode)"
 		--without-quic

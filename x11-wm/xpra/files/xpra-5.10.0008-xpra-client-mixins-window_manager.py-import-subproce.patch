@@ -1,0 +1,25 @@
+From 428480cde6cbd9913305db4ce4a4923f64fe4090 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 8 Oct 2023 00:44:15 +0530
+Subject: [PATCH 8/8] xpra/client/mixins/window_manager.py: import
+ subprocess.TimoutExpired
+
+---
+ xpra/client/mixins/window_manager.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xpra/client/mixins/window_manager.py b/xpra/client/mixins/window_manager.py
+index bf44ccf7c..9ecdd092b 100644
+--- a/xpra/client/mixins/window_manager.py
++++ b/xpra/client/mixins/window_manager.py
+@@ -17,6 +17,7 @@ from time import sleep, time, monotonic
+ from queue import Queue
+ from threading import Thread
+ from typing import Dict, List, Tuple, Any, Type, Callable, Optional
++from subprocess import TimeoutExpired
+ from gi.repository import GLib  # @UnresolvedImport
+ 
+ from xpra.platform.gui import (
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

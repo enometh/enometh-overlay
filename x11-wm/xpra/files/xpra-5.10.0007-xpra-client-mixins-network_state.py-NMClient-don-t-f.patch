@@ -1,0 +1,26 @@
+From 789119c8956e6dc51b9cd240a435a0699956cd2d Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sat, 7 Oct 2023 23:15:32 +0530
+Subject: [PATCH 7/8] xpra/client/mixins/network_state.py: (NMClient): don't
+ fail without system dbus
+
+[251123] - fixed in 276f8c0f?
+---
+ xpra/client/mixins/network_state.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/xpra/client/mixins/network_state.py b/xpra/client/mixins/network_state.py
+index d24ff27af..355cf8814 100644
+--- a/xpra/client/mixins/network_state.py
++++ b/xpra/client/mixins/network_state.py
+@@ -59,6 +59,7 @@ def get_NM_adapter_type(device_name) -> str:
+     except (ImportError, ValueError):
+         log("get_NM_adapter_type() no network-manager bindings")
+         return ""
++    nmclient = None
+     try:
+         nmclient = NM.Client.new(None)
+     except Exception as e:
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
