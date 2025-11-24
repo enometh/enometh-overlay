@@ -1,7 +1,7 @@
 # Copyright 1999-2025 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2024-10-02 08:09:15 IST>
+#   Time-stamp: <>
 #   Touched: Mon Dec 19 12:52:47 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -15,6 +15,7 @@
 # ;madhu 231201 5.0.4 - cython update.
 # ;madhu 241002 5.0.11 - v5.0.10-19-gb33340f29, "beta", python3.9 only, (vs 6.0ebuild): ffmpeg not gone, "test" untested, todo test minimal, no avif_decoder, todo: disable asan, xdummy forced
 # ;madhu 251123 5.0.13 v5.0.12-22-g4816c2d86 use single+shallow
+# ;madhu 251124 5.1.3 v5.1.3-8-gb40bb7717 - correct stable branch, disable xdummy by default (it can be enabled with --xvfb=), and it results in click selection
 EAPI=8
 USE_GIT=true
 
@@ -25,8 +26,8 @@ if ${USE_GIT} ||  [[ ${PV} = 9999* ]]; then
 # copy shallow manually
 #sudo -u portage cp /7/gtk/xpra/.git/shallow /gentoo/git3-src/7_gtk_xpra_.git/shallow
 	EGIT_CLONE_TYPE=single
-	EGIT_BRANCH=v5.x
-	EGIT_COMMIT=4816c2d86d102d16e460d40b9f635b743d61af89
+	EGIT_BRANCH=v5.1.x
+	EGIT_COMMIT=b40bb7717c161dcc556faf1f8601f78971ab5ad8
 	KEYWORDS="~amd64 ~x86"
 else
 #	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
@@ -180,16 +181,15 @@ BDEPEND="
 #fi
 
 PATCHES=(
-	"${FILESDIR}"/xpra-5.10.0001.xpra-server-source-webcam_mixin.py-WebCamMixin.proce.patch
-	"${FILESDIR}"/xpra-5.10.0002.xpra-sound-sink.py-SoundSink.__init__-start-off-with.patch
-	"${FILESDIR}"/xpra-5.10.0003.xpra-sound-src.py-fix-monitor_devices-is-a-dict-not-.patch
-	"${FILESDIR}"/xpra-5.10.0004-xpra-platform-xposix-keyboard.py-fix-str-byte-conver.patch
-	"${FILESDIR}"/xpra-5.10.0005-madhu-audio-logging.patch
+	"${FILESDIR}"/xpra-5.1.0001.xpra-server-source-webcam_mixin.py-WebCamMixin.proce.patch
+	"${FILESDIR}"/xpra-5.1.0002.xpra-sound-sink.py-SoundSink.__init__-start-off-with.patch
+	"${FILESDIR}"/xpra-5.1.0003.xpra-sound-src.py-fix-monitor_devices-is-a-dict-not-.patch
+	"${FILESDIR}"/xpra-5.1.0004-xpra-platform-xposix-keyboard.py-fix-str-byte-conver.patch
+	"${FILESDIR}"/xpra-5.1.0005-madhu-audio-logging.patch
 	"${FILESDIR}"/${PN}-9999-xdummy.patch
-	"${FILESDIR}"/xpra-5.10.0007-xpra-client-mixins-network_state.py-NMClient-don-t-f.patch
-	"${FILESDIR}"/xpra-5.10.0008-xpra-client-mixins-window_manager.py-import-subproce.patch
+	"${FILESDIR}"/xpra-5.1.0007-xpra-client-mixins-network_state.py-NMClient-don-t-f.patch
+	"${FILESDIR}"/xpra-5.1.0008-xpra-client-mixins-window_manager.py-import-subproce.patch
 #	"${FILESDIR}/${PN}-9999-pep517.patch"
-	"${FILESDIR}"/xpra-5.10.008-xpra-net-ssh-agent.py-setup_client_ssh_agent_socket-.patch
 )
 
 src_prepare() {
@@ -262,7 +262,8 @@ python_configure_all() {
 		"$(use_with webcam)"
 		"$(use_with webp)"
 		"$(use_with X x11)"
-		"$(use_with X Xdummy)"
+#		"$(use_with X Xdummy)"
+		--without-Xdummy
 
 		$(use_with ffmpeg dec_avcodec2)
 		$(use_with ffmpeg enc_ffmpeg)
