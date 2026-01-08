@@ -1,7 +1,7 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2023-02-08 18:28:19 IST>
+#   Time-stamp: <>
 #   Touched: Sun Jun 05 15:53:34 2022 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -10,21 +10,21 @@
 # ;madhu 220605 - 1.27 -> 1.28, use local ell
 # ;madhu 221112 - 1.30
 # ;madhu 230208 - 2.3
-# ;madhu 240324 - 2.16
+# ;madhu 250120 - 3.3
 
 EAPI=8
 inherit flag-o-matic linux-info systemd
 
-#Set this variable to the required external ell version, and USE=external-ell
-ELL_REQ="0.63"
+#Set this variable to the required external ell version
+ELL_REQ="0.80"
 
 if [[ ${PV} == *9999* ]]; then
 	inherit autotools git-r3
 	IWD_EGIT_REPO_URI="https://git.kernel.org/pub/scm/network/wireless/iwd.git"
 	ELL_EGIT_REPO_URI="https://git.kernel.org/pub/scm/libs/ell/ell.git"
 else
-	SRC_URI="https://www.kernel.org/pub/linux/network/wireless/${P}.tar.xz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~ia64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+	SRC_URI="https://mirrors.edge.kernel.org/pub/linux/network/wireless/${P}.tar.xz"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
 	MYRST2MAN="RST2MAN=:"
 fi
 
@@ -94,7 +94,7 @@ pkg_setup() {
 		WARNING_CRYPTO_AES_NI_INTEL="CRYPTO_AES_NI_INTEL: enable for increased performance"
 	fi
 
-	if use cpu_flags_x86_ssse3 && use amd64; then
+	if use cpu_flags_x86_ssse3 && use amd64 && kernel_is -lt 6 17; then
 		CONFIG_CHECK="${CONFIG_CHECK} ~CRYPTO_SHA1_SSSE3 ~CRYPTO_SHA256_SSSE3 ~CRYPTO_SHA512_SSSE3"
 		WARNING_CRYPTO_SHA1_SSSE3="CRYPTO_SHA1_SSSE3: enable for increased performance"
 		WARNING_CRYPTO_SHA256_SSSE3="CRYPTO_SHA256_SSSE3: enable for increased performance"
