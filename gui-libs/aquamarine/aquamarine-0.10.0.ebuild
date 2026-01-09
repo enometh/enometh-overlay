@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -14,6 +14,7 @@
 # ;madhu 250729 - 0.9.2
 # ;madhu 251014 - 0.9.3
 # ;madhu 251014 - 0.9.5
+# ;madhu 260109 - 0.10.0
 
 EAPI=8
 
