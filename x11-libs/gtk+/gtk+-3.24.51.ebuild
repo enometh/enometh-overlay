@@ -1,7 +1,7 @@
-# Copyright 1999-2023 Gentoo Authors and Martin V\"ath
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2020-10-22 22:26:06 IST>
+#   Time-stamp: <>
 #   Touched: Thu Oct 22 22:23:46 2020 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -12,9 +12,11 @@
 # ;madhu 210116 3.24.24-r1
 # ;madhu 211005 3.24.29
 # ;madhu 230902 3.24.38 -- from mv-overlay, fix sysprof-capture-3 in meson.build to say static: false to avoid relocation link failures with libz.a
+# ;madhu 260125 3.24.51 (upstream dropped + in 3.24.48). needs a patch to meson.eclass to generate an entry for cusp-config when creating file it passes to meson with --cross-file.
 
 EAPI=8
 
+GNOME_ORG_MODULE=gtk
 inherit gnome2 meson-multilib multilib toolchain-funcs virtualx
 
 DESCRIPTION="Gimp ToolKit +"
@@ -31,7 +33,7 @@ REQUIRED_USE="
 "
 RESTRICT="!test? ( test )"
 
-KEYWORDS="~alpha amd64 arm arm64 ~hppa ~ia64 ~loong ~mips ppc ppc64 ~riscv sparc x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-solaris"
+KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~mips ppc ppc64 ~riscv ~s390 ~sparc x86 ~x64-solaris"
 
 COMMON_DEPEND="
 	>=dev-libs/fribidi-0.19.7[${MULTILIB_USEDEP}]
@@ -48,16 +50,14 @@ COMMON_DEPEND="
 	cloudproviders? ( net-libs/libcloudproviders[${MULTILIB_USEDEP}] )
 	colord? ( >=x11-misc/colord-0.1.9:0=[${MULTILIB_USEDEP}] )
 	cups? ( >=net-print/cups-2.0[${MULTILIB_USEDEP}] )
-	introspection? ( >=dev-libs/gobject-introspection-1.39:= )
-	sysprof? ( >=dev-util/sysprof-capture-3.33.2:3[${MULTILIB_USEDEP}] )
+	introspection? ( >=dev-libs/gobject-introspection-1.82.0-r2:= )
 	wayland? (
 		>=dev-libs/wayland-1.14.91[${MULTILIB_USEDEP}]
-		>=dev-libs/wayland-protocols-1.21
+		>=dev-libs/wayland-protocols-1.32
 		media-libs/mesa[wayland,${MULTILIB_USEDEP}]
 		>=x11-libs/libxkbcommon-0.2[${MULTILIB_USEDEP}]
 	)
 	X? (
-		atk-bridge? ( >=app-accessibility/at-spi2-atk-2.15.1[${MULTILIB_USEDEP}] )
 		media-libs/libglvnd[X(+),${MULTILIB_USEDEP}]
 		x11-libs/libX11[${MULTILIB_USEDEP}]
 		x11-libs/libXcomposite[${MULTILIB_USEDEP}]
@@ -71,17 +71,15 @@ COMMON_DEPEND="
 	)
 "
 DEPEND="${COMMON_DEPEND}
-	test? (
-		media-fonts/font-cursor-misc
-		media-fonts/font-misc-misc
-	)
+	atk-bridge? ( 	>=app-accessibility/at-spi2-core-2.46.0[introspection?,${MULTILIB_USEDEP}] )
+	sysprof? ( >=dev-util/sysprof-capture-3.33.2:4[${MULTILIB_USEDEP}] )
 	X? ( x11-base/xorg-proto )
 "
 RDEPEND="${COMMON_DEPEND}
-	atk-bridge? ( >=app-accessibility/at-spi2-core-2.46.0[introspection(+)?,${MULTILIB_USEDEP}] )
 	>=dev-util/gtk-update-icon-cache-3
 "
 # librsvg for svg icons (PDEPEND to avoid circular dep), bug #547710
+#;madhu 260125 untested - have to remove adwaita-icon-theme to test
 PDEPEND="
 	adwaita-icon-theme? ( gnome-base/librsvg[${MULTILIB_USEDEP}]
 	  >=x11-themes/adwaita-icon-theme-3.14 )
@@ -93,9 +91,9 @@ BDEPEND="
 	app-text/docbook-xsl-stylesheets
 	dev-libs/gobject-introspection-common
 	dev-libs/libxslt
-	>=dev-util/gdbus-codegen-2.48
+	>=dev-util/gdbus-codegen-2.80.5-r1
 	dev-util/glib-utils
-	>=dev-util/gtk-doc-am-1.20
+	>=dev-build/gtk-doc-am-1.20
 	wayland? ( dev-util/wayland-scanner )
 	>=sys-devel/gettext-0.19.7
 	virtual/pkgconfig
@@ -122,6 +120,17 @@ PATCHES=(
 
 src_prepare() {
 	default
+
+	# kill po
+	sed -i -e "s/^subdir('po')/#subdir('po')/g" meson.build
+	sed -i -e "s/^subdir('po-properties')/#subdir('po-properties')/g" meson.build
+	sed -i '1035,1057d' gtk/meson.build
+
+	# Force sysprof-capture-4 instead of checking sysprof-capture-3 first; either is
+	# fine as far as deps are concerned, as it static links, but sysprof-capture-3
+	# links to glib which would be done statically if there's glib[static-libs],
+	# making the whole of gtk+ static link to glib instead of dynamic linking to glib.
+#	sed -i -e "s/'sysprof-capture-3'/'sysprof-capture-4'/g" meson.build || die
 
 	# The border-image-excess-size.ui test is known to fail on big-endian platforms
 	# See https://gitlab.gnome.org/GNOME/gtk/-/issues/5904
@@ -165,7 +174,7 @@ multilib_src_compile() {
 }
 
 multilib_src_test() {
-	virtx dbus-run-session meson test -C "${BUILD_DIR}" || die
+	virtx dbus-run-session meson test -C "${BUILD_DIR}" --timeout-multiplier 4 || die
 }
 
 multilib_src_install() {

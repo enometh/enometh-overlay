@@ -1,11 +1,30 @@
---- gtk+-3.24.38-orig/meson.build	2023-05-22 07:52:08.000000000 +0530
-+++ gtk+-3.24.38/meson.build	2023-09-03 00:24:14.661084083 +0530
-@@ -832,7 +832,7 @@
+From 9a2c4742f8df71ef361b7d1fb64c6fc950ba6c51 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 3 Sep 2023 00:24:14 +0530
+Subject: [PATCH] meson.build: from mv-overlay, fix sysprof-capture-3 in
+ meson.build to say static: false to avoid relocation link failures with
+ libz.a
+
+---
+ meson.build | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 97753d5..fe0533c 100644
+--- a/meson.build
++++ b/meson.build
+@@ -840,9 +840,9 @@ endif
  
  profiler_enabled = get_option('profiler')
  if profiler_enabled
--  profiler_dep = dependency('sysprof-capture-3', static: true, required: true)
-+  profiler_dep = dependency('sysprof-capture-3', static: false, required: true)
+-  profiler_dep = dependency('sysprof-capture-3', static: true, required: false)
++  profiler_dep = dependency('sysprof-capture-3', static: false, required: false)
+   if not profiler_dep.found()
+-    profiler_dep = dependency('sysprof-capture-4', static: true, required: false)
++    profiler_dep = dependency('sysprof-capture-4', static: false, required: false)
+   endif
    if profiler_dep.found()
      cdata.set('HAVE_SYSPROF_CAPTURE', profiler_dep.found())
-   else
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
