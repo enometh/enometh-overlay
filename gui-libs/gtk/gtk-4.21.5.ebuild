@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -18,14 +18,15 @@
 # ;madhu 231210 4.13.3
 # ;madhu 240623 4.15.2 ffmpeg gone
 # ;madhu 250710 4.19.3
+# ;madhu 260125 4.21.5
 
 EAPI=8
 
 USE_GIT=true
-MY_COMMIT=8698d66ff72e39f5763eb3f278711b3e98a8cdfa
+MY_COMMIT=034939ff263da88df479ace60edca974687dbb38
 
 PYTHON_COMPAT=( python3_{11..14} )
-inherit gnome.org gnome2-utils meson optfeature python-any-r1 toolchain-funcs virtualx xdg
+inherit flag-o-matic gnome.org gnome2-utils meson optfeature python-any-r1 toolchain-funcs virtualx xdg
 
 DESCRIPTION="GTK is a multi-platform toolkit for creating graphical user interfaces"
 HOMEPAGE="https://www.gtk.org/ https://gitlab.gnome.org/GNOME/gtk/"
@@ -45,15 +46,20 @@ if ${USE_GIT}; then
 	EGIT_CLONE_TYPE=shallow
 fi
 
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
-IUSE="accessibility aqua broadway cloudproviders colord cups examples gstreamer +introspection sysprof test vulkan wayland +X cpu_flags_x86_f16c gtk-doc tracker debug"
+KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~sparc ~x86"
+IUSE="accessibility aqua broadway cloudproviders colord cups examples gstreamer gtk-doc +introspection sysprof test vulkan wayland +X cpu_flags_x86_f16c  tracker debug"
 
 #	examples? ( gnome-base/librsvg:2.50:2 )
 #	vulkan? ( >=media-libs/vulkan-loader-1.3:=[wayland?,X?] )
+#	X?(	>=app-accessibility/at-spi2-core-2.46.0 )
 
 # TODO: Optional gst build dep on >=gst-plugins-base-1.23.1, so depend on it once we can
+# librsvg for svg icons and "!8541 Use librsvg for symbolics that we
+#     can't parse ourselves" (formerly a PDEPEND to avoid circular dep
+#     on wd40 profiles with librsvg[tools]), bug #547710
+# NOTE: Support was added to build against both cups2 and cups3
 COMMON_DEPEND="
-	>=dev-libs/glib-2.76.0:2
+	>=dev-libs/glib-2.82:2
 	>=x11-libs/cairo-1.18.2[aqua?,glib,svg(+),X?]
 	>=x11-libs/pango-1.56.0[introspection?]
 	>=dev-libs/fribidi-1.0.6
@@ -70,7 +76,6 @@ COMMON_DEPEND="
 	cloudproviders? ( net-libs/libcloudproviders )
 	colord? ( >=x11-misc/colord-0.1.9:0= )
 	cups? ( >=net-print/cups-2.0 )
-	examples? ( gnome-base/librsvg:2.50 )
 	gstreamer? (
 		>=media-libs/gstreamer-1.24.0:1.0
 		>=media-libs/gst-plugins-bad-1.24.0:1.0
@@ -79,16 +84,18 @@ COMMON_DEPEND="
 			>=media-libs/gst-plugins-base-1.24.0:1.0[opengl]
 		)
 	)
-	introspection? ( >=dev-libs/gobject-introspection-1.76:= )
-	vulkan? ( media-libs/vulkan-loader:= )
+	introspection? ( >=dev-libs/gobject-introspection-1.84:= )
+	vulkan? (
+		>=media-libs/vulkan-loader-1.3:=[wayland?,X?]
+		media-libs/mesa[vulkan]
+		)
 	wayland? (
-		>=dev-libs/wayland-1.23.0
-		>=dev-libs/wayland-protocols-1.41
+		>=dev-libs/wayland-1.24.0
+		>=dev-libs/wayland-protocols-1.44
 		media-libs/mesa[wayland]
 		>=x11-libs/libxkbcommon-0.2
 	)
 	X? (
-		>=app-accessibility/at-spi2-core-2.46.0
 		media-libs/fontconfig
 		media-libs/mesa[X(+)]
 		x11-libs/libX11
@@ -112,13 +119,11 @@ DEPEND="${COMMON_DEPEND}
 RDEPEND="${COMMON_DEPEND}
 	>=dev-util/gtk-update-icon-cache-3
 "
-# librsvg for svg icons (PDEPEND to avoid circular dep on wd40 profiles with librsvg[tools]), bug #547710
-# gnome-base/librsvg:2.5
 PDEPEND="
-	gnome-base/librsvg
 	>=x11-themes/adwaita-icon-theme-3.14
 "
 BDEPEND="
+	>=dev-build/meson-1.5.0
 	dev-libs/gobject-introspection-common
 	introspection? (
 		${PYTHON_DEPS}
@@ -127,11 +132,12 @@ BDEPEND="
 		')
 	)
 	dev-python/docutils
-	>=dev-libs/glib-2.80
+	>=dev-libs/glib-2.82
 	>=dev-util/gdbus-codegen-2.48
 	dev-util/glib-utils
 	>=sys-devel/gettext-0.19.7
 	virtual/pkgconfig
+	gtk-doc? ( dev-util/gi-docgen )
 	vulkan? ( media-libs/shaderc )
 	wayland? (
 		dev-util/wayland-scanner
@@ -183,6 +189,8 @@ fi
 }
 
 src_configure() {
+	use x86 && append-flags -DDISABLE_X64=1 #943705 https://gitlab.gnome.org/GNOME/gtk/-/issues/4173
+
 	local emesonargs=(
 		# GDK backends
 		$(meson_use X x11-backend)
@@ -208,12 +216,12 @@ src_configure() {
 		# Expected to fail with GCC < 11
 		# See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71993
 		$(meson_feature cpu_flags_x86_f16c f16c)
-
+		-Dandroid-runtime=disabled
 		# Introspection
 		$(meson_feature introspection)
 
 		# Documentation
-#		-Ddocumentation=false # we ship pregenerated API docs from tarball
+		$(meson_use gtk-doc documentation)
 # no tarball here bro
 		-Dscreenshots=false
 		-Dman-pages=true
@@ -226,18 +234,6 @@ src_configure() {
 		-Dbuild-tests=false
 		$(meson_use debug)
 	)
-
-	if ${USE_GIT}; then
-		# ;madhu 231210 FIXME depend on gi-docgen
-		emesonargs+=(
-			$(meson_use gtk-doc documentation)
-		)
-	else
-		emesonargs+=(
-			-Ddocumentation=false
-		)
-	fi
-
 	meson_src_configure
 }
 
@@ -289,20 +285,30 @@ src_test() {
 }
 
 src_install() {
+	local i src
+
 	meson_src_install
 
-	if ! ${USE_GIT}; then
-		:
-	# TODO: Seems that HTML docs are no longer in the tarball after
-	# upstream switched to CI-generated releases? bug #947514
-	#insinto /usr/share/gtk-doc/html
-	# This will install API docs specific to X11 and wayland regardless of USE flags, but this is intentional
-	#doins -r "${S}"/docs/reference/{gtk/gtk4,gsk/gsk4,gdk/gdk4{,-wayland,-x11}}
-	elif use gtk-doc; then
-		mkdir -pv ${ED}/usr/share/gtk-doc/html
-		for i in gdk4 gdk4-wayland gdk4-x11 gsk4 gtk4; do
-			mv -iv ${ED}/usr/share/doc/$i ${ED}/usr/share/gtk-doc/html/
+	if use gtk-doc; then
+		mkdir -pv "${ED}/usr/share/gtk-doc/html" || die
+
+		for dir in gdk4 gtk4 gsk4; do
+			src="${ED}/usr/share/doc/${dir}"
+			test -d "${src}" || die "Expected documentation directory ${src} not found"
+			mv -v "${src}" "${ED}/usr/share/gtk-doc/html" || die
 		done
+
+		if use X; then
+			src="${ED}/usr/share/doc/gdk4-x11"
+			test -d "${src}" || die "Expected X11 documentation ${src} not found"
+			mv -v "${src}" "${ED}/usr/share/gtk-doc/html" || die
+		fi
+
+		if use wayland; then
+			src="${ED}/usr/share/doc/gdk4-wayland"
+			test -d "${src}" || die "Expected Wayland documentation ${src} not found"
+			mv -v "${src}" "${ED}/usr/share/gtk-doc/html" || die
+		fi
 	fi
 }
 
