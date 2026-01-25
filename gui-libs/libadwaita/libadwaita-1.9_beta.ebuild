@@ -1,4 +1,4 @@
-# Copyright 2022-2025 Gentoo Authors
+# Copyright 2022-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -15,15 +15,16 @@
 # ;madhu 240215 1.5_beta (1.5.beta-7-ge8f1582)
 # ;madhu 240725 1.6_alpha (1.6.alpha-38-g3441dca5)
 # ;madhu 250710 1.8.alpha (1.8-g6d6a4b98)
+# ;madhu 260125 1.9.beta (1.9.alpha-7-g46bb66c1)
 EAPI=8
 
 PYTHON_COMPAT=( python3_{11..14} )
 inherit gnome.org meson python-any-r1 vala virtualx gnome-versioning
 USE_GIT=true
 
-MY_COMMIT=6d6a4b98144cc0f8a71b28d8ed315599dba9193f
+MY_COMMIT=46bb66c1e50d4efe46cb780f5b6c25b55964d7e2
 
-DESCRIPTION="Building blocks for modern adaptive GNOME applications"
+DESCRIPTION="Building blocks for modern GNOME applications"
 HOMEPAGE="https://gnome.pages.gitlab.gnome.org/libadwaita/ https://gitlab.gnome.org/GNOME/libadwaita"
 
 LICENSE="LGPL-2.1+"
@@ -42,11 +43,14 @@ if ${USE_GIT}; then
 fi
 
 IUSE="+introspection test +vala +gtk-doc examples"
-REQUIRED_USE="vala? ( introspection )"
+REQUIRED_USE="
+	gtk-doc? ( introspection )
+	vala? ( introspection )
+"
 
 RDEPEND="
 	>=dev-libs/glib-2.80.0:2
-	>=gui-libs/gtk-4.17.5:4[introspection?]
+	>=gui-libs/gtk-4.19.4:4[introspection?]
 	dev-libs/appstream:=
 	dev-libs/fribidi
 	introspection? ( >=dev-libs/gobject-introspection-1.83.2:= )
@@ -78,17 +82,10 @@ src_configure() {
 		-Dprofiling=false
 		$(meson_feature introspection)
 		$(meson_use vala vapi)
-#		-Dgtk_doc=false # we ship pregenerated docs
+		$(meson_use gtk-doc documentation)
 		$(meson_use test tests)
 		$(meson_use examples)
 	)
-
-	if ${USE_GIT}; then
-		local emesonargs+=(
-			$(meson_use gtk-doc documentation)
-		)
-	fi
-
 	meson_src_configure
 }
 
@@ -101,13 +98,8 @@ src_install() {
 	meson_src_install
 
 	if use gtk-doc; then
-		if ! ${USE_GIT}; then
-			insinto ${ED}/usr/share/gtk-doc/html
-			# This will install libadwaita API docs unconditionally, but this is intentional
-			doins -r "${S}"/doc/libadwaita-1
-		else
-			mkdir -pv ${ED}/usr/share/gtk-doc/html
-			mv -v ${ED}/usr/share/{doc,gtk-doc/html}/libadwaita-1
-		fi
+		mkdir -pv ${ED}/usr/share/gtk-doc/html
+# 		mv "${ED}"/usr/share/doc/{${PN}-${SLOT},${PF}/html} || die
+		mv -v ${ED}/usr/share/{doc,gtk-doc/html}/libadwaita-1
 	fi
 }
