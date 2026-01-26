@@ -17,7 +17,7 @@ PYTHON_COMPAT=( python3_{10..13} )
 
 #inherit cmake
 inherit ninja-utils
-inherit prefix python-single-r1 toolchain-funcs
+inherit prefix python-single-r1 toolchain-funcs ninja-utils
 
 DESCRIPTION="C language family frontend for LLVM"
 HOMEPAGE="https://llvm.org/"
@@ -26,8 +26,8 @@ HOMEPAGE="https://llvm.org/"
 # sorttable.js: MIT
 
 LICENSE="Apache-2.0-with-LLVM-exceptions UoI-NCSA MIT"
-SRC_URI="github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${PV}.tar.gz"
-SLOT=20/20.1
+SRC_URI="https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${PV}.tar.gz"
+SLOT=21/21.1
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86 ~amd64-linux ~arm64-macos ~x64-macos"
 IUSE="debug doc +extra ieee-long-double +pie +static-analyzer xml"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
@@ -98,6 +98,8 @@ src_configure() {
 		-DLLVM_ENABLE_EH=ON
 		-DLLVM_ENABLE_RTTI=ON
 
+		-DLLVM_INSTALL_UTILS=ON
+
 #		-DCLANG_ENABLE_LIBXML2=$(usex xml)
 #		-DCLANG_ENABLE_ARCMT=$(usex static-analyzer)
 #		-DCLANG_DEFAULT_PIE_ON_LINUX=$(usex pie)
@@ -114,13 +116,13 @@ src_configure() {
 }
 src_compile () {
 	#;madhu 250717 todo use cmake --build ${BUILD_DIR}
-	ninja -C ${BUILD_DIR}
+	eninja -C ${BUILD_DIR}
 }
 
 src_install() {
 	# cmake --install ${BUILD_DIR} --prefix ${D}/opt/llvm-${PV}
 	DESTDIR="${D}" \
-		   ninja -C ${BUILD_DIR} install
+		   eninja -C ${BUILD_DIR} install
 
 	local llvm_prefix=${EPREFIX}/opt/llvm-${PV}
 #	ln -sv lib ${ED}/opt/${llvm_prefix}/lib64
