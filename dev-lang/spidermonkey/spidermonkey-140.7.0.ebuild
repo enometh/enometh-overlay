@@ -17,13 +17,18 @@
 # ;madhu 220412 91.7.1 -> 91.8.0
 # ;madhu 220130 91.5.0.ebuild -> 96.3.0 (bogus build)
 # ;madhu 220927 102.3.0
-# ;madhu 260126 140.7.0 stripped down from gentoo. use /opt/rust-1.92.0/ /opt/llvm-21.1.8/
+# ;madhu 260126 140.7.0 stripped down from gentoo. use /opt/rust-bin-1.92.0/ /opt/llvm-21.1.8/, ignore all lto
 
 EAPI="8"
 
-USE_GIT=true
+USE_GIT=false
 NOPATCHES=true
 FAKEBUILD=false
+
+LLVMVER=2.1.18
+RUSTVER=1.92.0
+LLVMROOT=${EPREFIX}/opt/llvm-${LLVMVER}
+RUSTROOT=${EPREFIX}/opt/rust-bin-${RUSTVER}
 
 # Patch version
 FIREFOX_PATCHSET="firefox-140esr-patches-03.tar.xz"
@@ -101,6 +106,11 @@ else
 	${PATCH_URIS[@]}"
 fi
 
+if ${USE_GIT}; then
+#keep the tarball in manifest anyway
+SRC_URI+=" ${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz"
+fi
+
 DESCRIPTION="SpiderMonkey is Mozilla's JavaScript engine written in C and C++"
 HOMEPAGE="https://spidermonkey.dev https://firefox-source-docs.mozilla.org/js/index.html "
 LICENSE="MPL-2.0"
@@ -108,6 +118,7 @@ SLOT="$(ver_cut 1)"
 KEYWORDS="~amd64 ~arm ~arm64 ~loong ~ppc ~ppc64 ~riscv ~x86"
 
 IUSE="clang cpu_flags_arm_neon debug +jit lto test"
+IUSE+=" system-icu system-nspr"
 
 #RESTRICT="test"
 RESTRICT="!test? ( test )"
@@ -121,8 +132,8 @@ BDEPEND="${PYTHON_DEPS}
 	)"
 
 # check but use bundled anyway, virtual/zlib
-DEPEND="dev-libs/icu
-	dev-libs/nspr
+DEPEND="system-icu? ( dev-libs/icu )
+	system-nspr? ( dev-libs/nspr )
 	sys-libs/readline:0=
 	sys-libs/zlib"
 RDEPEND="${DEPEND}"
@@ -257,8 +268,8 @@ src_prepare() {
 }
 
 src_configure() {
-	# cp github.com/mozilla/cbindgen/releases/download/0.29.0/cbindgen-ubuntu22.04 /opt/rust-1.92.0/bin/opt/rust-1.92.0/bin
-	PATH=/opt/rust-1.92.0/bin:/opt/llvm-21.1.8/bin:$PATH
+	# cp github.com/mozilla/cbindgen/releases/download/0.29.0/cbindgen-ubuntu22.04 /opt/rust-1.92.0/bin/opt/rust-bin-1.92.0/bin/cbindgen
+	PATH=${RUSTROOT}/bin:${LLVMROOT}/bin:$PATH
 
 	# Show flags set at the beginning
 	einfo "Current BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
@@ -350,8 +361,8 @@ src_configure() {
 		--prefix="${EPREFIX}/usr"
 
 		--with-intl-api
-#		--with-system-icu
-		--with-system-nspr
+		$(use-with system-icu)
+		$(use-with system-nspr)
 		--with-system-zlib
 		--with-toolchain-prefix="${CHOST}-"
 
