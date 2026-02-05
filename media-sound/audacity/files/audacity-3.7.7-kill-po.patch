@@ -1,0 +1,48 @@
+From d901669e7147ea880c7e6b81ef60ee06ff04d334 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 5 Feb 2026 07:04:03 +0530
+Subject: [PATCH] kill po
+
+---
+ CMakeLists.txt     | 2 +-
+ src/CMakeLists.txt | 4 +---
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8164c5f..93a2539 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -667,7 +667,7 @@ endif()
+ 
+ add_subdirectory( "images" )
+ add_subdirectory( "libraries" )
+-add_subdirectory( "locale" )
++#add_subdirectory( "locale" )
+ add_subdirectory( "src" )
+ add_subdirectory( "modules" )
+ add_subdirectory( "nyquist" )
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index c63e5cc..ba430cd 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -13,7 +13,7 @@ message( STATUS "========== Configuring ${TARGET} ==========" )
+ set( CMAKE_ENABLE_EXPORTS ON )
+ 
+ add_executable( ${TARGET} )
+-add_dependencies( ${TARGET} locale )
++#add_dependencies( ${TARGET} locale )
+ add_dependencies( ${TARGET} nyquist )
+ add_dependencies( ${TARGET} plug-ins )
+ 
+@@ -1437,8 +1437,6 @@ else()
+                   DESTINATION "${_DATADIR}/applications" )
+       endif()
+ 
+-      install( FILES "${topdir}/LICENSE.txt" "${topdir}/README.md"
+-               DESTINATION "${_DATADIR}/doc/${AUDACITY_NAME}" )
+       install( FILES "${_SRCDIR}/audacity.xml"
+                DESTINATION "${_DATADIR}/mime/packages" )
+ 
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
