@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,6 +10,7 @@
 # ;madhu 220331 0.24.0 rename ttysnoop to avoid collision with app-misc/ttysnoop
 # ;madhu 221214 0.25.0 LLVM-14, patch ttysnoop for 5.10.x series
 # ;madhu 250813 0.35.0 private LLVM-20
+# ;madhu 260206 0.36.0 LLVM_VER=21.1.8, 1. fix system /usr/bin/luajit to build bcc-lua,  2. STATIC_LIBBPF=true fix clang whole-archive confusion problem by bundling libbpf sources for a static build, fix the problems of the form ": CommandLine Error: Option '' registered more than once! LLVM ERROR: inconsistency in registered CommandLine options"
 
 EAPI=8
 
@@ -19,7 +20,16 @@ DISTUTILS_USE_PEP517=setuptools
 PYTHON_COMPAT=( python3_{11..14} )
 #LLVM_COMPAT=( {15..21} )
 #LLVM_MAX_SLOT=20
-LLVM_VER=20.1.8
+LLVM_VER=21.1.8
+
+#ALT_PREFIX=/opt/bcc
+ALT_PREFIX=
+# ALT_PREFIX is broken with distutils-r1,  docompress manpages, both don't respect CMAKE_INSTALL_PREFIX
+
+# if STATIC_LIBBPF is true unpack libbpf-${LIBBPF_PV} as src/cc/libbpf
+# this avoid problems
+STATIC_LIBBPF=true
+LIBBPF_PV=1.6.1
 
 inherit cmake linux-info lua-single distutils-r1 toolchain-funcs #  llvm-r1
 inherit flag-o-matic
@@ -28,10 +38,14 @@ DESCRIPTION="Tools for BPF-based Linux IO analysis, networking, monitoring, and 
 HOMEPAGE="https://iovisor.github.io/bcc/"
 SRC_URI="https://github.com/iovisor/bcc/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
+if ${STATIC_LIBBPF} ; then
+	SRC_URI+=" https://github.com/libbpf/libbpf/archive/v${LIBBPF_PV}.tar.gz -> libbpf-${LIBBPF_PV}.tar.gz"
+fi
+
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="amd64 ~arm64 ~riscv ~x86"
-IUSE="+lua lzma +python static-libs test"
+KEYWORDS="~amd64 ~arm64 ~riscv ~x86"
+IUSE="debuginfod +lua lzma +python static-libs test"
 
 REQUIRED_USE="
 	${PYTHON_REQUIRED_USE}
@@ -48,7 +62,7 @@ RESTRICT="test"
 
 RDEPEND="
 	app-arch/zstd:=
-	>=dev-libs/elfutils-0.166:=
+	>=dev-libs/elfutils-0.166:=[debuginfod?]
 	dev-libs/libbpf:=
 	dev-libs/libffi:=
 	sys-kernel/linux-headers
@@ -85,8 +99,15 @@ PATCHES=(
 	"${FILESDIR}/bcc-0.23.0-man-compress.patch"
 	"${FILESDIR}/bcc-0.35.0-fix-ttysnoop-for-510x.patch"
 	"${FILESDIR}/bcc-0.31.0-no-automagic-deps.patch"
-	${FILESDIR}/bcc-0.35-0-fix-llvm-bpf-local.patch
 )
+
+src_unpack() {
+	default
+	if ${STATIC_LIBBPF}; then
+		# overwrite empty directory libbpf with mv -T
+		mv -v -T ${WORKDIR}/libbpf-${LIBBPF_PV} ${S}/src/cc/libbpf || die
+	fi
+}
 
 pkg_pretend() {
 	local CONFIG_CHECK="~BPF ~BPF_SYSCALL ~NET_CLS_BPF ~NET_ACT_BPF
@@ -97,7 +118,12 @@ pkg_pretend() {
 }
 
 pkg_setup() {
-#	llvm-r1_pkg_setup
+	local d="/opt/llvm-${LLVM_VER}/"
+	export LLVM_ROOT="$d"
+	export Clang_ROOT="$d"
+	export LLD_ROOT="$d"
+
+#	llvm-r2_pkg_setup
 	use python && python_setup
 }
 
@@ -118,9 +144,11 @@ bcc_distutils_phase() {
 src_prepare() {
 	local bpf_link_path
 
+	if ! ${STATIC_LIBBPF}; then
 	# this avoids bundling
 	bpf_link_path="$(realpath --relative-to="${S}/src/cc/libbpf" /usr/include/bpf)" || die
 	ln -sfn "${bpf_link_path}" src/cc/libbpf/include || die
+	fi
 
 	# bug 811288
 	local script scriptname
@@ -128,9 +156,9 @@ src_prepare() {
 		mv "${script}" "tools/old/old-${script##*/}" || die
 	done
 
-	sed -i '/#include <error.h>/d' examples/cpp/KModRetExample.cc || die
+#	sed -i '/#include <error.h>/d' examples/cpp/KModRetExample.cc || die
 
-	use static-libs || PATCHES+=( "${FILESDIR}/bcc-0.31.0-dont-install-static-libs.patch" )
+#	use static-libs || PATCHES+=( "${FILESDIR}/bcc-0.31.0-dont-install-static-libs.patch" )
 
 	# use distutils-r1 eclass funcs rather than letting upstream handle python
 	printf '\n' > src/python/CMakeLists.txt || die
@@ -148,22 +176,32 @@ src_prepare() {
 src_configure() {
 	# ;madhu 250813 - temp hack for dynlib llvm bpf
 	append-ldflags -L/opt/llvm-${LLVM_VER}/$(get_libdir)
-	# append-libs does not work with CMake. have to patch CMakeFile.
-	append-libs -lLLVMBPFAsmParser -lLLVMBPFCodeGen -lLLVMBPFDesc -lLLVMBPFDisassembler -lLLVMBPFInfo
 
 	local mycmakeargs=(
 		-DREVISION=${PV%%_*}
-		-DENABLE_LLVM_SHARED=ON
+		-DENABLE_LIBDEBUGINFOD=$(usex debuginfod)
+		-DENABLE_LLVM_SHARED=OFF
 		-DENABLE_NO_PIE=OFF
 		-DWITH_LZMA=$(usex lzma)
-		-DCMAKE_USE_LIBBPF_PACKAGE=ON
 		-DLIBBPF_INCLUDE_DIRS="$($(tc-getPKG_CONFIG) --cflags-only-I libbpf | sed 's:-I::g')"
 		-DKERNEL_INCLUDE_DIRS="${KERNEL_DIR}"
 		-DNO_BLAZESYM=ON
 		-Wno-dev
 	)
+
+	if ! ${LIBBPF_STATIC}; then
+		mycmakeargs+=( -DCMAKE_USE_LIBBPF_PACKAGE=ON )
+	fi
+
 	if use lua && use lua_single_target_luajit; then
 		mycmakeargs+=( -DWITH_LUAJIT=ON )
+	fi
+
+#	#;madhu 260206 tests don't compile with static llvm libs: /usr/lib/gcc/x86_64-pc-linux-gnu/14/../../../../x86_64-pc-linux-gnu/bin/ld: /var/tmp/portage/dev-util/bcc-0.36.0/work/bcc-0.36.0_build/src/cc/libbcc.so: undefined reference to `llvm::AllocaInst::AllocaInst(llvm::Type*, unsigned int, llvm::Value*, llvm::Align, llvm::Twine const&, llvm::InsertPosition)@LLVM_21.1'
+#	mycmakeargs+=( -DENABLE_TESTS:BOOL=OFF )
+
+	if [ -n "${ALT_PREFIX}" ]; then
+		mycmakeargs+=( -DCMAKE_INSTALL_PREFIX=$ALT_PREFIX )
 	fi
 
 	cmake_src_configure
@@ -215,8 +253,9 @@ src_install() {
 	for tool in "${ED}"/usr/share/bcc/tools/*; do
 		[[ -d ${tool} || ! -x ${tool} || ${tool} =~ .*[.](c|txt) ]] && continue
 		grep -qE '^#!/usr/bin/(env |)python' "${tool}" && continue
+		sed -e 's:dirname \$0:dirname "$(realpath "$0")":' -i "${tool}" || die
 
-		target="/usr/sbin/$(bcc_tool_name "${tool}")"
+		target="${ALT_PREFIX}/usr/sbin/$(bcc_tool_name "${tool}")"
 		[[ -e ${ED}${target} ]] && continue
 
 		dosym -r "${tool#${ED}}" "${target}"
