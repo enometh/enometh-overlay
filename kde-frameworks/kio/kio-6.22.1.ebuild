@@ -30,18 +30,14 @@ RESTRICT="test"
 # slot op: Uses Qt6::GuiPrivate for qtx11extras_p.h
 
 # GUI_ONLY
-# 	dev-qt/qtdeclarative:6
-#	kde-frameworks/kbookmarks:6
-#	kde-frameworks/kcompletion:6
-#	kde-frameworks/kitemviews:6
-#	kde-frameworks/kjobwidgets:6
-# 	kde-frameworks/knotifications:6
-#	kde-frameworks/ktextwidgets:6
 
 COMMON_DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,ssl,widgets,X?]
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kbookmarks:6
 	kde-frameworks/kcodecs:6
 	kde-frameworks/kcolorscheme:6
+	kde-frameworks/kcompletion:6
 	kde-frameworks/kconfig:6
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/kcrash:6
@@ -49,7 +45,10 @@ COMMON_DEPEND="
 	kde-frameworks/kguiaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kiconthemes:6
-
+	kde-frameworks/kitemviews:6
+	kde-frameworks/kjobwidgets:6
+	kde-frameworks/knotifications:6
+	kde-frameworks/ktextwidgets:6
 	kde-frameworks/kservice:6
 	kde-frameworks/kwidgetsaddons:6
 	kde-frameworks/kwindowsystem:6[wayland?,X?]
@@ -92,7 +91,7 @@ src_configure() {
 		$(cmake_use_find_package kwallet KF6Wallet)
 		-DWITH_WAYLAND=$(usex wayland)
 		-DWITH_X11=$(usex X)
-		-DKIOGUI_ONLY=on
+#		-DKIOGUI_ONLY=on
 		-DBUILD_TESTING=off
 	)
 	CMAKE_PREFIX_PATH=/opt/Qt${QTVER} \
