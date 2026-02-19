@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -11,10 +11,11 @@
 # ;madhu 250731 25.1.7 (ln -sv  llvm-config x86_64-pc-linux-gnu-llvm-config)
 # ;madhu 250813 25.1.2
 # ;madhu 250813 25.2.0
+# ;madhu 260220 26.0.0
 
 EAPI=8
 
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..21} )
 PYTHON_COMPAT=( python3_{11..14} )
 
 inherit llvm-r1 meson python-any-r1
@@ -36,7 +37,7 @@ fi
 
 LICENSE="MIT"
 SLOT="0"
-LLVM_VER="20.1.8"
+LLVM_VER="21.1.8"
 
 VIDEO_CARDS="asahi panfrost"
 for card in ${VIDEO_CARDS}; do
