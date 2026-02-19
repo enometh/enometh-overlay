@@ -1,7 +1,7 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2025-07-18 05:22:15 IST>
+#   Time-stamp: <>
 #   Touched: Wed Sep 30 12:29:20 2020 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -11,7 +11,7 @@
 # ;madhu 210301 1.5.4.1
 # ;madhu 220221 1.3.204 --> version number rolledback
 # ;madhu 250718 1.4.321.0 - change name of file downloaded to DISTDIR to be different from that in gentoo. 2. have to older mask binary packages for emerge -K.
-
+# ;madhu 260220 1.4.341.0
 EAPI=8
 
 inherit cmake
