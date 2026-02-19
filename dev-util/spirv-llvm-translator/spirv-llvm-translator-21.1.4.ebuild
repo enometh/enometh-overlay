@@ -1,7 +1,7 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2021-09-10 05:54:41 IST>
+#   Time-stamp: <>
 #   Touched: Fri Sep 10 05:44:04 2021 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -9,10 +9,11 @@
 #
 # ;madhu 210910 12.0.0 -> 13.0.0
 # ;madhu 250718 21.0.8 -- build with /opt/llvm-20.1.8 (hardcoded) without gentoo llvm eclasses, fix SRC_URI name, FIXME: installs doc under /usr
+# ;madhu 260220 20.1.4 -> 21.1.4
 
 EAPI=8
 
-LLVM_COMPAT=( 20 )
+LLVM_COMPAT=( 21 )
 
 inherit cmake-multilib flag-o-matic llvm-r2 multiprocessing
 
@@ -26,7 +27,7 @@ MULTILIB_ABIS="amd64"
 
 LICENSE="UoI-NCSA"
 SLOT="$(ver_cut 1)"
-KEYWORDS="amd64 ~arm64 ~loong ~riscv x86"
+KEYWORDS="amd64 arm arm64 ~loong ~riscv x86"
 IUSE="test"
 RESTRICT="!test? ( test )"
 
@@ -37,7 +38,7 @@ RDEPEND="
 
 #;madhu 250718 - enometh-overlay
 DEPEND="${RDEPEND}
-	>=dev-util/spirv-headers-1.4.321.0
+	>=dev-util/spirv-headers-1.4.328.0
 "
 BDEPEND="
 	virtual/pkgconfig
@@ -48,15 +49,15 @@ BDEPEND="
 "
 
 src_prepare() {
-#	PATH=/opt/llvm-20.1.8/bin:$PATH
+#	PATH=/opt/llvm-21.1.8/bin:$PATH
 	default
 }
 
 get_llvm_prefix() {
-	echo "${ESYSROOT}/opt/llvm-20.1.8/"
+	echo "${ESYSROOT}/opt/llvm-21.1.8/"
 }
 
-#PATCHES=( "${FILESDIR}"/${PN}-20.1.3-option-registered.patch )
+#PATCHES=( 	"${FILESDIR}"/${P}-fix-DecorateUniformId.spvasm.patch )
 
 src_prepare() {
 	append-flags -fPIC
