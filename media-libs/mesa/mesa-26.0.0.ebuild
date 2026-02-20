@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -19,19 +19,21 @@
 # - USE="llvm_slot_20" with /opt/llvm-20.x.x
 # ;madhu 250731 25.1.7
 # ;madhu 250813 25.2.0 -Dtools=glsl
+# ;madhu 260219 26.0.0 axe vdpau, hardcode rust, meson.eclass inherits rust-toolchain even if we skip it, setting RUSTC and CARGOC in the environment is not enough as _meson_create_cross_file calls 'rust'. set PATH.likewise x86_64-pc-linux-gnu-llvm-config. providing clang is not enough.
 
 EAPI=8
 
-LLVM_COMPAT=( {18..20} )
+LLVM_COMPAT=( {18..21} )
 LLVM_OPTIONAL=1
 CARGO_OPTIONAL=1
 PYTHON_COMPAT=( python3_{11..14} )
 
 #MADHU
 MULTILIB_ABIS="amd64"
-LLVM_VER="20.1.8"
+LLVM_VER="21.1.8"
 
-inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info rust-toolchain
+inherit flag-o-matic llvm-r1 meson-multilib python-any-r1 linux-info
+# rust-toolchain
 
 # echo "slots=${_LLVM_SLOTS[@]}"
 
@@ -46,7 +48,7 @@ CRATES="
 	unicode-ident@1.0.12
 "
 
-RUST_MIN_VER="1.78.0"
+RUST_MIN_VER="1.82.0"
 RUST_MULTILIB=1
 RUST_OPTIONAL=1
 RUST_DEPEND1=
@@ -63,7 +65,7 @@ else
 	SRC_URI="
 		https://archive.mesa3d.org/${MY_P}.tar.xz
 	"
-	KEYWORDS="~alpha ~amd64 ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-solaris"
 fi
 
 # This should be {CARGO_CRATE_URIS//.crate/.tar.gz} to correspond to the wrap files,
@@ -80,8 +82,10 @@ LICENSE="MIT SGI-B-2.0"
 SLOT="0"
 
 RADEON_CARDS="r300 r600 radeon radeonsi"
+# intel
 VIDEO_CARDS="${RADEON_CARDS}
-	asahi d3d12 freedreno intel lavapipe lima nouveau nvk panfrost v3d vc4 virgl
+	asahi d3d12 freedreno i915 imagination intel lavapipe lima nouveau nvk
+	panfrost v3d vc4 virgl
 	vivante vmware zink"
 for card in ${VIDEO_CARDS}; do
 	IUSE_VIDEO_CARDS+=" video_cards_${card}"
@@ -89,6 +93,7 @@ done
 
 # madhu: gles1 gles2 for compat with older packages built with those
 # flags
+# ;madhu 260220 rip vdpau
 IUSE="${IUSE_VIDEO_CARDS}
 	cpu_flags_x86_sse2 debug  d3d9  gles1 +gles2 osmesa xa
 	+llvm tools
@@ -96,6 +101,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 	sysprof test unwind vaapi valgrind vdpau vulkan
 	wayland +X +zstd"
 RESTRICT="!test? ( test )"
+# 	video_cards_i915? ( llvm )
 REQUIRED_USE="
 	llvm? ( ${LLVM_REQUIRED_USE} )
 	video_cards_lavapipe? ( llvm vulkan )
@@ -108,20 +114,23 @@ REQUIRED_USE="
 
 LIBDRM_DEPSTRING=">=x11-libs/libdrm-2.4.121"
 #	>=media-libs/libglvnd-1.3.2[X?,${MULTILIB_USEDEP}]
+
+#		$(llvm_gen_dep "
+#			llvm-core/llvm:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
+#			opencl? (
+#				dev-util/spirv-llvm-translator:\${LLVM_SLOT}
+#				llvm-core/clang:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
+#				=llvm-core/libclc-\${LLVM_SLOT}*[spirv(-)]
+#			)
+#		")
+
 RDEPEND="
+	${LIBDRM_DEPSTRING}[${MULTILIB_USEDEP}]
 	>=dev-libs/expat-2.1.0-r3[${MULTILIB_USEDEP}]
 	>=dev-util/spirv-tools-1.3.231.0[${MULTILIB_USEDEP}]
 	>=sys-libs/zlib-1.2.9[${MULTILIB_USEDEP}]
 	unwind? ( sys-libs/libunwind[${MULTILIB_USEDEP}] )
 	llvm? (
-		$(llvm_gen_dep "
-			llvm-core/llvm:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
-			opencl? (
-				dev-util/spirv-llvm-translator:\${LLVM_SLOT}
-				llvm-core/clang:\${LLVM_SLOT}[llvm_targets_AMDGPU(+),${MULTILIB_USEDEP}]
-				=llvm-core/libclc-\${LLVM_SLOT}*[spirv(-)]
-			)
-		")
 		video_cards_r600? (
 			virtual/libelf:0=[${MULTILIB_USEDEP}]
 		)
@@ -138,10 +147,20 @@ RDEPEND="
 	vaapi? (
 		>=media-libs/libva-1.7.3:=[${MULTILIB_USEDEP}]
 	)
+	video_cards_i915? (
+		${LIBDRM_DEPSTRING}[video_cards_intel]
+	)
+	video_cards_radeonsi? (
+		${LIBDRM_DEPSTRING}[video_cards_amdgpu]
+		virtual/libelf:0=[${MULTILIB_USEDEP}]
+	)
 	vdpau? ( >=x11-libs/libvdpau-1.5:=[${MULTILIB_USEDEP}] )
 	video_cards_radeonsi? ( virtual/libelf:0=[${MULTILIB_USEDEP}] )
 	video_cards_zink? ( media-libs/vulkan-loader:=[${MULTILIB_USEDEP}] )
-	vulkan? ( virtual/libudev:= )
+	vulkan? (
+		media-libs/libdisplay-info:=[${MULTILIB_USEDEP}]
+		virtual/libudev:=
+	)
 	wayland? ( >=dev-libs/wayland-1.18.0[${MULTILIB_USEDEP}] )
 	${LIBDRM_DEPSTRING}[video_cards_freedreno?,video_cards_intel?,video_cards_nouveau?,video_cards_vc4?,video_cards_vivante?,video_cards_vmware?,${MULTILIB_USEDEP}]
 	X? (
@@ -165,8 +184,8 @@ RDEPEND="${RDEPEND}
 "
 
 DEPEND="${RDEPEND}
-	sysprof? ( >=dev-util/sysprof-capture-3.38.0[${MULTILIB_USEDEP}] )
-	video_cards_d3d12? ( >=dev-util/directx-headers-1.614.1[${MULTILIB_USEDEP}] )
+	sysprof? ( >=dev-util/sysprof-capture-49.0[${MULTILIB_USEDEP}] )
+	video_cards_d3d12? ( >=dev-util/directx-headers-1.618.1[${MULTILIB_USEDEP}] )
 	valgrind? ( dev-debug/valgrind )
 	wayland? ( >=dev-libs/wayland-protocols-1.41 )
 	X? (
@@ -241,6 +260,7 @@ pkg_pretend() {
 		if ! use video_cards_asahi &&
 		   ! use video_cards_d3d12 &&
 		   ! use video_cards_freedreno &&
+		   ! use video_cards_imagination &&
 		   ! use video_cards_intel &&
 		   ! use video_cards_lavapipe &&
 		   ! use video_cards_nouveau &&
@@ -249,7 +269,7 @@ pkg_pretend() {
 		   ! use video_cards_radeonsi &&
 		   ! use video_cards_v3d &&
 		   ! use video_cards_virgl; then
-			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain asahi, d3d12, freedreno, intel, lavapipe, nouveau, nvk, panfrost, radeonsi, v3d, or virgl"
+			ewarn "Ignoring USE=vulkan     since VIDEO_CARDS does not contain asahi, d3d12, freedreno, imagination, intel, lavapipe, nouveau, nvk, panfrost, radeonsi, v3d, or virgl"
 		fi
 	fi
 
@@ -315,16 +335,16 @@ pkg_setup() {
 #		rust_pkg_setup
 		:
 	fi
+# MADHU ALT-LLVM-RUST
+	export CARGO=/opt/rust-1.92.0/bin/cargo RUSTC=/opt/rust-1.92.0/bin/rustc
+	export PATH=/opt/rust-1.92.0/bin:$PATH
+	export PATH=/opt/llvm-${LLVM_VER}/bin:$PATH
 }
 
 src_prepare() {
 	default
 	sed -i -e "/^PLATFORM_SYMBOLS/a '__gentoo_check_ldflags__'," \
 		bin/symbols-check.py || die # bug #830728
-# MADHU ALT-LLVM-RUST
-	export CARGO=/opt/rust/bin/cargo RUSTC=/opt/rust/bin/rustc
-	export PATH=/opt/llvm-${LLVM_VER}/bin:$PATH
-
 }
 
 get_llvm_prefix() {
@@ -362,9 +382,9 @@ multilib_src_configure() {
 	   use video_cards_r600 ||
 	   use video_cards_radeonsi ||
 	   use video_cards_virgl; then
-		emesonargs+=($(meson_feature vdpau gallium-vdpau))
+		emesonargs+=($(meson_feature vaapi gallium-va))
 	else
-		emesonargs+=(-Dgallium-vdpau=disabled)
+		emesonargs+=(-Dgallium-va=disabled)
 	fi
 
 	gallium_enable !llvm softpipe
@@ -372,7 +392,8 @@ multilib_src_configure() {
 	gallium_enable video_cards_asahi asahi
 	gallium_enable video_cards_d3d12 d3d12
 	gallium_enable video_cards_freedreno freedreno
-	gallium_enable video_cards_intel crocus i915 iris
+	gallium_enable video_cards_i915 i915
+	gallium_enable video_cards_intel crocus iris
 	gallium_enable video_cards_lima lima
 	gallium_enable video_cards_nouveau nouveau
 	gallium_enable video_cards_panfrost panfrost
@@ -404,13 +425,17 @@ multilib_src_configure() {
 		vulkan_enable video_cards_asahi asahi
 		vulkan_enable video_cards_d3d12 microsoft-experimental
 		vulkan_enable video_cards_freedreno freedreno
+		vulkan_enable video_cards_imagination imagination
 		vulkan_enable video_cards_intel intel intel_hasvk
 		vulkan_enable video_cards_lavapipe swrast
+		vulkan_enable video_cards_nvk nouveau
 		vulkan_enable video_cards_panfrost panfrost
 		vulkan_enable video_cards_radeonsi amd
 		vulkan_enable video_cards_v3d broadcom
 		vulkan_enable video_cards_vc4 broadcom
 		vulkan_enable video_cards_virgl virtio
+		emesonargs+=(-Dvulkan-layers=anti-lag,device-select,overlay)
+
 		if use video_cards_nvk; then
 			vulkan_enable video_cards_nvk nouveau
 			if ! multilib_is_native_abi; then
@@ -466,7 +491,9 @@ multilib_src_configure() {
 		$(meson_feature llvm)
 		$(meson_feature lm-sensors lmsensors)
 		$(meson_feature unwind libunwind)
+		$(meson_feature vulkan display-info)
 		$(meson_feature zstd)
+		$(meson_use llvm amd-use-llvm)
 		$(meson_use sysprof)
 		$(meson_use cpu_flags_x86_sse2 sse2)
 		-Dvalgrind=$(usex valgrind auto disabled)
@@ -487,18 +514,18 @@ multilib_src_configure() {
 
 	meson_src_configure
 
-	if ! multilib_is_native_abi && use video_cards_nvk; then
-		sed -i -E '{N; s/(rule rust_COMPILER_FOR_BUILD\n command = rustc) --target=[a-zA-Z0-9=:-]+ (.*) -C link-arg=-m[[:digit:]]+/\1 \2/g}' build.ninja || die
-	fi
+#	if ! multilib_is_native_abi && use video_cards_nvk; then
+#		sed -i -E '{N; s/(rule rust_COMPILER_FOR_BUILD\n command = rustc) --target=[a-zA-Z0-9=:-]+ (.*) -C link-arg=-m[[:digit:]]+/\1 \2/g}' build.ninja || die
+#	fi
 }
 
 multilib_src_compile() {
-	if [[ ${ABI} == x86 ]]; then
-		# Bug 939803
-		BINDGEN_EXTRA_CLANG_ARGS="-m32" meson_src_compile
-	else
+#	if [[ ${ABI} == x86 ]]; then
+#		# Bug 939803
+#		BINDGEN_EXTRA_CLANG_ARGS="-m32" meson_src_compile
+#	else
 		meson_src_compile
-	fi
+#	fi
 }
 
 multilib_src_test() {
