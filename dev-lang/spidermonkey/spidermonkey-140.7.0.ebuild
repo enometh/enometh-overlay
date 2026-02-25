@@ -17,7 +17,7 @@
 # ;madhu 220412 91.7.1 -> 91.8.0
 # ;madhu 220130 91.5.0.ebuild -> 96.3.0 (bogus build)
 # ;madhu 220927 102.3.0
-# ;madhu 260126 140.7.0 stripped down from gentoo. use /opt/rust-bin-1.92.0/ /opt/llvm-21.1.8/, ignore all lto
+# ;madhu 260126 140.7.0 stripped down from gentoo. use /opt/rust-bin-1.92.0/ /opt/llvm-21.1.8/, ignore all lto, 260225 - inherit prefix, hack makopt_jobs
 
 EAPI="8"
 
@@ -29,6 +29,7 @@ LLVMVER=2.1.18
 RUSTVER=1.92.0
 LLVMROOT=${EPREFIX}/opt/llvm-${LLVMVER}
 RUSTROOT=${EPREFIX}/opt/rust-bin-${RUSTVER}
+RUSTROOT=/opt/rust-1.92.0/
 
 # Patch version
 FIREFOX_PATCHSET="firefox-140esr-patches-03.tar.xz"
@@ -44,7 +45,7 @@ PYTHON_REQ_USE="ncurses,ssl,xml(+)"
 
 WANT_AUTOCONF="2.1"
 
-inherit check-reqs flag-o-matic llvm-r1 multiprocessing python-any-r1 rust toolchain-funcs
+inherit check-reqs flag-o-matic llvm-r1 multiprocessing python-any-r1 rust toolchain-funcs prefix
 
 MY_PN="mozjs"
 MY_PV="${PV/_pre*}" # Handle Gentoo pre-releases
@@ -101,12 +102,12 @@ if ${USE_GIT}; then
 
 	KEYWORDS="amd64 arm64 x86"
 else
-
 	SRC_URI="${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz
 	${PATCH_URIS[@]}"
 fi
 
 if ${USE_GIT}; then
+:
 #keep the tarball in manifest anyway
 SRC_URI+=" ${MOZ_SRC_BASE_URI}/source/${MOZ_P}.source.tar.xz -> ${MOZ_P_DISTFILES}.source.tar.xz"
 fi
@@ -151,6 +152,11 @@ python_check_deps() {
 	if use test ; then
 		python_has_version "dev-python/six[${PYTHON_USEDEP}]"
 	fi
+}
+
+# makeopt_jobs in environment doesn't use etc/portage/make.conf MAKEOPTS but only consults the number of CPUs and it return a number not a -jN.
+makeopt_jobs() {
+	echo -j3
 }
 
 mozconfig_add_options_ac() {
@@ -265,11 +271,12 @@ src_prepare() {
 
 	MOZJS_BUILDDIR="${WORKDIR}/build"
 	mkdir -pv "${MOZJS_BUILDDIR}"
+	export PATH=${RUSTROOT}/bin:${LLVMROOT}/bin:$PATH
 }
 
 src_configure() {
 	# cp github.com/mozilla/cbindgen/releases/download/0.29.0/cbindgen-ubuntu22.04 /opt/rust-1.92.0/bin/opt/rust-bin-1.92.0/bin/cbindgen
-	PATH=${RUSTROOT}/bin:${LLVMROOT}/bin:$PATH
+	export PATH=${RUSTROOT}/bin:${LLVMROOT}/bin:$PATH
 
 	# Show flags set at the beginning
 	einfo "Current BINDGEN_CFLAGS:\t${BINDGEN_CFLAGS:-no value set}"
