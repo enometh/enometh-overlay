@@ -14,13 +14,15 @@
 # 2.32s user 0.17s system 98% cpu 2.526 total
 # gcc version 15.2.1 20260103
 # 13.95s user 0.24s system 99% cpu 14.200 total
+#
+# ;madhu 260312 0.3.0
 
 EAPI=8
 
 inherit toolchain-funcs
 
 DESCRIPTION="Small C++ library for utilities used across the Hypr* ecosystem"
-HOMEPAGE="https://github.com/hyprwm/hyprutils"
+HOMEPAGE="https://github.com/hyprwm/hyprwire"
 
 if [[ "${PV}" = *9999 ]]; then
 	inherit git-r3
