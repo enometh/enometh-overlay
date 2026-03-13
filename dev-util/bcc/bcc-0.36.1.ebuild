@@ -11,6 +11,7 @@
 # ;madhu 221214 0.25.0 LLVM-14, patch ttysnoop for 5.10.x series
 # ;madhu 250813 0.35.0 private LLVM-20
 # ;madhu 260206 0.36.0 LLVM_VER=21.1.8, 1. fix system /usr/bin/luajit to build bcc-lua,  2. STATIC_LIBBPF=true fix clang whole-archive confusion problem by bundling libbpf sources for a static build, fix the problems of the form ": CommandLine Error: Option '' registered more than once! LLVM ERROR: inconsistency in registered CommandLine options"
+# ;madhu 260313 0.36.1 pulls in from iovisor/bcc/pull/5453.patch
 
 EAPI=8
 
@@ -29,7 +30,7 @@ ALT_PREFIX=
 # if STATIC_LIBBPF is true unpack libbpf-${LIBBPF_PV} as src/cc/libbpf
 # this avoid problems
 STATIC_LIBBPF=true
-LIBBPF_PV=1.6.1
+LIBBPF_PV=1.6.3
 
 inherit cmake linux-info lua-single distutils-r1 toolchain-funcs #  llvm-r1
 inherit flag-o-matic
@@ -99,6 +100,7 @@ PATCHES=(
 	"${FILESDIR}/bcc-0.23.0-man-compress.patch"
 	"${FILESDIR}/bcc-0.35.0-fix-ttysnoop-for-510x.patch"
 	"${FILESDIR}/bcc-0.31.0-no-automagic-deps.patch"
+	"${FILESDIR}/bcc-0.36.1-fix-insn-glitch.patch"
 )
 
 src_unpack() {
