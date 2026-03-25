@@ -1,0 +1,25 @@
+From d2b734f7000ff399d59ae01fb63a6e9c3cfd25e2 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 25 Mar 2026 23:49:32 +0530
+Subject: [PATCH] CMakeLists.txt: skip container plugin and download
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 68344a3..6d3bf2e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -163,7 +163,7 @@ endif()
+ include(falcosecurity-libs)
+ include(yaml-cpp)
+ include(nlohmann-json)
+-include(container_plugin)
++#include(container_plugin)
+ 
+ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+ 	if(NOT DEFINED DRIVER_VERSION)
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

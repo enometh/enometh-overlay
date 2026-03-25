@@ -1,0 +1,26 @@
+From 4326e807ccd94d2545b6c2878f0e90edfefd6c86 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Thu, 26 Mar 2026 03:11:53 +0530
+Subject: [PATCH] CMakeLists.txt: use non-standard kernel headers
+
+- BTF_FUNC_loop in enum
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6d3bf2e..e07ce71 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -77,7 +77,7 @@ endif()
+ if(NOT WIN32)
+ 
+ 	set(SYSDIG_DEBUG_FLAGS "-D_DEBUG")
+-	set(CMAKE_COMMON_FLAGS "-Wall -ggdb ${SYSDIG_MUSL_FLAGS}")
++	set(CMAKE_COMMON_FLAGS "-Wall -ggdb ${SYSDIG_MUSL_FLAGS} -I/7/gtk/headers-6.18/include")
+ 
+ 	if(BUILD_WARNINGS_AS_ERRORS)
+ 		set(CMAKE_SUPPRESSED_WARNINGS "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-sign-compare -Wno-type-limits -Wno-implicit-fallthrough -Wno-format-truncation")
+-- 
+2.49.0.9.gd50a5e8939.dirty
+

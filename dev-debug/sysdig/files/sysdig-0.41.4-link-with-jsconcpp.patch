@@ -1,7 +1,7 @@
-From c5f8c6035a3ed9b9c5c46b902ef63dc63fe12e22 Mon Sep 17 00:00:00 2001
+From eed3a7b5c878c7ba451a68754c2ffe7ac4dde035 Mon Sep 17 00:00:00 2001
 From: Madhu <enometh@net.meer>
 Date: Fri, 7 Jun 2024 13:10:53 +0530
-Subject: [PATCH 4/5] userspace/sysdig/CMakeLists.txt: link {c,}sysdig with
+Subject: [PATCH] userspace/sysdig/CMakeLists.txt: link {c,}sysdig with
  JSONCPP_LIB
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH 4/5] userspace/sysdig/CMakeLists.txt: link {c,}sysdig with
  1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/userspace/sysdig/CMakeLists.txt b/userspace/sysdig/CMakeLists.txt
-index 60f8072..35209dd 100644
+index 4acbb03..8ff34e9 100644
 --- a/userspace/sysdig/CMakeLists.txt
 +++ b/userspace/sysdig/CMakeLists.txt
-@@ -104,13 +104,22 @@ target_include_directories(
+@@ -112,13 +112,22 @@ target_include_directories(
  		..
  	)
  
@@ -27,21 +27,21 @@ index 60f8072..35209dd 100644
  	include_directories(${PROJECT_BINARY_DIR}/driver/src)
  
  	target_link_libraries(sysdig
- 		sinsp
+ 		"${SINSP_LIB}"
  		"${LUAJIT_LIB}"
--		"${YAMLCPP_LIB}")
-+		"${YAMLCPP_LIB}"
+-		yaml-cpp)
++		yaml-cpp
 +		"${JSONCPP_LIB}"
 +	      )
  
  	if(USE_BUNDLED_NCURSES)
  		add_dependencies(csysdig ncurses)
-@@ -120,7 +129,10 @@ if(NOT WIN32)
- 		sinsp
+@@ -128,7 +137,10 @@ if(NOT WIN32)
+ 		"${SINSP_LIB}"
  		"${LUAJIT_LIB}"
  		"${CURSES_LIBRARIES}"
--		"${YAMLCPP_LIB}")
-+		"${YAMLCPP_LIB}"
+-		yaml-cpp)
++		yaml-cpp
 +		"${JSONCPP_LIB}"
 +
 +	      )
@@ -49,5 +49,5 @@ index 60f8072..35209dd 100644
  	add_subdirectory(man)
  
 -- 
-2.39.2.101.g768bb238c4
+2.49.0.9.gd50a5e8939.dirty
 

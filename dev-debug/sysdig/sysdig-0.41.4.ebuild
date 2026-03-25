@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <2023-07-04 11:06:15 IST>
@@ -23,6 +23,8 @@
 # hard_link=false and inode_ccache=false when building the module.
 # TODO. pkgconfig are not fixed.
 #
+# ;madhu 260325 0.41.3, use shell-completion, update versions (0.21.0)
+
 EAPI=8
 
 LUA_COMPAT=( luajit  )
@@ -46,7 +48,7 @@ USE_BUNDLED_LUA=false
 #MODULES_OPTIONAL_USE=modules
 
 # inherit linux-mod-r1 for tc-get-kernel and KV_FULL
-inherit bash-completion-r1 cmake lua-single linux-info
+inherit shell-completion cmake lua-single linux-info
 
 if ${FUDGE_SRC_URI}; then
 	inherit unpacker
@@ -57,10 +59,10 @@ HOMEPAGE="https://sysdig.com/"
 
 # For now we need to bump this version of falcosecurity/libs manually;
 # check the used git revision in <src>/cmake/modules/falcosecurity-libs.cmake
-LIBS_COMMIT="0.16.0"
+LIBS_COMMIT="0.21.0"
 
 if ! ${OMIT_DRIVER_DOWNLOAD}; then
-DRIVER_VER="7.1.0"
+DRIVER_VER="8.1.0"
 DRIVER_DST="libs-${DRIVER_VER}-driver"
 fi
 
@@ -84,16 +86,20 @@ fi
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-##IUSE="+modules"
+##IUSE="bpf +modules"
 REQUIRED_USE="${LUA_REQUIRED_USE}"
 
+#	dev-libs/re2:=
+#	dev-libs/uthash
+
 RDEPEND="${LUA_DEPS}
-	app-misc/jq
+	dev-cpp/abseil-cpp:=
 	dev-cpp/tbb:=
 	dev-cpp/yaml-cpp:=
-	dev-libs/jsoncpp
+	dev-libs/jsoncpp:=
 	dev-libs/libb64:=
 	dev-libs/openssl:=
+ >=dev-libs/libbpf-1.1:=
 	dev-libs/protobuf:=
 	net-dns/c-ares:=
 	net-libs/grpc:=
@@ -106,6 +112,11 @@ DEPEND="${RDEPEND}
 	dev-cpp/nlohmann_json
 	dev-cpp/valijson
 	virtual/os-headers"
+
+#BDEPEND="bpf? (
+#			dev-util/bpftool
+#			llvm-core/clang:*[llvm_targets_BPF]
+#		)"
 
 ## for now pin the driver to the same ebuild version
 ##PDEPEND="modules? ( =dev-debug/scap-driver-${PV}* )"
@@ -127,14 +138,31 @@ src_unpack() {
 }
 
 PATCHES=(
-	${FILESDIR}/sysdig-0.37.1-fix-SOVERSION.patch
+	${FILESDIR}/sysdig-0.41.4-fix-SOVERSION.patch
 	${FILESDIR}/sysdig-0.37.1-fix-shared-build.patch
-	${FILESDIR}/sysdig-0.37.1-link-with-jsconcpp.patch
+	${FILESDIR}/sysdig-0.41.4-link-with-jsconcpp.patch
+	${FILESDIR}/sysdig-0.41.4--CMakeLists.txt-skip-container-plugin-and-download.patch
+	${FILESDIR}/sysdig-0.41.4-CMakeLists.txt-use-non-standard-kernel-headers.patch
 )
 
 if ${USE_BUNDLED_LUA}; then
 	PATCHES+=( ${FILESDIR}/sysdig-0.37.1-use-bundled-luajit.patch )
 fi
+
+pkg_pretend() {
+	return
+	if use bpf; then
+		local CONFIG_CHECK="
+			~BPF
+			~BPF_EVENTS
+			~BPF_JIT
+			~BPF_SYSCALL
+			~FTRACE_SYSCALLS
+			~HAVE_EBPF_JIT
+		"
+		check_extra_config
+	fi
+}
 
 src_prepare() {
 
@@ -163,10 +191,11 @@ src_prepare() {
 }
 
 src_configure() {
+	append-flags -fno-strict-aliasing
 	local mycmakeargs=(
 #		# don't not build driver
 		-DBUILD_DRIVER=ON
-		-DBUILD_BPF=ON
+		-DBUILD_SYSDIG_MODERN_BPF=ON
 
 		# unbundle the deps
 		-DUSE_BUNDLED_DEPS=OFF
@@ -187,12 +216,14 @@ src_configure() {
 
 		# libscap examples are not installed or really useful
 		-DBUILD_LIBSCAP_EXAMPLES=OFF
+		-DBUILD_LIBSINSP_EXAMPLES=OFF
 
 		# point to driver libs-{DRIVER_VER}-driver/driver
 		# -DDRIVER_SOURCE_DIR=${WORKDIR}/${DRIVER_DST}/driver
 		# see OMIT_DRIVER_DOWNLOAD below:
 
 		# point to the falcosecurity-libs tree
+		-DUSE_BUNDLED_FALCOSECURITY_LIBS=ON
 		-DFALCOSECURITY_LIBS_SOURCE_DIR="${WORKDIR}"/libs-${LIBS_COMMIT}
 
 		# explicitly set version
@@ -258,4 +289,6 @@ src_install() {
 	# move bashcomp to the proper location
 	dobashcomp "${ED}"/usr/etc/bash_completion.d/sysdig || die
 	rm -r "${ED}"/usr/etc || die
+	# clean up zsh copy
+	rm -r ${ED}"/usr/share/zsh/vendor-completions" || die
 }
