@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -24,6 +24,7 @@
 # ;madhu 231120 0.3.85 -- don't bump webrtc, jack-sdk shouldn't conflict with jack-audio-connection-kit (just with jack2)
 # ;madhu 240725 1.2.1 -- get rid of docs nonsense, bogus doxygen dep. USE=-gsettings with pulse.
 # ;madhu 250604 1.4.4
+# ;madhu 260409 1.4.11
 EAPI=8
 
 # 1. Please regularly check (even at the point of bumping) Fedora's packaging
@@ -36,7 +37,7 @@ EAPI=8
 # continue to move quickly. It's not uncommon for fixes to be made shortly
 # after releases.
 
-PYTHON_COMPAT=( python3_{10..13} )
+PYTHON_COMPAT=( python3_{10..14} )
 inherit meson-multilib optfeature prefix python-any-r1 systemd tmpfiles udev
 
 if [[ ${PV} == 9999 ]]; then
@@ -52,7 +53,7 @@ else
 		SRC_URI="https://gitlab.freedesktop.org/${PN}/${PN}/-/archive/${PV}/${P}.tar.bz2"
 	fi
 
-	KEYWORDS="~amd64 ~arm ~arm64 ~loong ~mips ~ppc ~ppc64 ~riscv ~sparc ~x86"
+	KEYWORDS="amd64 arm arm64 ~loong ~mips ppc ppc64 ~riscv ~sparc x86"
 fi
 
 DESCRIPTION="Multimedia processing graphs"
@@ -62,7 +63,7 @@ LICENSE="MIT LGPL-2.1+ GPL-2"
 # ABI was broken in 0.3.42 for https://gitlab.freedesktop.org/pipewire/wireplumber/-/issues/49
 SLOT="0/0.4"
 # ;madhu 231120 axe sound-server
-IUSE="bluetooth elogind dbus doc echo-cancel extra ffmpeg flatpak gstreamer gsettings ieee1394 jack-client jack-sdk liblc3 loudness lv2 man udev"
+IUSE="bluetooth elogind dbus doc echo-cancel extra ffmpeg fftw flatpak gstreamer gsettings ieee1394 jack-client jack-sdk libcamera liblc3 loudness lv2 man udev"
 IUSE+=" modemmanager pipewire-alsa readline roc selinux ssl system-service systemd test v4l X zeroconf"
 
 # Once replacing system JACK libraries is possible, it's likely that
@@ -108,6 +109,7 @@ BDEPEND="
 "
 
 # ;madhu 231120 axe sound-server
+#	pulseaudio? ( media-libs/libpulse )
 #	sound-server? ( !media-sound/pulseaudio-daemon )
 #   jack-sdk? ( !media-sound/jack-audio-connection-kit)
 
@@ -115,7 +117,6 @@ BDEPEND="
 # and not really worth it, bug #877769.
 #
 # * Supports both legacy webrtc-audio-processing:2 and new webrtc-audio-processing:1.
-# Automagic but :2 isn't yet packaged.
 #
 # * Older Doxygen (<1.9.8) may work but inferior output is created:
 #   - https://gitlab.freedesktop.org/pipewire/pipewire/-/merge_requests/1778
@@ -139,9 +140,16 @@ RDEPEND="
 	)
 	elogind? ( sys-auth/elogind )
 	dbus? ( sys-apps/dbus[${MULTILIB_USEDEP}] )
-	echo-cancel? ( media-libs/webrtc-audio-processing )
+	echo-cancel? (
+		media-libs/webrtc-audio-processing:=
+		|| (
+			>=media-libs/webrtc-audio-processing-2.0:2
+			>=media-libs/webrtc-audio-processing-1.2:1
+		)
+	)
 	extra? ( >=media-libs/libsndfile-1.0.20 )
 	ffmpeg? ( media-video/ffmpeg:= )
+	fftw? ( sci-libs/fftw:3.0=[${MULTILIB_USEDEP}] )
 	flatpak? ( dev-libs/glib )
 	gstreamer? (
 		>=dev-libs/glib-2.32.0:2
@@ -155,6 +163,7 @@ RDEPEND="
 		!media-sound/jack-audio-connection-kit
 		!media-sound/jack2
 	)
+	libcamera? ( media-libs/libcamera:= )
 	liblc3? ( media-sound/liblc3 )
 	loudness? ( media-libs/libebur128:=[${MULTILIB_USEDEP}] )
 	lv2? ( media-libs/lilv )
@@ -190,12 +199,6 @@ PDEPEND=">=media-video/wireplumber-0.5.2"
 
 DOCS=( {README,INSTALL}.md NEWS )
 
-if false; then
-PATCHES=(
-	"${FILESDIR}"/${PN}-0.3.25-enable-failed-mlock-warning.patch
-)
-fi
-
 pkg_setup() {
 	if use doc || use man ; then
 		python-any-r1_pkg_setup
@@ -230,6 +233,7 @@ multilib_src_configure() {
 		$(meson_feature dbus)
 		$(meson_native_use_feature zeroconf avahi)
 		$(meson_native_use_feature doc docs)
+		$(meson_native_use_feature man)
 		$(meson_native_enabled examples) # TODO: Figure out if this is still important now that media-session gone
 		$(meson_feature test tests)
 		-Dinstalled_tests=disabled # Matches upstream; Gentoo never installs tests
@@ -286,7 +290,7 @@ multilib_src_configure() {
 		$(meson_feature loudness ebur128)
 		$(meson_native_use_feature lv2)
 		$(meson_native_use_feature v4l v4l2)
-		-Dlibcamera=disabled # libcamera is not in Portage tree
+		$(meson_native_use_feature libcamera)
 		$(meson_native_use_feature roc)
 		$(meson_native_use_feature readline)
 		$(meson_native_use_feature ssl raop)
@@ -313,6 +317,8 @@ multilib_src_configure() {
 		$(meson_native_use_feature X x11-xfixes)
 		$(meson_native_use_feature X libcanberra)
 
+# nosam
+#		$(meson_native_use_feature pulseaudio libpulse)
 		# TODO
 		-Dsnap=disabled
 	)
@@ -382,7 +388,7 @@ multilib_src_install_all() {
 		newins "${FILESDIR}"/pipewire.desktop-r2 pipewire.desktop
 
 		exeinto /usr/bin
-		newexe "${FILESDIR}"/gentoo-pipewire-launcher.in-r3 gentoo-pipewire-launcher
+		newexe "${FILESDIR}"/gentoo-pipewire-launcher.in-r4 gentoo-pipewire-launcher
 
 		doman "${FILESDIR}"/gentoo-pipewire-launcher.1
 
