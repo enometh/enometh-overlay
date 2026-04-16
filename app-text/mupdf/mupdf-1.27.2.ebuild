@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -19,6 +19,7 @@
 # ;madhu 220816 1.20.3
 # ;madhu 230306 1.21.1-r1
 # ;madhu 250325 1.25.5 - shared, use bundled tesseract,leptonica, no GENTOO_PV
+# ;madhu 260416 1.27.2 - bundle everything, ignore most use flags..
 
 EAPI=8
 
@@ -30,14 +31,17 @@ USE_GIT=true
 inherit desktop flag-o-matic toolchain-funcs xdg
 
 DESCRIPTION="A lightweight PDF viewer and toolkit written in portable C"
-HOMEPAGE="https://mupdf.com/ https://git.ghostscript.com/?p=mupdf.git"
+HOMEPAGE="https://mupdf.com/ https://cgit.ghostscript.com/mupdf.git"
+
+# mkdir "/var/tmp/gentoo/build/git-mirror" -pv
+# ln -sv ~/scratch/extern/mupdf /var/tmp/gentoo/build/git-mirror/mupdf.git
 
 if ${USE_GIT} ; then
 	inherit git-r3
 	EGIT_REPO_URI="https://example.com/mupdf.git"
-	EGIT_MIRROR_URI="file:///build/git-mirror"
+	EGIT_MIRROR_URI="file:///var/tmp/gentoo/build/git-mirror"
 	EGIT_CLONE_TYPE="shallow"
-	EGIT_BRANCH="tmp-madhu-1.25.5"
+	EGIT_BRANCH="tmp-madhu-1.27.2"
 	EGIT_SUBMODULES=()
 	SRC_URI=""
 	S=${EGIT_CHECKOUT_DIR}
@@ -51,33 +55,42 @@ fi
 LICENSE="AGPL-3"
 SLOT="0/${PV}"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
-IUSE="+drm archive +javascript opengl ssl X"
-REQUIRED_USE="opengl? ( javascript )"
+IUSE="+drm archive barcode brotli +javascript +jpeg2k opengl ssl X"
+# REQUIRED_USE="opengl? ( javascript )"
 
 # Although we use the bundled, patched version of freeglut in mupdf (because of
 # bug #653298), the best way to ensure that its dependencies are present is to
 # install system's freeglut.
+
+# 		X? ( media-libs/libglvnd[X] )
 RDEPEND="
 	archive? ( app-arch/libarchive )
-	dev-libs/gumbo:=
 	media-libs/freetype:2
 	media-libs/harfbuzz:=[truetype]
-	media-libs/jbig2dec:=
 	media-libs/libpng:0=
-	>=media-libs/openjpeg-2.1:2=
-	>=media-libs/libjpeg-turbo-1.5.3-r2:0=
 	net-misc/curl
-	javascript? ( >=dev-lang/mujs-1.2.0:= )
-	opengl? ( >=media-libs/freeglut-3.0.0 )
 	ssl? ( >=dev-libs/openssl-1.1:0= )
-	sys-libs/zlib
+	virtual/zlib:=
 	X? (
 		x11-libs/libX11
 		x11-libs/libXext
 		x11-libs/libXrandr
 	)
 "
-# 		media-libs/libglvnd[X]
+
+# use bundled libs by default
+if false; then
+RDEPEND+="
+	dev-libs/gumbo:=
+	brotli? ( app-arch/brotli:= )
+	>=media-libs/libjpeg-turbo-1.5.3-r2:0=
+	media-libs/jbig2dec:=
+	javascript? ( >=dev-lang/mujs-1.3.8:= )
+	barcode? ( media-libs/zxing-cpp:= )
+	jpeg2k? ( >=media-libs/openjpeg-2.1:2= )
+	opengl? ( >=media-libs/freeglut-3.0.0 )
+"
+fi
 
 DEPEND="${RDEPEND}
 	X? ( x11-base/xorg-proto )"
@@ -86,45 +99,14 @@ BDEPEND="virtual/pkgconfig"
 if ! ${USE_GIT}; then
 die "TODO NO GENTOO PATCHES"
 PATCHES=(
-0001-thirdparty-mujs-jsi.h-moon-fix-compile-for-NAN-isfin.patch
-0002-platform-x11-x11_main.c-winopen-support-XEMBED-envir.patch
-0003-platform-x11-pdfapp.c-pan-contiguously-for-pgup-pgdn.patch
-0004-platform-x11-pdfapp.c-pan-to-multiple-search-strings.patch
-0005-platform-x11-pdfapp.-ch-enhanced-snapback-history-ne.patch
-0006-platform-x11-x11_main.c-translate-XK_space-to-pgdn.patch
-0007-platform-x11-pdfapp.c-accept-numerical-args-for-hjkl.patch
-0008-platform-x11-x11_main.c-swap_button_hack.patch
-0009-platform-x11-pdfapp.c-do-not-change-pages-when-scrol.patch
-0010-cmdfifo-patch-handle-c-argument.-c-tmp-server-name-s.patch
-0011-platform-gl-gl-main.c-avoid-segfault-on-show-js-cons.patch
-0012-Makefile-adjust-default-build-to-debug.patch
-0013-include-mupdf-fitz-config.h-Enable-defines-to-AVOID-.patch
-0014-platform-x11-pdfapp.c-pdfapp_onkey-Save-numbers-type.patch
-0015-platform-x11-x11_main.c-Add-Control-Modifiers-for-KP.patch
-0016-platform-x11-pdfapp.c-pdfapp_onkey-rename-fullscreen.patch
-0017-platform-x11-pdfapp.c-fix-hjkl-contiguous-scroll.patch
-0018-platform-x11-pdfapp.c-pdfapp_onkey-implement-smart-f.patch
-0019-src-pdf-pdf-xref.c-reinstate-pdf_recognize.patch
-0020-mupdf-1.21.0-add-desktop-pc-files.patch.patch
-0021-mupdf-1.15-CFLAGS.patch.patch
-0022-mupdf-1.19-Makefile.patch.patch
-0023-platform-x11-x11_main.c-onselreq-fix-typo.patch
-0024-platform-debian-mupdf.desktop-prefer-Icon-mupdf.patch
-0025-Makefile-revert-gentoo-changes-build-a-shared-librar.patch
-0026-platform-x11-x11_main.c-tmp-debugging.patch
-0027-k2pdfopt_v2.54-mupdf_mod.patch
-0028-k2pdfopt-patches-fix-lcms.h.patch
-0029-Makerules-fPIC-when-building-static-libraries.patch
-0030-tmp-debugging-how-tesseract-leptonica-get-included.patch
-0031-tmp-debugging-source-pdf-font-win32.c-pdf_install_lo.patch
-0032-background-transparancy-patch.patch
-0033-Makerules-fix-bundled-GLUT-to-use-xorg-xinput-cflags.patch
 )
 fi
 
 src_prepare() {
 	default
 
+# SKIP ALL GENTOO
+if false; then
 	use hppa && append-cflags -ffunction-sections
 
 	append-cflags "-DFZ_ENABLE_JS=$(usex javascript 1 0)"
@@ -136,8 +118,11 @@ src_prepare() {
 		-e "1iAR = $(tc-getAR)" \
 		-e "1iverbose = yes" \
 		-e "1ibuild = debug" \
+		-e "1ibarcode = $(usex barcode)" \
+		-e "1ibrotli = $(usex brotli)" \
+		-e "1imujs = $(usex javascript)" \
 		-i Makerules || die "Failed adding build variables to Makerules in src_prepare()"
-
+fi
 	# Adjust MuPDF version in .pc file created by the
 	# [...]-add-desktop-pc-files.patch file
 	sed -e "s/Version: \(.*\)/Version: ${PV}/" \
@@ -173,17 +158,35 @@ _emake() {
 	local myemakeargs=(
 #		GENTOO_PV=${PV}
 		shared=yes
-		USE_SYSTEM_LEPTONICA=no
-		USE_SYSTEM_TESSERACT=no
+		USE_SYSTEM_LIBS=no
+
+#		USE_SYSTEM_BROTLI=$(usex brotli)
+#		USE_SYSTEM_BROTLI=no
+#		USE_SYSTEM_GLUT=no
+#		USE_SYSTEM_GUMBO=no
+#		USE_SYSTEM_JBIG2DEC=no
+#		USE_SYSTEM_LEPTONICA=no
+#		USE_SYSTEM_MUJS=$(usex javascript)
+#		USE_SYSTEM_MUJS=no
+#		USE_SYSTEM_MUJS=no
+#		USE_SYSTEM_OPENJPEG=no
+#		USE_SYSTEM_TESSERACT=no
+#		USE_SYSTEM_ZINGCPP=no
+#		USE_SYSTEM_ZXINGCPP=$(usex barcode)
+#		USE_SYSTEM_ZXINGCPP=no
+
 		tesseract=yes
 		leptonica=yes
 		verbose=yes
-		HAVE_GLUT=$(usex opengl)
-		HAVE_LIBCRYPTO=$(usex ssl)
-		HAVE_X11=$(usex X)
-		USE_SYSTEM_LIBS=yes
-		USE_SYSTEM_MUJS=$(usex javascript)
-		USE_SYSTEM_GLUT=no
+# defaults to no
+		barcode=$(usex barcode)
+
+#		HAVE_GLUT=$(usex opengl)
+#		HAVE_LIBCRYPTO=$(usex ssl)
+#		HAVE_MUJS=$(usex javascript)
+#		HAVE_SYS_ZXINGCPP=$(usex barcode)
+#		HAVE_X11=$(usex X)
+#		HAVE_ZXINGCPP=$(usex barcode)
 		HAVE_OBJCOPY=no
 		"$@"
 	)
@@ -200,6 +203,7 @@ src_compile() {
 src_install() {
 	if use opengl || use X ; then
 		domenu platform/debian/${PN}.desktop
+#XXX
 		doicon -s scalable docs/logo/new-${PN}-icon.svg
 	else
 		rm docs/man/${PN}.1 || die "Failed to remove man page in src_install()"
@@ -214,6 +218,7 @@ src_install() {
 	_emake install
 
 	dosym libmupdf.so.${PV#1.} /usr/$(get_libdir)/lib${PN}.so
+#	dosym libmupdf.so.${PV} /usr/$(get_libdir)/lib${PN}.so
 
 	if use opengl ; then
 		einfo "mupdf symlink points to mupdf-gl (bug 616654)"
