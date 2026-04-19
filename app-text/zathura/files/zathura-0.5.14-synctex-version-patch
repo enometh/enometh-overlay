@@ -1,0 +1,29 @@
+From a5b7b9e780f175e7c79dfdb322912587439f4014 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Sun, 19 Apr 2026 15:01:42 +0530
+Subject: [PATCH] meson.build: undo synctex version dep
+
+[260419]
+synctex master https://github.com/jlaurens/synctex advertises a
+version of 1.31, the >=2 version required here seems to be some debian
+renumbering
+---
+ meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 18dcdc1..61c219b 100644
+--- a/meson.build
++++ b/meson.build
+@@ -81,7 +81,7 @@ flags = [
+ flags = cc.get_supported_arguments(flags)
+ 
+ # optional dependencies
+-synctex = dependency('synctex', version: '>=2', required: get_option('synctex'))
++synctex = dependency('synctex', version: '>=1.21', required: get_option('synctex'))
+ seccomp = dependency('libseccomp', required: get_option('seccomp'))
+ landlock = cc.check_header('linux/landlock.h', required: get_option('landlock'))
+ 
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
