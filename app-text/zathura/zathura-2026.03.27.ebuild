@@ -13,6 +13,7 @@
 # ;madhu 230306 0.5.2-r4, -magic, build manpages
 # ;madhu 250324 0.5.11 - disable landlock
 # ;madhu 260419 0.5.14
+# ;madhu 260419 2026.03.27
 
 EAPI=8
 
