@@ -1,4 +1,4 @@
-# Copyright 2023-2025 Gentoo Authors
+# Copyright 2023-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -10,6 +10,7 @@
 # ;madhu 250106 0.1.1
 # ;madhu 250622 0.1.3
 # ;madhu 251123 0.4.0
+# ;madhu 260514 0.5.1
 EAPI=8
 
 inherit cmake
