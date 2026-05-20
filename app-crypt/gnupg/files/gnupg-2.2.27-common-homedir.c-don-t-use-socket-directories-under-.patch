@@ -1,0 +1,37 @@
+From 97a7a7bf653ecde8caeeabded60cfd4c007a668f Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 2 Feb 2021 17:39:07 +0530
+Subject: [PATCH 2/3] common/homedir.c: don't use socket directories under /run
+
+* common/homedir.c: (_gnupg_socketdir_internal): don't use socket
+directorues under /run unless environment variable
+GNUPG_USE_SYSTEMD_RUNTIME_DIR=1 is set.
+---
+ common/homedir.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/common/homedir.c b/common/homedir.c
+index 835f0ea..1da58d8 100644
+--- a/common/homedir.c
++++ b/common/homedir.c
+@@ -1500,6 +1500,17 @@ _gnupg_socketdir_internal (int skip_checks, unsigned *r_info)
+   else
+     name = xstrdup (prefix);
+ 
++  char *c;
++  if (bases[i] && name &&
++      ((c = getenv("GNUPG_USE_SYSTEMD_RUNTIME_DIR")) == NULL
++       || strcmp(c, "1") != 0)) {
++    log_info("ignoring %s and using %s instead. set GNUPG_USE_SYSTEMD_RUNTIME_DIR=1 if this is not what is wanted\n",
++	     name, gnupg_homedir ());
++    xfree(name);
++    name = NULL;
++  }
++
++
+  leave:
+   /* If nothing works fall back to the homedir.  */
+   if (!name)
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
