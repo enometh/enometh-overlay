@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -9,9 +9,10 @@
 #
 # ;madhu 220818 - xterm-372: PRIVATE repo: USE_GIT, ship basic PATCHES
 # ;madhu 250815 - xterm-401, patches now document they are from suse. added BackArrow2* scripts, terminal.png (from suse), 16color.txt (from rawhide)
+# ;madhu 260617 - xterm-410 (test USE_GIT=false)
 
 EAPI=8
-USE_GIT=true
+USE_GIT=false
 
 inherit desktop flag-o-matic toolchain-funcs xdg
 
@@ -27,7 +28,7 @@ SRC_URI="ftp://ftp.invisible-island.net/${PN}/${P}.tgz"
 fi
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x64-solaris"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~x64-macos ~x64-solaris"
 IUSE="+openpty sixel toolbar truetype unicode Xaw3d xinerama"
 
 BDEPEND="virtual/pkgconfig
@@ -36,7 +37,7 @@ DEPEND="
 	kernel_linux? ( sys-libs/libutempter )
 	media-libs/fontconfig:1.0
 	media-libs/freetype
-	>=sys-libs/ncurses-5.7-r7:0=
+	>=sys-libs/ncurses-5.7-r7:=
 	x11-apps/xmessage
 	x11-libs/libICE
 	x11-libs/libX11
@@ -48,8 +49,10 @@ DEPEND="
 	x11-libs/libXt
 	unicode? ( x11-apps/luit )
 	Xaw3d? ( x11-libs/libXaw3d )
-	xinerama? ( x11-libs/libXinerama )"
-RDEPEND="${DEPEND}
+	xinerama? ( x11-libs/libXinerama )
+"
+RDEPEND="
+	${DEPEND}
 	media-fonts/font-misc-misc
 	x11-apps/rgb"
 
