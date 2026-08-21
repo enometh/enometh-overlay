@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 # Copyright 1999-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
@@ -17,6 +17,7 @@
 # ;madhu 231203 2.2.0 - phew. features off
 # ;madhu 240912 2.2.6 - PYTHON_TARGETS=python3_9
 # ;madhu 251223 2.4.0
+# ;madhu 260821 2.4.3
 
 EAPI=8
 
@@ -38,19 +39,15 @@ inherit linux-mod-r1 multiprocessing pam systemd udev usr-ldscript
 DESCRIPTION="Linux kernel module and userland utilities for ZFS"
 HOMEPAGE="https://github.com/openzfs/zfs"
 
-MODULES_KERNEL_MAX=6.18
+MODULES_KERNEL_MAX=7.0
 MODULES_KERNEL_MIN=4.18
 
 if [[ ${PV} == "9999" ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/openzfs/zfs.git"
 else
-	VERIFY_SIG_OPENPGP_KEY_PATH=/usr/share/openpgp-keys/openzfs.asc
-	inherit verify-sig
-
 	MY_P="${P/_rc/-rc}"
 	SRC_URI="https://github.com/openzfs/${PN}/releases/download/${MY_P}/${MY_P}.tar.gz"
-	SRC_URI+=" verify-sig? ( https://github.com/openzfs/${PN}/releases/download/${MY_P}/${MY_P}.tar.gz.asc )"
 	S="${WORKDIR}/${MY_P}"
 
 	ZFS_KERNEL_COMPAT="${MODULES_KERNEL_MAX}"
@@ -59,7 +56,7 @@ else
 	ZFS_KERNEL_DEP="${ZFS_KERNEL_DEP%%.*}.$(( ${ZFS_KERNEL_DEP##*.} + 1))"
 
 	if [[ ${PV} != *_rc* ]]; then
-		KEYWORDS="~amd64 ~arm64 ~loong ~ppc64 ~riscv ~sparc"
+		KEYWORDS="amd64 arm64 ~loong ppc64 ~riscv ~sparc"
 	fi
 fi
 
@@ -98,17 +95,6 @@ BDEPEND="
 	)
 "
 
-if [[ ${PV} != "9999" ]] ; then
-	BDEPEND+=" verify-sig? ( sec-keys/openpgp-keys-openzfs )"
-
-	IUSE+=" +dist-kernel-cap"
-	RDEPEND="
-		dist-kernel-cap? ( dist-kernel? (
-			<virtual/dist-kernel-${ZFS_KERNEL_DEP}
-		) )
-	"
-fi
-
 #;madhu 240912
 # echo app-alternatives/cpio-0 > /etc/portage/profile/package.provided/cpio
 # echo app-alternatives/bc-0 > /etc/portage/profile/package.provided/bc
@@ -138,6 +124,15 @@ RDEPEND="
 	!<sys-fs/zfs-kmod-2.4.0_rc2-r1
 "
 
+if [[ ${PV} != "9999" ]] ; then
+	IUSE+=" +dist-kernel-cap"
+	RDEPEND+="
+		dist-kernel-cap? ( dist-kernel? (
+			<virtual/dist-kernel-${ZFS_KERNEL_DEP}
+		) )
+	"
+fi
+
 REQUIRED_USE="
 	!minimal? ( ${PYTHON_REQUIRED_USE} )
 	python? ( !minimal )
@@ -147,6 +142,7 @@ REQUIRED_USE="
 RESTRICT="test"
 
 PATCHES=(
+# provided through etc/portage/patches
 #	"${FILESDIR}/"2.1.9-cmd-zed-zed.c-fix-regression-that-makes-zed-exit-whe.patch
 #	"${FILESDIR}"/2.1.9-etc-init.d-zfs-zed-fix-inifinite-loop-segfault-under.patch
 	"${FILESDIR}"/${PN}-2.1.11-gentoo.patch
