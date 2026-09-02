@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -17,6 +17,7 @@
 # ;madhu 251123 5.0.13 v5.0.12-22-g4816c2d86 use single+shallow
 # ;madhu 251124 5.1.3 v5.1.3-8-gb40bb7717 - correct stable branch, disable xdummy by default (it can be enabled with --xvfb=), and it results in click selection
 EAPI=8
+# ;madhu 260902 5.1.6 v5.1.6-78-g180463333
 USE_GIT=true
 
 if ${USE_GIT} ||  [[ ${PV} = 9999* ]]; then
@@ -27,7 +28,7 @@ if ${USE_GIT} ||  [[ ${PV} = 9999* ]]; then
 #sudo -u portage cp /7/gtk/xpra/.git/shallow /gentoo/git3-src/7_gtk_xpra_.git/shallow
 	EGIT_CLONE_TYPE=single
 	EGIT_BRANCH=v5.1.x
-	EGIT_COMMIT=b40bb7717c161dcc556faf1f8601f78971ab5ad8
+	EGIT_COMMIT=1804633338c3fe5fd3e73e31f8932076635c7cfc
 	KEYWORDS="~amd64 ~x86"
 else
 #	SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
@@ -36,7 +37,7 @@ else
 	KEYWORDS="~amd64 ~x86"
 fi
 
-PYTHON_COMPAT=( python3_{9..12} )
+PYTHON_COMPAT=( python3_{9..14} )
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_SINGLE_IMPL=yes
 DISTUTILS_EXT=1
