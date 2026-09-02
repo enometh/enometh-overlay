@@ -1,7 +1,7 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <2023-01-03 20:09:00 IST>
+#   Time-stamp: <>
 #   Touched: Sun Nov 15 09:45:42 2020 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
@@ -13,13 +13,14 @@
 # ;madhu 210413 1.20.11 display-manager-init
 # ;madhu 210727 1.20.12 - dont use x11-base/xwayland yet
 # ;madhu 210823 1.20.13 USE=-wayland
-# ;madhu 211227 20.1.2 only libglvnd, wayland dmx kdrive gonn
-# ;madhu 220221 20.1.3
-# ;madhu 230103 20.1.6
-# ;madhu 240308 20.1.11 - punt on flex
-# ;madhu 241214 20.1.14
-# ;madhu 250815 20.1.18
-# ;madhu 251214 20.1.21
+# ;madhu 211227 21.1.2 only libglvnd, wayland dmx kdrive gonn
+# ;madhu 220221 21.1.3
+# ;madhu 230103 21.1.6
+# ;madhu 240308 21.1.11 - punt on flex
+# ;madhu 241214 21.1.14
+# ;madhu 250815 21.1.18
+# ;madhu 251214 21.1.21
+# ;madhu 260902 21.1.24
 EAPI=8
 
 XORG_TARBALL_SUFFIX="xz"
@@ -30,7 +31,7 @@ EGIT_REPO_URI="https://gitlab.freedesktop.org/xorg/xserver.git"
 DESCRIPTION="X.Org X servers"
 SLOT="0/${PV}"
 if [[ ${PV} != 9999* ]]; then
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86 ~amd64-linux ~x86-linux"
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 fi
 
 IUSE_SERVERS="xephyr xnest xorg xvfb"
