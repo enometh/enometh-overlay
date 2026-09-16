@@ -1,0 +1,27 @@
+From 6e4bf3d6e090f79ba2e95be463b89a740bb957f8 Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 16 Sep 2026 11:10:11 +0530
+Subject: [PATCH] CMakeLists.txt: adjust destinations for multilib
+
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1ede30d..b7109bc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -74,8 +74,8 @@ IF(ABIVERSION)
+ ENDIF()
+ 
+ INSTALL(TARGETS ubus cli
+-	ARCHIVE DESTINATION lib
+-	LIBRARY DESTINATION lib
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ 	RUNTIME DESTINATION bin
+ )
+ INSTALL(TARGETS ubusd
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
