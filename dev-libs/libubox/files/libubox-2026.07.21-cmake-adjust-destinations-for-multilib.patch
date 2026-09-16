@@ -1,0 +1,55 @@
+From 732f88324d9d05ad5c9002d96a81662635463dde Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Wed, 16 Sep 2026 10:18:13 +0530
+Subject: [PATCH] CMakeLists.txt: adjust destinations for multilib
+
+---
+ CMakeLists.txt | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bb67fec..4afb35f 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -41,8 +41,8 @@ INSTALL(FILES ${headers}
+ 	DESTINATION include/libubox
+ )
+ INSTALL(TARGETS ubox ubox-static
+-	ARCHIVE DESTINATION lib
+-	LIBRARY DESTINATION lib
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ )
+ 
+ ADD_SUBDIRECTORY(lua)
+@@ -81,9 +81,9 @@ IF(EXISTS ${json})
+ 	TARGET_LINK_LIBRARIES(json_script ubox)
+ 
+ 	INSTALL(TARGETS blobmsg_json blobmsg_json-static jshn json_script
+-		ARCHIVE DESTINATION lib
+-		LIBRARY DESTINATION lib
+-		RUNTIME DESTINATION bin
++		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+ 	)
+ 
+ 	FILE(GLOB scripts sh/*.sh)
+@@ -106,3 +106,14 @@ ADD_CUSTOM_TARGET(debian
+ 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+ 	COMMENT "Building Debian package"
+ )
++
++message(STATUS "<<< Gentoo configuration >>>
++Build type      ${CMAKE_BUILD_TYPE}
++Install path    ${CMAKE_INSTALL_PREFIX}
++Compiler flags:
++C               ${CMAKE_C_FLAGS}
++C++             ${CMAKE_CXX_FLAGS}
++Linker flags:
++Executable      ${CMAKE_EXE_LINKER_FLAGS}
++Module          ${CMAKE_MODULE_LINKER_FLAGS}
++Shared          ${CMAKE_SHARED_LINKER_FLAGS}\n")
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
