@@ -1,4 +1,4 @@
-# Copyright 1999-2025 Gentoo Authors
+# Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
 #   Time-stamp: <>
@@ -9,10 +9,11 @@
 #
 # ;madhu 250710 3.0.68
 # ;madhu 251103 3.0.70
+# ;madhu 260922 3.0.82.2
 
 EAPI=8
 
-PYTHON_COMPAT=( pypy3_11 python3_{11..14} )
+PYTHON_COMPAT=(python3_{9..14} )
 PYTHON_REQ_USE='bzip2(+),threads(+)'
 TMPFILES_OPTIONAL=1
 
@@ -29,7 +30,7 @@ if [[ ${PV} == 9999 ]] ; then
 	inherit git-r3
 else
 	SRC_URI="https://gitweb.gentoo.org/proj/portage.git/snapshot/${P}.tar.bz2"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~loong ~m68k ~mips ~ppc ~ppc64 ~riscv ~s390 ~sparc ~x86"
+	KEYWORDS="~alpha amd64 arm arm64 ~hppa ~loong ~m68k ~mips ppc ppc64 ~riscv ~s390 ~sparc x86"
 fi
 
 LICENSE="GPL-2"
@@ -66,7 +67,7 @@ BDEPEND="
 # For whirlpool hash, require python[ssl] (bug #425046).
 RDEPEND="
 	${PYTHON_DEPS}
-	acct-user/portage
+	>=acct-user/portage-0-r4
 	>=app-arch/tar-1.27
 	app-arch/zstd
 	>=app-misc/pax-utils-0.1.17
@@ -76,7 +77,8 @@ RDEPEND="
 	!build? (
 		>=app-admin/eselect-1.2
 		app-portage/getuto
-		>=app-shells/bash-5.0:0
+		>=app-shells/bash-5.3:0
+		dev-util/debugedit
 		>=sec-keys/openpgp-keys-gentoo-release-20240703
 		>=sys-apps/sed-4.0.5
 		rsync-verify? (
@@ -106,7 +108,7 @@ PATCHES=(
 ${FILESDIR}/portage-3.0.61-bin-ebuild-helpers-doins-preserve-timestamps.patch
 ${FILESDIR}/portage-3.0.70-estrip-preserve-timestamps-with-elfutils-strip.patch
 ${FILESDIR}/portage-3.0.70-bin-misc-functions.sh-rpmbuild-fixes.patch
-${FILESDIR}/portage-3.0.70-dbapi-don-t-refresh-binpkg-cache-unless-FORCE-is-in-.patch
+${FILESDIR}/portage-3.0.82.2-dbapi-don-t-refresh-binpkg-cache-unless-FORCE-is-in-.patch
 )
 
 pkg_pretend() {
