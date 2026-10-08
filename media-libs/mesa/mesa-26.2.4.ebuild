@@ -20,6 +20,7 @@
 # ;madhu 250731 25.1.7
 # ;madhu 250813 25.2.0 -Dtools=glsl
 # ;madhu 260219 26.0.0 axe vdpau, hardcode rust, meson.eclass inherits rust-toolchain even if we skip it, setting RUSTC and CARGOC in the environment is not enough as _meson_create_cross_file calls 'rust'. set PATH.likewise x86_64-pc-linux-gnu-llvm-config. providing clang is not enough.
+# ;madhu 261008 26.2.4
 
 EAPI=8
 
@@ -48,7 +49,7 @@ CRATES="
 	unicode-ident@1.0.12
 "
 
-RUST_MIN_VER="1.82.0"
+RUST_MIN_VER="1.85.0"
 RUST_MULTILIB=1
 RUST_OPTIONAL=1
 RUST_DEPEND1=
@@ -128,7 +129,7 @@ RDEPEND="
 	${LIBDRM_DEPSTRING}[${MULTILIB_USEDEP}]
 	>=dev-libs/expat-2.1.0-r3[${MULTILIB_USEDEP}]
 	>=dev-util/spirv-tools-1.3.231.0[${MULTILIB_USEDEP}]
-	>=sys-libs/zlib-1.2.9[${MULTILIB_USEDEP}]
+	>=sys-libs/zlib-1.2.9:=[${MULTILIB_USEDEP}]
 	unwind? ( sys-libs/libunwind[${MULTILIB_USEDEP}] )
 	llvm? (
 		video_cards_r600? (
@@ -141,7 +142,7 @@ RDEPEND="
 	lm-sensors? ( sys-apps/lm-sensors:=[${MULTILIB_USEDEP}] )
 	opencl? (
 		>=virtual/opencl-3
-		llvm-core/libclc[spirv(-)]
+		llvm-runtimes/libclc[spirv(-)]
 		virtual/libelf:0=
 	)
 	vaapi? (
@@ -185,7 +186,7 @@ RDEPEND="${RDEPEND}
 
 DEPEND="${RDEPEND}
 	sysprof? ( >=dev-util/sysprof-capture-49.0[${MULTILIB_USEDEP}] )
-	video_cards_d3d12? ( >=dev-util/directx-headers-1.618.1[${MULTILIB_USEDEP}] )
+	video_cards_d3d12? ( >=dev-util/directx-headers-1.619.1[${MULTILIB_USEDEP}] )
 	valgrind? ( dev-debug/valgrind )
 	wayland? ( >=dev-libs/wayland-protocols-1.41 )
 	X? (
@@ -196,7 +197,7 @@ DEPEND="${RDEPEND}
 
 CLC_DEPSTRING="
 	~dev-util/mesa_clc-${PV}[video_cards_asahi?,video_cards_panfrost?]
-	llvm-core/libclc[spirv(-)]
+	llvm-runtimes/libclc[spirv(-)]
 "
 
 # ;madhu 250719 via bindgen-bin
@@ -210,7 +211,7 @@ BDEPEND="
 	)
 	>=dev-build/meson-1.7.0
 	app-alternatives/yacc
-	app-alternatives/lex
+	sys-devel/flex
 	virtual/pkgconfig
 	$(python_gen_any_dep "
 		>=dev-python/mako-0.8.0[\${PYTHON_USEDEP}]
