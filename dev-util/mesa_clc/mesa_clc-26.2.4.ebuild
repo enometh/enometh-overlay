@@ -12,13 +12,14 @@
 # ;madhu 250813 25.1.2
 # ;madhu 250813 25.2.0
 # ;madhu 260220 26.0.0
+# ;madhu 261008 26.2.4
 
 EAPI=8
 
 LLVM_COMPAT=( {18..21} )
 PYTHON_COMPAT=( python3_{11..14} )
 
-inherit llvm-r1 meson python-any-r1
+inherit llvm-r2 meson python-any-r1
 
 MY_PV="${PV/_/-}"
 
@@ -32,7 +33,7 @@ if [[ ${PV} == 9999 ]]; then
 else
 	S="${WORKDIR}/mesa-${MY_PV}"
 	SRC_URI="https://archive.mesa3d.org/mesa-${MY_PV}.tar.xz"
-	KEYWORDS="~amd64 ~arm64 ~x86"
+	KEYWORDS="~amd64 ~arm ~arm64 ~riscv ~x86"
 fi
 
 LICENSE="MIT"
@@ -78,7 +79,7 @@ python_check_deps() {
 
 pkg_setup() {
 # MADHU disable llvm-r1_pkg_setup
-#	llvm-r1_pkg_setup
+#	llvm-r2_pkg_setup
 	python-any-r1_pkg_setup
 }
 
@@ -105,6 +106,7 @@ src_configure() {
 	use debug && EMESON_BUILDTYPE=debug
 
 	local emesonargs=(
+		-Dallow-broken-lto=true
 		-Dllvm=enabled
 		-Dshared-llvm=enabled
 		-Dmesa-clc=enabled
