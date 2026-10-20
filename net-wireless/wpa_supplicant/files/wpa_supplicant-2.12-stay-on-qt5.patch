@@ -1,0 +1,25 @@
+From a88aa5eb56a26e425feea7103b230120d399c1df Mon Sep 17 00:00:00 2001
+From: Madhu <enometh@net.meer>
+Date: Tue, 20 Oct 2026 19:34:59 +0530
+Subject: [PATCH] wpa_supplicant/wpa_gui-qt4/main.cpp: stay on installed Qt5
+
+---
+ wpa_supplicant/wpa_gui-qt4/main.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/wpa_supplicant/wpa_gui-qt4/main.cpp b/wpa_supplicant/wpa_gui-qt4/main.cpp
+index d395aa1..891c75a 100644
+--- a/wpa_supplicant/wpa_gui-qt4/main.cpp
++++ b/wpa_supplicant/wpa_gui-qt4/main.cpp
+@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
+ 	int ret;
+ 
+ 	locale = QLocale::system().name();
+-	resourceDir = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
++	resourceDir = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+ 	if (translator.load("wpa_gui_" + locale, resourceDir) ||
+ 	    translator.load("wpa_gui_" + locale, "lang"))
+ 		app.installTranslator(&translator);
+-- 
+2.49.0.9.gd50a5e8939.dirty
+
