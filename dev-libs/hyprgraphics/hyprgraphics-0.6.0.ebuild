@@ -11,6 +11,7 @@
 # ;madhu 250622 0.1.3
 # ;madhu 251123 0.4.0
 # ;madhu 260514 0.5.1
+# ;madhu 261105 0.6.0
 EAPI=8
 
 inherit cmake
