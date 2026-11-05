@@ -15,10 +15,10 @@
 # ;madhu 251014 - 0.9.3
 # ;madhu 251014 - 0.9.5
 # ;madhu 260109 - 0.10.0
-
+# ;madhu 261105 - 0.16.0
 EAPI=8
 
-inherit cmake
+inherit cmake toolchain-funcs
 
 DESCRIPTION="Aquamarine is a very light linux rendering backend library"
 HOMEPAGE="https://github.com/hyprwm/aquamarine"
@@ -39,12 +39,12 @@ SLOT="0"
 RESTRICT="test"
 # 	media-libs/mesa
 RDEPEND="
-	>=dev-libs/libinput-1.26.1
+	>=dev-libs/libinput-1.30.0
 	dev-libs/wayland
 	media-libs/libdisplay-info
 	media-libs/mesa
-	>=dev-util/hyprwayland-scanner-0.4.0
-	>=gui-libs/hyprutils-0.8.0
+	>=dev-util/hyprwayland-scanner-0.4.5
+	>=gui-libs/hyprutils-0.8.4
 	sys-apps/hwdata
 	>=sys-auth/seatd-0.8.0
 	x11-libs/cairo
