@@ -1,23 +1,25 @@
 # Copyright 1999-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 #
-#   Time-stamp: <>
+#   Time-stamp: <2026-11-12 20:31:09 IST>
 #   Touched: Mon Jan 06 15:41:07 2025 +0530 <enometh@net.meer>
 #   Bugs-To: enometh@net.meer
 #   Status: Experimental.  Do not redistribute
 #   Copyright (C) 2025 Madhu.  All Rights Reserved.
 # ;madhu 250106 14.2.1_p20250104, from an earlier snapshot. vanilla build only.
 # ;madhu 260109 15.2.1_p20260103 gcc-15-20260103
+# ;madhu 261105 16.2.1_p20261031
 # ln -sv /filler/f/mirrors/ftp.gwdg.de/pub/misc/gcc/snapshots/LATEST-15/gcc-15-20260103.tar.xz /gentoo/distfiles  (EXTRA_ECONF=--disable-bootstrap GCC_MAKE_TARGET=all)
+# ;madhu 261112 17.0.0_p20261108 skip all toolchain fns
 
 EAPI=8
 
-BASE_PLEVEL="15-20260103"
+BASE_PLEVEL="17-20261108"
 INCPATCHES=""
 
 TOOLCHAIN_PATCH_DEV="none"
 TOOLCHAIN_HAS_TESTS="" # don't download python stuff
-PATCH_GCC_VER="15.2.0"
+PATCH_GCC_VER="17.0.0"
 PATCH_VER="" # 7, don't  download patch
 MUSL_VER="" # 1, don't download musl stuff
 PYTHON_COMPAT=( python3_{11..14} )
@@ -26,6 +28,13 @@ GCC_TARBALL_SRC_URI="bogus"
 TOOLCHAIN_SET_S=no
 
 inherit toolchain
+
+# override toolchain configure
+PREFIX=/opt/gcc-17.0/
+LIBPATH=${PREFIX}/lib
+INCLUDEPATH=${PREFIX}/include
+BINPATH=${PREFIX}/bin
+DATAPATH=${PREFIX/share}
 
 SRC_URI="https://gcc.gnu.org/pub/gcc/snapshots/${BASE_PLEVEL}/gcc-${BASE_PLEVEL}.tar.xz"
 for i in ${INCPATCHES}; do
@@ -89,4 +98,74 @@ src_prepare() {
 			einfo "  ${f%%...}"
 		done
 
+}
+
+src_configure() {
+	mkdir -p "${WORKDIR}"/build || die
+	pushd "${WORKDIR}"/build > /dev/null || die
+#	addwrite /dev/zero
+	local myeconfargs=(
+		--host=x86_64-pc-linux-gnu
+#		--build=x86_64-pc-linux-gnu
+		--prefix=/opt/gcc-17.0
+#       --disable-libdquadmath-support
+		--disable-bootstrap
+		--disable-default-pie
+		--with-gcc-major-version-only
+		--enable-languages=c,c++,fortran,jit
+		--enable-obsolete
+		--enable-secureplt
+		--disable-werror
+		--with-system-zlib
+		--disable-nls
+		--disable-libunwind-exceptions
+		--enable-checking=yes,extra
+		--with-gcc-major-version-only
+		--enable-libstdcxx-time
+		--enable-lto
+		--disable-libstdcxx-pch
+		--disable-linker-build-id
+		--disable-libada
+		--enable-shared
+		--enable-threads=posix
+		--enable-__cxa_atexit
+		--enable-clocale=gnu
+		--with-tls=gnu2
+		--enable-multilib
+		--with-multilib-list=m32,m64
+		--disable-fixed-point
+		--enable-targets=all
+		--enable-offload-defaulted
+		--enable-offload-targets=nvptx-none
+		--enable-libgomp
+		--disable-libssp
+		--disable-cet
+		--disable-systemtap
+		--disable-valgrind-annotations
+		--disable-vtable-verify
+		--disable-libvtv
+		--with-zstd
+		--with-isl
+		--disable-isl-version-check
+#		--disable-libsanitizer
+		--enable-host-bind-now
+		--disable-ssp
+		--disable-fixincludes
+		--enable-host-shared
+		--with-build-config=bootstrap-lto
+	)
+	PATH=/dev/shm/gtk-root/usr/local/bin:$PATH \
+	${S}/configure "${myeconfargs[@]}"
+	popd > /dev/null || die
+}
+
+src_compile() {
+	pushd "${WORKDIR}"/build > /dev/null || die
+	make
+	popd > /dev/null || die
+}
+src_install() {
+	pushd "${WORKDIR}"/build > /dev/null || die
+	DESTDIR=${D} make install-strip
+	popd > /dev/null || die
 }
